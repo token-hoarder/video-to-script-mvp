@@ -1,0 +1,60 @@
+name: AI PR Code Reviewer
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Google Generative AI
+        run: npm install @google/generative-ai
+
+      - name: AI Code Review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Use GitHub CLI to safely grab the code changes
+          gh pr diff $PR_NUMBER > pr_diff.txt
+
+          node -e "
+          const { GoogleGenerativeAI } = require('@google/generative-ai');
+          const fs = require('fs');
+
+          async function run() {
+            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+            const diff = fs.readFileSync('pr_diff.txt', 'utf8').slice(0, 15000);
+            if (!diff.trim()) return;
+
+            const prompt = \`You are a senior code reviewer. Analyze this code diff for a Next.js/Supabase app. Identify any bugs, logic errors, security vulnerabilities, or performance bottlenecks. If the code looks great, say so. Provide a concise, helpful review in Markdown format.
+            
+            Code Diff:
+            \${diff}\`;
+
+            const result = await model.generateContent(prompt);
+            
+            // Save to file to avoid bash escaping conflicts
+            fs.writeFileSync('review_comment.md', result.response.text());
+          }
+          run();
+          "
+          
+          # Post the AI's review as a comment on the PR
+          gh pr comment $PR_NUMBER --body-file review_comment.md

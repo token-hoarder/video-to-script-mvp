@@ -1,0 +1,64 @@
+name: Auto-Generate Architecture Diagram
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  map-architecture:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Tree and Gemini
+        run: |
+          sudo apt-get install -y tree
+          npm install @google/generative-ai
+
+      - name: Generate Mermaid Diagram
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          # Map the directory, ignoring hidden files and heavy folders
+          tree -I 'node_modules|.git|.next|public' > tree.txt
+
+          node -e "
+          const { GoogleGenerativeAI } = require('@google/generative-ai');
+          const fs = require('fs');
+
+          async function run() {
+            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+            const structure = fs.readFileSync('tree.txt', 'utf8').slice(0, 10000);
+
+            const prompt = \`Analyze this Next.js project directory structure. Create a high-level system architecture diagram using Mermaid.js syntax. Focus on the relationship between the frontend components, API routes, external AI APIs, and the Supabase database. Output strictly valid Mermaid syntax enclosed in \\\`\\\`\\\`mermaid code blocks. Do not explain the code.
+            
+            Directory Structure:
+            \${structure}\`;
+
+            const result = await model.generateContent(prompt);
+            
+            const newContent = '# System Architecture\\n\\n' + result.response.text() + '\\n\\n*Last updated automatically by Gemini.*';
+            fs.writeFileSync('ARCHITECTURE.md', newContent);
+          }
+          run();
+          "
+
+      - name: Commit Diagram
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add ARCHITECTURE.md
+          git diff --quiet && git diff --staged --quiet || git commit -m "docs: auto-generate architecture diagram"
+          git push
