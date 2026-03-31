@@ -70,3 +70,11 @@ jobs:
           git add CHANGELOG.md
           git diff --quiet && git diff --staged --quiet || git commit -m "docs: auto-update CHANGELOG.md via Gemini"
           git push
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git diff --quiet && git diff --staged --quiet || git commit -m "docs: auto-update CHANGELOG.md via Gemini"
+          git pull --rebase origin main
+          git push
