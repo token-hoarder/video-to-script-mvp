@@ -1,5 +1,14 @@
 ## [2026-03-31] - Auto-Generated Update
 
+Here's a concise, user-friendly changelog entry:
+
+### ⚙️ Chore
+*   Enhanced the architecture diagram generation workflow to prevent update failures and ensure it remains consistently up-to-date.
+
+---
+
+## [2026-03-31] - Auto-Generated Update
+
 ```markdown
 ### Features
 
