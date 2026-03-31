@@ -43,7 +43,7 @@ jobs:
             const commitMsg = execSync('git log -1 --pretty=%B').toString();
             const diff = execSync('git diff HEAD~1 HEAD').toString().slice(0, 15000); 
 
-            const prompt = \`Analyze this git commit message and code diff. Write a brief, user-friendly changelog entry explaining what features were added or bugs were fixed. Keep it concise and format it in Markdown.
+            const prompt = \`Analyze this Next.js project directory structure. Create a high-level system architecture diagram using Mermaid.js syntax. Focus on the relationship between the frontend components, API routes, external AI APIs, and the Supabase database. Output strictly valid Mermaid syntax enclosed in \\\`\\\`\\\`mermaid code blocks. CRITICAL: You must wrap all node label text in double quotes (e.g., A["Next.js (Pages & Components)"]) to prevent syntax errors. Do not explain the code.\`;
             
             Commit Message: \${commitMsg}
             Code Diff: \${diff}\`;
