@@ -78,7 +78,7 @@ jobs:
 
             const structure = fs.readFileSync('tree.txt', 'utf8').slice(0, 10000);
 
-            const prompt = \`Analyze this Next.js project directory structure. Create a high-level system architecture diagram using Mermaid.js syntax. Focus on the relationship between the frontend components, API routes, external AI APIs, and the Supabase database. Output strictly valid Mermaid syntax enclosed in \`\`\`mermaid code blocks. Do not explain the code.
+            const prompt = \`Analyze this Next.js project directory structure. Create a high-level system architecture diagram using Mermaid.js syntax. Focus on the relationship between the frontend components, API routes, external AI APIs, and the Supabase database. Output strictly valid Mermaid syntax enclosed in \\\`\\\`\\\`mermaid code blocks. Do not explain the code.
             
             Directory Structure:
             \${structure}\`;
