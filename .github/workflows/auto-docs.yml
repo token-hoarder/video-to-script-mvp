@@ -1,0 +1,72 @@
+name: Auto-Generate Documentation
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Google Generative AI SDK
+        run: npm install @google/generative-ai
+
+      - name: Generate Changelog with Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          node -e "
+          const { GoogleGenerativeAI } = require('@google/generative-ai');
+          const { execSync } = require('child_process');
+          const fs = require('fs');
+
+          async function run() {
+            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+            const commitMsg = execSync('git log -1 --pretty=%B').toString();
+            // Grab the diff but limit the size to avoid token overflow
+            const diff = execSync('git diff HEAD~1 HEAD').toString().slice(0, 15000); 
+
+            const prompt = \`Analyze this git commit message and code diff. Write a brief, user-friendly changelog entry explaining what features were added or bugs were fixed. Keep it concise and format it in Markdown.
+            
+            Commit Message: \${commitMsg}
+            Code Diff: \${diff}\`;
+
+            const result = await model.generateContent(prompt);
+            const response = result.response.text();
+
+            let changelog = '';
+            if (fs.existsSync('CHANGELOG.md')) {
+              changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+            }
+
+            const date = new Date().toISOString().split('T')[0];
+            const newContent = '## [' + date + '] - Auto-Generated Update\\n\\n' + response + '\\n\\n---\\n\\n' + changelog;
+
+            fs.writeFileSync('CHANGELOG.md', newContent);
+          }
+          run();
+          "
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git diff --quiet && git diff --staged --quiet || git commit -m "docs: auto-update CHANGELOG.md via Gemini"
+          git push
