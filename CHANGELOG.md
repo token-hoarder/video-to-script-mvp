@@ -1,6 +1,14 @@
 ## [2026-03-31] - Auto-Generated Update
 
 ```markdown
+- **Fix:** Addressed an issue in the AI pipeline where generated Mermaid diagrams sometimes lacked proper code block formatting.
+```
+
+---
+
+## [2026-03-31] - Auto-Generated Update
+
+```markdown
 ### ⚙️ Chore
 *   Enhanced the architecture diagram generation workflow to prevent update failures and ensure it remains consistently up-to-date.
 ```
