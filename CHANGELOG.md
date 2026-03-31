@@ -1,5 +1,13 @@
 ## [2026-03-31] - Auto-Generated Update
 
+- **Refactor:** Extracted inline Node.js scripts in the CI/CD workflow to dedicated external files.
+- **Improvement:** Updated the AI prompt for changelog generation to accurately analyze code diffs and commit messages.
+- **Fix:** Enhanced the AI prompt for architecture diagram generation with critical instructions to ensure valid Mermaid.js syntax.
+
+---
+
+## [2026-03-31] - Auto-Generated Update
+
 ```markdown
 - **Fix:** Addressed an issue in the AI pipeline where generated Mermaid diagrams sometimes lacked proper code block formatting.
 ```
