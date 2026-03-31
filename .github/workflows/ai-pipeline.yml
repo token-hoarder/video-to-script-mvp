@@ -80,7 +80,10 @@ jobs:
 
             const structure = fs.readFileSync('tree.txt', 'utf8').slice(0, 10000);
 
-            const prompt = `Analyze this Next.js project directory structure. Create a high-level system architecture diagram using Mermaid.js syntax. Focus on the relationship between the frontend components, API routes, external AI APIs, and the Supabase database. Output strictly valid Mermaid syntax enclosed in \`\`\`mermaid code blocks. CRITICAL: You must wrap all node label text in double quotes (e.g., A["Next.js (Pages & Components)"]) to prevent syntax errors. Do not explain the code.
+            const prompt = `Analyze this Next.js project directory structure. Create a high-level system architecture diagram using Mermaid.js syntax.
+            Use a Left-to-Right layout (graph LR). Group the architecture using Mermaid subgraphs into logical, high-level buckets (e.g., 'Frontend UI', 'Next.js Backend/API', 'Supabase Services', 'External AI'). Focus on showing which components live inside which buckets, rather than drawing complex interaction arrows between every single file.
+            Output strictly valid Mermaid syntax enclosed in \`\`\`mermaid code blocks. 
+            CRITICAL: You must wrap all node label text in double quotes (e.g., A["Next.js (Pages & Components)"]) to prevent syntax errors. Do not explain the code.
             
             Directory Structure:
             ${structure}`;
