@@ -1,5 +1,11 @@
 ## [2026-03-31] - Auto-Generated Update
 
+Enhanced AI architecture diagram generation to create request flow diagrams, emphasizing bounded contexts and user request lifecycles.
+
+---
+
+## [2026-03-31] - Auto-Generated Update
+
 - **Documentation:** Revised the system architecture diagram (`ARCHITECTURE.md`) to reflect updated component interactions, including explicit Next.js Server Actions and Supabase Middleware.
 - **CI/CD:** Refactored the CI/CD workflow by extracting inline Node.js scripts into dedicated external files.
 - **AI Prompting:** Enhanced AI prompts for improved accuracy in changelog generation and corrected Mermaid.js syntax for architecture diagrams.
