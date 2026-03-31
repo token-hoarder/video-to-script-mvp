@@ -1,5 +1,13 @@
 ## [2026-03-31] - Auto-Generated Update
 
+- **Documentation:** Revised the system architecture diagram (`ARCHITECTURE.md`) to reflect updated component interactions, including explicit Next.js Server Actions and Supabase Middleware.
+- **CI/CD:** Refactored the CI/CD workflow by extracting inline Node.js scripts into dedicated external files.
+- **AI Prompting:** Enhanced AI prompts for improved accuracy in changelog generation and corrected Mermaid.js syntax for architecture diagrams.
+
+---
+
+## [2026-03-31] - Auto-Generated Update
+
 - **Refactor:** Extracted inline Node.js scripts in the CI/CD workflow to dedicated external files.
 - **Improvement:** Updated the AI prompt for changelog generation to accurately analyze code diffs and commit messages.
 - **Fix:** Enhanced the AI prompt for architecture diagram generation with critical instructions to ensure valid Mermaid.js syntax.
