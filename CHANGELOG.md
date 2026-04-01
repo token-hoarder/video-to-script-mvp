@@ -1,5 +1,11 @@
 ## [2026-04-01] - Auto-Generated Update
 
+Feature: Introduced a draggable and resizable caption overlay for video previews, leveraging Framer Motion. Video previews now auto-play when a script is selected.
+
+---
+
+## [2026-04-01] - Auto-Generated Update
+
 Introduced an interactive caption overlay for the video player, enabling real-time script display synchronized with video playback. Users can now select any generated script to preview as captions. This feature is supported by updated script generation, providing precise 0.1-second `startTime` and `endTime` for each segment.
 
 ---
