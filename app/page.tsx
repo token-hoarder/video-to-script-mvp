@@ -241,6 +241,7 @@ export default function Home() {
                      src={videoPreviewUrl} 
                      controls 
                      controlsList="nodownload"
+                     playsInline
                      className="w-full h-full object-contain"
                      onTimeUpdate={handleTimeUpdate}
                      onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration)}
