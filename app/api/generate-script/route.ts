@@ -108,18 +108,22 @@ export async function POST(req: NextRequest) {
 
       // Conditionally toggle mode if user provided script explicitly
       const prompt = userScript 
-        ? `You are an expert video editor and scriptwriter. Analyze the attached video visual context and the provided user script. 
+        ? `You are an Award-winning Cinematic Director and Storyteller. Analyze the attached video visual context and the provided user script. 
 User Script: "${userScript}"
 
-Divide the script into logical segments (1-2 sentences each). Time each segment based strictly on the visual context of the video. 
-- If the provided script is too long for the video duration, provide an 'Edited Version' that fits the time while keeping the emotional weight. 
-- If it's too short, insert specific '[Visual Break]' markers in the text field where there is no talking.
+Your goal is to move away from literal descriptions (e.g., 'A person packs a bag') to emotional narratives (e.g., 'Packing isn't just about clothes; it's about what you leave behind').
+
+Logic & Constraints:
+- Calculate the total duration of the uploaded video.
+- Use a pacing of 130 words per minute.
+- You MUST fit the script to the video. If the script is too long for the video's duration, you MUST edit/trim the text to fit perfectly while keeping the emotional weight.
+- Divide the script into logical segments.
 
 Output exactly a JSON array of objects with the keys: 
-- "startTime" (number in seconds)
-- "endTime" (number in seconds)
+- "timestamp" (string: e.g., "0:02" or "0:00-0:05")
 - "text" (string: the spoken text or [Visual Break])
-- "visualContext" (string: description of the visual shot matching the segment).
+- "visualTrigger" (string: description of the visual moment triggering the line)
+- "isEdited" (boolean: true if you altered the user's original text to fit spacing, false otherwise).
 Output ONLY a valid JSON array without markdown formatting.`
         : `You are an expert short-form video scriptwriter for Instagram Reels and TikTok. Analyze the attached video file. Pay close attention to the visual elements, setting, and pacing. Your task is to output exactly three distinct voiceover scripts based on the video content: 
       1. A 'Funny/Relatable' script.

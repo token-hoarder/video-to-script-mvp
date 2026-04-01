@@ -9,10 +9,10 @@ import { toast } from 'sonner';
 export type ScriptBlock = { timestamp: string; text: string };
 
 export type StoryboardSegment = {
-  startTime: number;
-  endTime: number;
+  timestamp: string;
   text: string;
-  visualContext: string;
+  visualTrigger: string;
+  isEdited: boolean;
 };
 
 export type ScriptsPayload = {
@@ -94,9 +94,16 @@ export function ScriptCards({ scripts, isLoading }: ScriptCardsProps) {
             <CardContent className="pt-6 relative">
               <div className="flex flex-col gap-3">
                 <div className="flex justify-between items-start">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/20 text-primary border border-primary/30 font-mono">
-                    [{segment.startTime}s - {segment.endTime}s]
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/20 text-primary border border-primary/30 font-mono">
+                      [{segment.timestamp}]
+                    </span>
+                    {segment.isEdited && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30 uppercase tracking-wide">
+                        Edited to Fit
+                      </span>
+                    )}
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -107,7 +114,7 @@ export function ScriptCards({ scripts, isLoading }: ScriptCardsProps) {
                   </Button>
                 </div>
                 <div className="text-xs font-medium text-zinc-400 italic bg-zinc-900/50 p-3 rounded-lg border border-zinc-800/50">
-                  🎥 {segment.visualContext}
+                  🎥 {segment.visualTrigger}
                 </div>
                 <div className="text-sm text-zinc-200 pl-1 leading-relaxed">
                   {segment.text}
