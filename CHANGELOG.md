@@ -1,3 +1,9 @@
+## [2026-04-01] - Auto-Generated Update
+
+Refactored video upload process to utilize secure, direct-to-Supabase streaming, enhancing efficiency and offloading server resources. The script generation endpoint now consumes video files from public URLs via a streaming buffer for improved performance.
+
+---
+
 ## [2026-03-31] - Auto-Generated Update
 
 Enhanced AI architecture diagram generation to create request flow diagrams, emphasizing bounded contexts and user request lifecycles.

@@ -2,59 +2,65 @@
 
 ```mermaid
 graph LR
-    subgraph "Client / Browser"
-        USR["User"]
-        BROWSER["Web Browser"]
-    end
+  subgraph "Client / Browser"
+    U["User"]
+    CUI["Client UI (Browser)"]
+  end
 
-    subgraph "Next.js Application"
-        NEXT_UI["Next.js UI (Pages & Components)"]
-        AUTH_MID["Authentication Middleware"]
-        LOGIN_ACT["Login Server Actions"]
-        API_GEN["Generate Script API (/api/generate-script)"]
-    end
+  subgraph "Next.js Application"
+    NF["Next.js Frontend (Pages & Components)"]
+    AM["Auth Middleware"]
+    LSA["Login Server Actions"]
+    GSA["Generate Script API"]
+    UVA["Upload Video URL API"]
+  end
 
-    subgraph "Supabase Cloud"
-        SUPA_AUTH["Supabase Authentication Service"]
-        SUPA_DB["Supabase Database"]
-    end
+  subgraph "Supabase Cloud"
+    SA["Supabase Authentication"]
+    SDB["Supabase Database"]
+    SS["Supabase Storage"]
+  end
 
-    subgraph "External Services"
-        EXT_AI["External AI Model (e.g., LLM)"]
-    end
+  subgraph "External Services"
+    AIS["External AI Service"]
+    VPS["External Video Processing Service"]
+  end
 
-    USR --> BROWSER["Initial Request / Interaction"]
-    BROWSER --> NEXT_UI["Request Page/Resource"]
+  %% Flow: Initial Page Load & Auth Check
+  U -- "Accesses Application" --> CUI
+  CUI -- "Requests Page" --> NF
+  NF -- "Intercepts Request" --> AM
+  AM -- "Checks Session" --> SA
+  SA -- "Validates Token/Session" --> AM
+  AM -- "Authorizes Access" --> NF
+  NF -- "Renders Page" --> CUI
 
-    NEXT_UI --> AUTH_MID["Intercept Request"]
-    AUTH_MID --> SUPA_AUTH["Verify Session / Token"]
-    SUPA_AUTH --> AUTH_MID["Session Status"]
+  %% Flow: User Login
+  U -- "Submits Login Form" --> CUI
+  CUI -- "Invokes Server Action" --> LSA
+  LSA -- "Authenticates User" --> SA
+  SA -- "Returns Auth Token/Session" --> LSA
+  LSA -- "Sets Session & Redirects" --> NF
 
-    AUTH_MID -- Authenticated Session --> NEXT_UI["Render Protected Content"]
-    AUTH_MID -- Unauthenticated / No Session --> LOGIN_ACT["Redirect to Login"]
+  %% Flow: Generate Script
+  U -- "Requests Script Generation" --> CUI
+  CUI -- "Calls API" --> GSA
+  GSA -- "Sends Prompt" --> AIS
+  AIS -- "Returns Generated Script" --> GSA
+  GSA -- "Saves Script Metadata" --> SDB
+  SDB -- "Confirmation" --> GSA
+  GSA -- "Returns Script" --> CUI
+  CUI -- "Displays Script" --> U
 
-    LOGIN_ACT --> SUPA_AUTH["User Login Attempt"]
-    SUPA_AUTH --> LOGIN_ACT["Authentication Result"]
-    LOGIN_ACT -- Login Success --> NEXT_UI["Redirect to Main App"]
-
-    NEXT_UI -- Request Data --> SUPA_DB["Fetch Data (e.g., scripts)"]
-    SUPA_DB -- Data Response --> NEXT_UI["Display Content"]
-    NEXT_UI --> BROWSER["Render UI"]
-    BROWSER --> USR["View Application"]
-
-    USR -- Input Prompt --> BROWSER["Submit Form"]
-    BROWSER -- API Call --> NEXT_UI["Handle Request"]
-    NEXT_UI -- POST /api/generate-script --> API_GEN["Process Request"]
-
-    API_GEN --> EXT_AI["Request Script Generation"]
-    EXT_AI --> API_GEN["Generated Script"]
-
-    API_GEN --> SUPA_DB["Store Generated Script"]
-    SUPA_DB --> API_GEN["Storage Confirmation"]
-
-    API_GEN -- Script Response --> NEXT_UI["Update UI"]
-    NEXT_UI --> BROWSER["Display New Script"]
-    BROWSER --> USR["Review Generated Script"]
+  %% Flow: Upload Video URL
+  U -- "Provides Video URL" --> CUI
+  CUI -- "Calls API" --> UVA
+  UVA -- "Sends URL for Processing" --> VPS
+  VPS -- "Processes Video & Notifies" --> UVA
+  UVA -- "Stores Video Metadata" --> SDB
+  SDB -- "Confirmation" --> UVA
+  UVA -- "Returns Processing Status" --> CUI
+  CUI -- "Displays Status" --> U
 ```
 
 *Last updated automatically by Gemini.*
