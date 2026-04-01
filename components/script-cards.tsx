@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, Tv, Smile, GraduationCap, Sparkles } from 'lucide-react';
+import { Copy, Check, Smile, Droplet, GraduationCap, Tv, Play, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -100,6 +100,7 @@ export function ScriptCards({ scripts, onSelectScript, activeScriptId, isLoading
               className={`h-7 px-3 text-xs tracking-wider transition-all duration-300 ${activeScriptId === 'custom' ? 'bg-primary/20 border-primary/50 text-primary hover:bg-primary/30' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800'}`}
               onClick={() => onSelectScript('custom', scripts)}
             >
+              <Play className="w-3 h-3 mr-1.5" />
               {activeScriptId === 'custom' ? 'Viewing Preview' : 'Preview on Video'}
             </Button>
           )}
@@ -161,6 +162,7 @@ export function ScriptCards({ scripts, onSelectScript, activeScriptId, isLoading
                   className={`text-xs ${activeScriptId === key ? 'border-primary/50 bg-primary/10 text-primary hover:bg-primary/20' : 'text-zinc-400 border-zinc-800 hover:text-white hover:bg-zinc-800'}`}
                   onClick={() => onSelectScript(key, blocks)}
                 >
+                  <Play className="w-3 h-3 mr-1" />
                   {activeScriptId === key ? 'Previewing' : 'Preview'}
                 </Button>
               )}

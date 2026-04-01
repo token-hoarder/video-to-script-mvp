@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { UploadZone } from "@/components/upload-zone";
 import { ScriptCards, ScriptsPayload } from "@/components/script-cards";
@@ -14,6 +14,9 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [userScript, setUserScript] = useState("");
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [captionPosition, setCaptionPosition] = useState({ x: 0, y: 0 });
 
   const [currentTime, setCurrentTime] = useState(0);
   const [activeScriptId, setActiveScriptId] = useState<string | null>(null);
@@ -26,6 +29,12 @@ export default function Home() {
   const handleSelectScript = (id: string, blocks: any[]) => {
     setActiveScriptId(id);
     setActiveScriptBlocks(blocks);
+    
+    // Auto-play and reset timeline when pressing Preview
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play();
+    }
   };
 
   const handleFileSelect = (selectedFile: File) => {
@@ -189,12 +198,19 @@ export default function Home() {
           {videoPreviewUrl && (
             <div className="mb-8 rounded-xl overflow-hidden border border-zinc-800 bg-black shadow-2xl relative w-full aspect-video flex items-center justify-center">
               <video 
+                ref={videoRef}
                 src={videoPreviewUrl} 
                 controls 
                 className="w-full h-full object-contain"
                 onTimeUpdate={handleTimeUpdate}
               />
-              <CaptionOverlay currentTime={currentTime} blocks={activeScriptBlocks} />
+              <CaptionOverlay 
+                currentTime={currentTime} 
+                blocks={activeScriptBlocks} 
+                position={captionPosition}
+                onPositionChange={setCaptionPosition}
+                videoRef={videoRef}
+              />
             </div>
           )}
 
