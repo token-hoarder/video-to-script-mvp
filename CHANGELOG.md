@@ -1,5 +1,11 @@
 ## [2026-04-01] - Auto-Generated Update
 
+Feature: Introduced a draggable and resizable caption overlay for video previews, enhancing user interaction with auto-play functionality upon script selection. The system architecture documentation has also been updated to reflect revised service components and interaction flows.
+
+---
+
+## [2026-04-01] - Auto-Generated Update
+
 Feature: Introduced a draggable and resizable caption overlay for video previews, leveraging Framer Motion. Video previews now auto-play when a script is selected.
 
 ---

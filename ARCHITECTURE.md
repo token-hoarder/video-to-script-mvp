@@ -3,49 +3,59 @@
 ```mermaid
 graph LR
     subgraph "Client / Browser"
-        A["User"]
-        B["Frontend UI"]
+        User["User"]
+        BrowserUI["Browser UI (Next.js Hydrated)"]
     end
 
     subgraph "Next.js Application"
-        C["Auth UI / Actions"]
-        D["Auth Middleware"]
-        E["Upload URL API"]
-        F["Generate Script API"]
-        G["Server-side Data Access"]
+        NextPages["Next.js Frontend Pages (SSR/RSC)"]
+        AuthMiddleware["Auth Middleware (Supabase)"]
+        APIRouteUpload["API Route: Upload Video URL"]
+        APIRouteGenerate["API Route: Generate Script"]
+        SupabaseServerClient["Supabase Server Client"]
     end
 
     subgraph "Supabase Cloud"
-        H["Supabase Auth"]
-        I["Supabase Database"]
+        SupabaseAuth["Supabase Authentication Service"]
+        SupabaseDB["Supabase Database (PostgreSQL)"]
     end
 
-    subgraph "External AI Services"
-        J["AI/LLM Service"]
+    subgraph "External Services"
+        ExternalAI["External AI/LLM Service"]
     end
 
-    %% Flow definitions
-    A -- "Interacts with" --> B
-    B -- "Login Request" --> C
-    C -- "Authenticates User" --> H
-    H -- "Auth Session / Token" --> D
-    B -- "Secured Request" --> D
-    D -- "Authorized Request" --> E
-    D -- "Authorized Request" --> F
-    D -- "Authorized Request" --> G
+    %% Flow: Initial Page Load / Authentication
+    User --> BrowserUI["Browser UI (Next.js Hydrated)"]
+    BrowserUI --> NextPages["Next.js Frontend Pages (SSR/RSC)"]
+    NextPages --> AuthMiddleware["Auth Middleware (Supabase)"]: "Check Session / Auth"
+    AuthMiddleware --> SupabaseAuth["Supabase Authentication Service"]: "Verify Session"
+    SupabaseAuth --> AuthMiddleware: "Session Status"
+    AuthMiddleware --> NextPages
+    NextPages --> BrowserUI: "Render Page"
 
-    B -- "Submit URL" --> E
-    E -- "Store Content URL" --> I
+    %% Flow: User Login (e.g., via Login Page actions.ts)
+    BrowserUI -- "Login Request" --> AuthMiddleware
+    AuthMiddleware -- "Sign In/Up" --> SupabaseAuth
+    SupabaseAuth -- "Auth Token/Session" --> AuthMiddleware
+    AuthMiddleware -- "Set Session / Redirect" --> BrowserUI
 
-    B -- "Request Script" --> F
-    F -- "Retrieve URL" --> I
-    F -- "Send Content/Prompt" --> J
-    J -- "Return Generated Script" --> F
-    F -- "Store Generated Script" --> I
+    %% Flow: Upload Video URL (via app/api/upload-url/route.ts)
+    BrowserUI -- "Submit Video URL" --> APIRouteUpload["API Route: Upload Video URL"]
+    APIRouteUpload --> SupabaseServerClient["Supabase Server Client"]
+    SupabaseServerClient -- "Store URL/Metadata" --> SupabaseDB["Supabase Database (PostgreSQL)"]
+    SupabaseDB --> SupabaseServerClient: "Confirmation"
+    SupabaseServerClient --> APIRouteUpload: "Success/Error"
+    APIRouteUpload --> BrowserUI: "Update UI"
 
-    G -- "Fetch Data" --> I
-    I -- "Return Data" --> G
-    G -- "Render Content" --> B
+    %% Flow: Generate Script (via app/api/generate-script/route.ts)
+    BrowserUI -- "Request Script Generation" --> APIRouteGenerate["API Route: Generate Script"]
+    APIRouteGenerate --> ExternalAI["External AI/LLM Service"]: "Prompt for Script"
+    ExternalAI --> APIRouteGenerate: "Generated Script"
+    APIRouteGenerate --> SupabaseServerClient["Supabase Server Client"]
+    SupabaseServerClient -- "Store Generated Script" --> SupabaseDB["Supabase Database (PostgreSQL)"]
+    SupabaseDB --> SupabaseServerClient: "Confirmation"
+    SupabaseServerClient --> APIRouteGenerate: "Success/Error"
+    APIRouteGenerate --> BrowserUI: "Display Script"
 ```
 
 *Last updated automatically by Gemini.*
