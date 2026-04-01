@@ -242,6 +242,8 @@ export default function Home() {
                      controls 
                      controlsList="nodownload"
                      playsInline
+                     preload="metadata"
+                     disablePictureInPicture
                      className="w-full h-full object-contain"
                      onTimeUpdate={handleTimeUpdate}
                      onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration)}
