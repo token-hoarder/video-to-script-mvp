@@ -117,10 +117,12 @@ Logic & Constraints:
 - Calculate the total duration of the uploaded video.
 - Use a pacing of 130 words per minute.
 - You MUST fit the script to the video. If the script is too long for the video's duration, you MUST edit/trim the text to fit perfectly while keeping the emotional weight.
-- Divide the script into logical segments.
+- Divide the script into logical segments (an array of objects).
+- Provide timing at a 0.1s precision (e.g., 1.5) to match the visual 'beats' you see in the video.
 
 Output exactly a JSON array of objects with the keys: 
-- "timestamp" (string: e.g., "0:02" or "0:00-0:05")
+- "startTime" (number: explicitly a float/second, e.g., 0.5)
+- "endTime" (number: explicitly a float/second, e.g., 3.2)
 - "text" (string: the spoken text or [Visual Break])
 - "visualTrigger" (string: description of the visual moment triggering the line)
 - "isEdited" (boolean: true if you altered the user's original text to fit spacing, false otherwise).

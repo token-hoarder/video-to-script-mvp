@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { UploadZone } from "@/components/upload-zone";
 import { ScriptCards, ScriptsPayload } from "@/components/script-cards";
+import { CaptionOverlay } from "@/components/caption-overlay";
 import { Button } from "@/components/ui/button";
 import { LogOut, Film } from "lucide-react";
 import { toast } from "sonner";
@@ -13,6 +14,19 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [userScript, setUserScript] = useState("");
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+
+  const [currentTime, setCurrentTime] = useState(0);
+  const [activeScriptId, setActiveScriptId] = useState<string | null>(null);
+  const [activeScriptBlocks, setActiveScriptBlocks] = useState<any[]>([]);
+
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    setCurrentTime(e.currentTarget.currentTime);
+  };
+
+  const handleSelectScript = (id: string, blocks: any[]) => {
+    setActiveScriptId(id);
+    setActiveScriptBlocks(blocks);
+  };
 
   const handleFileSelect = (selectedFile: File) => {
     setFile(selectedFile);
@@ -37,6 +51,8 @@ export default function Home() {
     try {
       setIsProcessing(true);
       setScripts(null);
+      setActiveScriptId(null);
+      setActiveScriptBlocks([]);
 
       // 1. Authenticate / get user
       const { data: { user } } = await supabase.auth.getUser();
@@ -172,7 +188,13 @@ export default function Home() {
           
           {videoPreviewUrl && (
             <div className="mb-8 rounded-xl overflow-hidden border border-zinc-800 bg-black shadow-2xl relative w-full aspect-video flex items-center justify-center">
-              <video src={videoPreviewUrl} controls className="w-full h-full object-contain" />
+              <video 
+                src={videoPreviewUrl} 
+                controls 
+                className="w-full h-full object-contain"
+                onTimeUpdate={handleTimeUpdate}
+              />
+              <CaptionOverlay currentTime={currentTime} blocks={activeScriptBlocks} />
             </div>
           )}
 
@@ -183,7 +205,12 @@ export default function Home() {
             </p>
           </div>
           <div className="flex-1 pb-10">
-            <ScriptCards isLoading={isProcessing} scripts={scripts} />
+            <ScriptCards 
+              isLoading={isProcessing} 
+              scripts={scripts}
+              activeScriptId={activeScriptId}
+              onSelectScript={handleSelectScript}
+            />
           </div>
         </section>
       </main>

@@ -9,7 +9,8 @@ import { toast } from 'sonner';
 export type ScriptBlock = { timestamp: string; text: string };
 
 export type StoryboardSegment = {
-  timestamp: string;
+  startTime: number;
+  endTime: number;
   text: string;
   visualTrigger: string;
   isEdited: boolean;
@@ -23,10 +24,12 @@ export type ScriptsPayload = {
 
 interface ScriptCardsProps {
   scripts?: ScriptsPayload | null;
+  onSelectScript?: (id: string, blocks: any[]) => void;
+  activeScriptId?: string | null;
   isLoading: boolean;
 }
 
-export function ScriptCards({ scripts, isLoading }: ScriptCardsProps) {
+export function ScriptCards({ scripts, onSelectScript, activeScriptId, isLoading }: ScriptCardsProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const copyToClipboard = async (id: string, blocks: ScriptBlock[]) => {
@@ -86,17 +89,29 @@ export function ScriptCards({ scripts, isLoading }: ScriptCardsProps) {
   if (Array.isArray(scripts)) {
     return (
       <div className="space-y-4">
-        <h3 className="text-sm font-medium text-zinc-400 mb-2 flex items-center gap-2">
-          <Tv className="w-4 h-4" /> Custom Storyboard Sequence
+        <h3 className="text-sm font-medium text-zinc-400 mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Tv className="w-4 h-4" /> Custom Storyboard Sequence
+          </div>
+          {onSelectScript && (
+            <Button
+              variant="outline"
+              size="sm"
+              className={`h-7 px-3 text-xs tracking-wider transition-all duration-300 ${activeScriptId === 'custom' ? 'bg-primary/20 border-primary/50 text-primary hover:bg-primary/30' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800'}`}
+              onClick={() => onSelectScript('custom', scripts)}
+            >
+              {activeScriptId === 'custom' ? 'Viewing Preview' : 'Preview on Video'}
+            </Button>
+          )}
         </h3>
         {scripts.map((segment, idx) => (
-          <Card key={idx} className="border-zinc-800 bg-zinc-950 shadow-none hover:shadow-lg transition-shadow">
+          <Card key={idx} className={`border-zinc-800 bg-zinc-950 shadow-none hover:shadow-lg transition-all duration-300 ${activeScriptId === 'custom' ? 'border-primary/30 bg-primary/5 shadow-primary/5' : ''}`}>
             <CardContent className="pt-6 relative">
               <div className="flex flex-col gap-3">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/20 text-primary border border-primary/30 font-mono">
-                      [{segment.timestamp}]
+                      [{segment.startTime}s - {segment.endTime}s]
                     </span>
                     {segment.isEdited && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30 uppercase tracking-wide">
@@ -130,7 +145,7 @@ export function ScriptCards({ scripts, isLoading }: ScriptCardsProps) {
   return (
     <div className="space-y-6">
       {Object.entries(scripts).map(([key, blocks]) => (
-        <Card key={key} className="border-zinc-800 bg-zinc-950 shadow-none hover:shadow-lg transition-shadow">
+        <Card key={key} className={`border-zinc-800 bg-zinc-950 shadow-none hover:shadow-lg transition-all duration-300 ${activeScriptId === key ? 'border-primary/50 shadow-[0_0_15px_rgba(255,255,255,0.05)] bg-zinc-900' : ''}`}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div className="flex flex-col space-y-1">
               <CardTitle className="capitalize flex items-center gap-2 text-zinc-100">
@@ -138,15 +153,26 @@ export function ScriptCards({ scripts, isLoading }: ScriptCardsProps) {
               </CardTitle>
               <CardDescription className="text-zinc-500 text-xs">A suggested voiceover flow aligned with video timing</CardDescription>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-white border-zinc-700 hover:bg-zinc-800 hover:text-white"
-              onClick={() => copyToClipboard(key, blocks)}
-            >
-              {copiedId === key ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Copy className="w-4 h-4 mr-2" />}
-              {copiedId === key ? 'Copied' : 'Copy'}
-            </Button>
+            <div className="flex gap-2">
+              {onSelectScript && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`text-xs ${activeScriptId === key ? 'border-primary/50 bg-primary/10 text-primary hover:bg-primary/20' : 'text-zinc-400 border-zinc-800 hover:text-white hover:bg-zinc-800'}`}
+                  onClick={() => onSelectScript(key, blocks)}
+                >
+                  {activeScriptId === key ? 'Previewing' : 'Preview'}
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-white border-zinc-700 hover:bg-zinc-800 hover:text-white"
+                onClick={() => copyToClipboard(key, blocks)}
+              >
+                {copiedId === key ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="pt-4">
             <div className="space-y-3">
