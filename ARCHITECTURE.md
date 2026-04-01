@@ -2,65 +2,58 @@
 
 ```mermaid
 graph LR
-  subgraph "Client / Browser"
-    U["User"]
-    CUI["Client UI (Browser)"]
-  end
+    subgraph "Client / Browser"
+        A["User"]
+        B["Frontend UI"]
+    end
 
-  subgraph "Next.js Application"
-    NF["Next.js Frontend (Pages & Components)"]
-    AM["Auth Middleware"]
-    LSA["Login Server Actions"]
-    GSA["Generate Script API"]
-    UVA["Upload Video URL API"]
-  end
+    subgraph "Next.js Application"
+        C["Auth Middleware"]
+        D["Next.js Server Components / Pages"]
+        E["Login Server Actions"]
+        F["API Route: Upload URL"]
+        G["API Route: Generate Script"]
+    end
 
-  subgraph "Supabase Cloud"
-    SA["Supabase Authentication"]
-    SDB["Supabase Database"]
-    SS["Supabase Storage"]
-  end
+    subgraph "Supabase Cloud"
+        H["Supabase Auth"]
+        I["Supabase Database"]
+        J["Supabase Storage"]
+    end
 
-  subgraph "External Services"
-    AIS["External AI Service"]
-    VPS["External Video Processing Service"]
-  end
+    subgraph "External Services"
+        K["External Video Processing Service"]
+        L["External AI / LLM Service"]
+    end
 
-  %% Flow: Initial Page Load & Auth Check
-  U -- "Accesses Application" --> CUI
-  CUI -- "Requests Page" --> NF
-  NF -- "Intercepts Request" --> AM
-  AM -- "Checks Session" --> SA
-  SA -- "Validates Token/Session" --> AM
-  AM -- "Authorizes Access" --> NF
-  NF -- "Renders Page" --> CUI
+    %% Flow: User Authentication
+    A --> B: "Access Login Page"
+    B -- "Submit Credentials" --> E
+    E -- "Verify User" --> H: "Auth Request"
+    H -- "User Session / Token" --> E
+    E -- "Set Cookie / Redirect" --> C
+    C -- "Authenticated Request" --> D: "Load Main App"
 
-  %% Flow: User Login
-  U -- "Submits Login Form" --> CUI
-  CUI -- "Invokes Server Action" --> LSA
-  LSA -- "Authenticates User" --> SA
-  SA -- "Returns Auth Token/Session" --> LSA
-  LSA -- "Sets Session & Redirects" --> NF
+    %% Flow: Main Application Load (Authenticated)
+    A --> C: "Load App (Authenticated)"
+    C -- "Validated Session" --> D
+    D -- "Fetch User Data / Content" --> I
 
-  %% Flow: Generate Script
-  U -- "Requests Script Generation" --> CUI
-  CUI -- "Calls API" --> GSA
-  GSA -- "Sends Prompt" --> AIS
-  AIS -- "Returns Generated Script" --> GSA
-  GSA -- "Saves Script Metadata" --> SDB
-  SDB -- "Confirmation" --> GSA
-  GSA -- "Returns Script" --> CUI
-  CUI -- "Displays Script" --> U
+    %% Flow: Upload Video/URL for Processing
+    B -- "Upload Video URL" --> F
+    F -- "Store URL Metadata" --> I
+    F -- "Enqueue Video Processing Task" --> K
+    K -- "Process Video Content" --> J: "Store Processed Assets"
+    K -- "Update Processing Status" --> I
 
-  %% Flow: Upload Video URL
-  U -- "Provides Video URL" --> CUI
-  CUI -- "Calls API" --> UVA
-  UVA -- "Sends URL for Processing" --> VPS
-  VPS -- "Processes Video & Notifies" --> UVA
-  UVA -- "Stores Video Metadata" --> SDB
-  SDB -- "Confirmation" --> UVA
-  UVA -- "Returns Processing Status" --> CUI
-  CUI -- "Displays Status" --> U
+    %% Flow: Generate Script
+    B -- "Request Script Generation" --> G
+    G -- "Retrieve Video Data / User Context" --> I
+    G -- "Prompt AI Model" --> L
+    L -- "Generated Script Text" --> G
+    G -- "Store Generated Script" --> I
+    G -- "Return Script" --> D
+    D -- "Display Script" --> B
 ```
 
 *Last updated automatically by Gemini.*

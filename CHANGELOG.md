@@ -1,5 +1,11 @@
 ## [2026-04-01] - Auto-Generated Update
 
+Introduced an interactive caption overlay for the video player, enabling real-time script display synchronized with video playback. Users can now select any generated script to preview as captions. This feature is supported by updated script generation, providing precise 0.1-second `startTime` and `endTime` for each segment.
+
+---
+
+## [2026-04-01] - Auto-Generated Update
+
 Refactored video upload process to utilize secure, direct-to-Supabase streaming, enhancing efficiency and offloading server resources. The script generation endpoint now consumes video files from public URLs via a streaming buffer for improved performance.
 
 ---
