@@ -173,6 +173,29 @@ Output ONLY a valid JSON array without markdown formatting.`
     }
   } catch (err: any) {
     console.error('API Error:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    
+    // Default safe user-facing message
+    let safeMessage = 'An unexpected error occurred while analyzing your video. Please try again.';
+    let statusCode = 500;
+    
+    // Analyze error string to safely map known issues
+    const rawError = err.message ? err.message.toLowerCase() : '';
+    
+    if (err.status === 429 || rawError.includes('quota') || rawError.includes('429') || rawError.includes('exhausted') || rawError.includes('rate limit')) {
+      safeMessage = 'Our AI is currently experiencing high demand. Please try again in a few minutes.';
+      statusCode = 429;
+    } else if (rawError.includes('gemini video processing failed')) {
+      safeMessage = 'We could not process this video format. Please try uploading a standard MP4 or MOV.';
+      statusCode = 422;
+    } else if (err.status === 401 || rawError.includes('unauthorized')) {
+      safeMessage = 'You must be logged in to perform this action.';
+      statusCode = 401;
+    } else if (rawError.includes('timeout') || rawError.includes('econnreset') || rawError.includes('aborted')) {
+      safeMessage = 'The AI request timed out. The video might be too long or complex to process.';
+      statusCode = 504;
+    }
+
+    // Never return the raw err.message or stack trace to the client
+    return NextResponse.json({ error: safeMessage }, { status: statusCode });
   }
 }
