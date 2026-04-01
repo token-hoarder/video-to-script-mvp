@@ -31,7 +31,7 @@ export function ScriptSidebar({ scripts, isAnalyzing, onSelectScript, activeScri
         </div>
         
         {/* Custom Script Slot */}
-        <Card className={`border ${activeScriptId === 'custom' ? 'border-primary/50 bg-primary/10' : 'border-zinc-800 bg-black/60'} transition-all hover:bg-zinc-900/80`}>
+        <Card className={`border ${activeScriptId === 'custom' ? 'border-primary bg-primary/10 ring-1 ring-primary shadow-[0_0_15px_rgba(var(--primary),0.15)]' : 'border-zinc-800 bg-black/60'} transition-all hover:bg-zinc-900/80`}>
            <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                  <div className="p-2 rounded-md bg-zinc-900 border border-zinc-800">
@@ -71,7 +71,7 @@ export function ScriptSidebar({ scripts, isAnalyzing, onSelectScript, activeScri
                 const isActive = activeScriptId === slot.id;
                 
                 return (
-                   <Card key={slot.id} className={`border ${isActive ? 'border-primary/50 bg-primary/10' : 'border-zinc-800 bg-black/60'} transition-all ${!blocks ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : 'hover:bg-zinc-900/80'}`}>
+                   <Card key={slot.id} className={`border ${isActive ? 'border-primary bg-primary/10 ring-1 ring-primary shadow-[0_0_15px_rgba(var(--primary),0.15)]' : 'border-zinc-800 bg-black/60'} transition-all ${!blocks ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : 'hover:bg-zinc-900/80'}`}>
                       <CardContent className="p-4 flex items-center justify-between">
                          <div className="flex items-center gap-3">
                             <div className="p-2 rounded-md bg-zinc-900 border border-zinc-800 shadow-sm">

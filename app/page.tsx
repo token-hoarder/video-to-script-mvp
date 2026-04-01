@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { UploadZone } from "@/components/upload-zone";
 import { ScriptSidebar, ScriptsPayload } from "@/components/script-sidebar";
+import { StoryboardDetails } from "@/components/storyboard-details";
 import { CaptionOverlay } from "@/components/caption-overlay";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -289,6 +290,8 @@ export default function Home() {
                        </div>
                      )}
                    </Button>
+                   
+                   <StoryboardDetails activeScriptId={activeScriptId} blocks={activeScriptBlocks} />
                 </div>
              </div>
 
