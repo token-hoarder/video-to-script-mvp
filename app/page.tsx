@@ -42,15 +42,30 @@ export default function Home() {
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
+      toast.info('Generating secure upload link...');
+
+      const uploadUrlRes = await fetch('/api/upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filePath })
+      });
+
+      const uploadUrlData = await uploadUrlRes.json();
+      if (!uploadUrlRes.ok) {
+        throw new Error(uploadUrlData.error || 'Failed to generate secure upload link');
+      }
+
       toast.info('Uploading video to storage...');
 
       const { error: uploadError } = await supabase.storage
         .from('videos')
-        .upload(filePath, file);
+        .uploadToSignedUrl(filePath, uploadUrlData.token, file);
 
       if (uploadError) {
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
+
+      const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(filePath);
 
       toast.info('Generating scripts using Gemini AI...');
 
@@ -60,7 +75,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ videoPath: filePath }),
+        body: JSON.stringify({ fileUrl: publicUrl }),
       });
 
       const result = await response.json();

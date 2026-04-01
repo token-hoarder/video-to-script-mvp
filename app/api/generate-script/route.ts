@@ -17,10 +17,10 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(req: NextRequest) {
   try {
-    const { videoPath } = await req.json();
+    const { fileUrl } = await req.json();
 
-    if (!videoPath) {
-      return NextResponse.json({ error: 'No video path provided' }, { status: 400 });
+    if (!fileUrl) {
+      return NextResponse.json({ error: 'No file URL provided' }, { status: 400 });
     }
 
     // Auth verification
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     const { data: existing } = await supabase
       .from('scripts')
       .select('*')
-      .eq('video_url', videoPath)
+      .eq('video_url', fileUrl)
       .eq('user_id', user.id)
       .single();
 
@@ -58,25 +58,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ data: existing.generated_content });
     }
 
-    // 1. Download the video from Supabase Storage
-    const { data: videoBlob, error: downloadError } = await supabase.storage
-      .from('videos')
-      .download(videoPath);
-
-    if (downloadError || !videoBlob) {
-      console.error('Download error:', downloadError);
-      return NextResponse.json({ error: 'Failed to download video.' }, { status: 500 });
+    // 1. Download the video from public URL via streaming buffer
+    const downloadRes = await fetch(fileUrl);
+    
+    if (!downloadRes.ok || !downloadRes.body) {
+      console.error('Download error:', downloadRes.statusText);
+      return NextResponse.json({ error: 'Failed to download video from URL.' }, { status: 500 });
     }
 
-    // 2. Save file temporarily
-    const buffer = Buffer.from(await videoBlob.arrayBuffer());
-    const tempFilePath = path.join(os.tmpdir(), `upload-${Date.now()}-${path.basename(videoPath)}`);
-    fs.writeFileSync(tempFilePath, buffer);
+    // 2. Stream to temp file
+    const urlObj = new URL(fileUrl);
+    const fileName = path.basename(urlObj.pathname) || 'video.mp4';
+    const tempFilePath = path.join(os.tmpdir(), `upload-${Date.now()}-${fileName}`);
+    
+    const fileStream = fs.createWriteStream(tempFilePath);
+    const { pipeline } = require('stream/promises');
+    const { Readable } = require('stream');
+    
+    await pipeline(Readable.fromWeb(downloadRes.body as any), fileStream);
 
     try {
       // 3. Upload to Gemini File API
+      const mimeType = downloadRes.headers.get('content-type') || 'video/mp4';
       const response = await fileManager.uploadFile(tempFilePath, {
-        mimeType: videoBlob.type,
+        mimeType: mimeType,
         displayName: 'User Video',
       });
       console.log('Gemini file upload successful:', response.file.name);
@@ -131,7 +136,7 @@ export async function POST(req: NextRequest) {
       // 5. Store result in DB
       const { error: dbError } = await supabase.from('scripts').insert({
         user_id: user.id,
-        video_url: videoPath,
+        video_url: fileUrl,
         generated_content: jsonOutput,
       });
 
