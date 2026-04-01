@@ -4,58 +4,67 @@
 graph LR
     subgraph "Client / Browser"
         User["User"]
-        BrowserUI["Browser UI (Next.js Hydrated)"]
+        FrontendUI["Frontend UI (React Components)"]
     end
 
     subgraph "Next.js Application"
-        NextPages["Next.js Frontend Pages (SSR/RSC)"]
-        AuthMiddleware["Auth Middleware (Supabase)"]
-        APIRouteUpload["API Route: Upload Video URL"]
-        APIRouteGenerate["API Route: Generate Script"]
-        SupabaseServerClient["Supabase Server Client"]
+        NJS_AuthMiddleware["Auth Middleware (Supabase)"]
+        NJS_LoginLogic["Login Logic (Server Actions)"]
+        NJS_Pages["Next.js Pages (SSR / RSC)"]
+        NJS_GenerateScriptAPI["API Route: /api/generate-script"]
+        NJS_UploadURLAPI["API Route: /api/upload-url"]
     end
 
     subgraph "Supabase Cloud"
-        SupabaseAuth["Supabase Authentication Service"]
-        SupabaseDB["Supabase Database (PostgreSQL)"]
+        S_Auth["Supabase Auth"]
+        S_DB["Supabase Database (Postgres)"]
     end
 
     subgraph "External Services"
-        ExternalAI["External AI/LLM Service"]
+        E_AIScriptGen["AI Script Generation Service (e.g., OpenAI)"]
+        E_VideoProcessor["Video Processing/Ingestion Service"]
     end
 
-    %% Flow: Initial Page Load / Authentication
-    User --> BrowserUI["Browser UI (Next.js Hydrated)"]
-    BrowserUI --> NextPages["Next.js Frontend Pages (SSR/RSC)"]
-    NextPages --> AuthMiddleware["Auth Middleware (Supabase)"]: "Check Session / Auth"
-    AuthMiddleware --> SupabaseAuth["Supabase Authentication Service"]: "Verify Session"
-    SupabaseAuth --> AuthMiddleware: "Session Status"
-    AuthMiddleware --> NextPages
-    NextPages --> BrowserUI: "Render Page"
+    %% 1. User Interaction and Initial Page Load
+    User --> FrontendUI : "Navigates / Interacts"
+    FrontendUI --> NJS_AuthMiddleware : "Browser Request (Page Load)"
+    FrontendUI --> NJS_Pages : "Page Load / Client-side Action"
 
-    %% Flow: User Login (e.g., via Login Page actions.ts)
-    BrowserUI -- "Login Request" --> AuthMiddleware
-    AuthMiddleware -- "Sign In/Up" --> SupabaseAuth
-    SupabaseAuth -- "Auth Token/Session" --> AuthMiddleware
-    AuthMiddleware -- "Set Session / Redirect" --> BrowserUI
+    %% 2. Authentication Flow
+    NJS_AuthMiddleware --> S_Auth : "Verify Session"
+    S_Auth --> NJS_AuthMiddleware : "Session Valid/Invalid"
+    NJS_AuthMiddleware -- "Authenticated" --> NJS_Pages : "Access Protected Page"
+    NJS_AuthMiddleware -- "Unauthenticated" --> FrontendUI : "Redirect to Login"
 
-    %% Flow: Upload Video URL (via app/api/upload-url/route.ts)
-    BrowserUI -- "Submit Video URL" --> APIRouteUpload["API Route: Upload Video URL"]
-    APIRouteUpload --> SupabaseServerClient["Supabase Server Client"]
-    SupabaseServerClient -- "Store URL/Metadata" --> SupabaseDB["Supabase Database (PostgreSQL)"]
-    SupabaseDB --> SupabaseServerClient: "Confirmation"
-    SupabaseServerClient --> APIRouteUpload: "Success/Error"
-    APIRouteUpload --> BrowserUI: "Update UI"
+    FrontendUI -- "User Login" --> NJS_LoginLogic
+    NJS_LoginLogic --> S_Auth : "Authenticate User Credentials"
+    S_Auth --> NJS_LoginLogic : "Auth Response"
+    NJS_LoginLogic --> FrontendUI : "Login Status / Redirect"
 
-    %% Flow: Generate Script (via app/api/generate-script/route.ts)
-    BrowserUI -- "Request Script Generation" --> APIRouteGenerate["API Route: Generate Script"]
-    APIRouteGenerate --> ExternalAI["External AI/LLM Service"]: "Prompt for Script"
-    ExternalAI --> APIRouteGenerate: "Generated Script"
-    APIRouteGenerate --> SupabaseServerClient["Supabase Server Client"]
-    SupabaseServerClient -- "Store Generated Script" --> SupabaseDB["Supabase Database (PostgreSQL)"]
-    SupabaseDB --> SupabaseServerClient: "Confirmation"
-    SupabaseServerClient --> APIRouteGenerate: "Success/Error"
-    APIRouteGenerate --> BrowserUI: "Display Script"
+    %% 3. Generate Script Flow
+    FrontendUI -- "Request Script" --> NJS_GenerateScriptAPI
+    NJS_GenerateScriptAPI --> E_AIScriptGen : "Send Prompt & Parameters"
+    E_AIScriptGen --> NJS_GenerateScriptAPI : "Return Generated Script"
+    NJS_GenerateScriptAPI --> S_DB : "Save Script Metadata"
+    S_DB --> NJS_GenerateScriptAPI : "Confirmation"
+    NJS_GenerateScriptAPI --> FrontendUI : "Display Script"
+
+    %% 4. Upload URL Flow
+    FrontendUI -- "Submit Video URL" --> NJS_UploadURLAPI
+    NJS_UploadURLAPI --> S_DB : "Save Video URL & Initial Metadata"
+    S_DB --> NJS_UploadURLAPI : "Confirmation"
+    NJS_UploadURLAPI --> E_VideoProcessor : "Trigger Async Processing (e.g., Message Queue)"
+    E_VideoProcessor --> S_DB : "Update Video Status / Store Processed Data" %% Async callback/webhook to DB
+    NJS_UploadURLAPI --> FrontendUI : "Upload Confirmation / Status"
+
+    %% 5. Data Access for Next.js Pages (Server Components / Actions)
+    NJS_Pages -- "Fetch User Data" --> S_DB : "Query Database"
+    S_DB --> NJS_Pages : "Return Data"
+    NJS_Pages -- "Access Session" --> S_Auth : "Get User Info"
+    S_Auth --> NJS_Pages : "Return User Details"
+
+    %% 6. General Responses
+    NJS_Pages --> FrontendUI : "Rendered UI / Data"
 ```
 
 *Last updated automatically by Gemini.*
