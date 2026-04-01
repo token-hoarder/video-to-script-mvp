@@ -94,20 +94,20 @@ export function CaptionOverlay({ currentTime, blocks, position, onPositionChange
               });
             }}
             whileDrag={{ cursor: 'grabbing' }}
-            className="pointer-events-auto text-white font-medium text-center tracking-wide max-w-[90%] whitespace-normal break-words leading-relaxed bg-black/20 backdrop-blur-md rounded-xl drop-shadow-md cursor-grab active:cursor-grabbing hover:outline-dashed hover:outline-2 hover:outline-white/30 focus-within:outline-dashed focus-within:outline-2 focus-within:outline-white/30"
+            className="pointer-events-auto text-white font-medium text-center tracking-wide whitespace-normal break-words leading-relaxed cursor-grab active:cursor-grabbing hover:outline-dashed hover:outline-2 hover:outline-white/30 focus-within:outline-dashed focus-within:outline-2 focus-within:outline-white/30"
             style={{ 
               containerType: 'inline-size', 
               resize: 'both', 
               overflow: 'hidden', 
               minWidth: '150px', 
               minHeight: '60px',
-              width: '280px'
+              width: '250px'
             }}
           >
             <div 
-              className="w-full h-full flex flex-col items-center justify-center text-balance"
+              className="w-full h-full flex flex-col items-center justify-center text-balance drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
               style={{
-                fontSize: 'clamp(0.875rem, 8cqi, 2.5rem)',
+                fontSize: 'clamp(1rem, 12cqi, 3rem)',
                 padding: '0.75rem 1rem'
               }}
             >
