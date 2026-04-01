@@ -7,11 +7,19 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 export type ScriptBlock = { timestamp: string; text: string };
+
+export type StoryboardSegment = {
+  startTime: number;
+  endTime: number;
+  text: string;
+  visualContext: string;
+};
+
 export type ScriptsPayload = {
   funny: ScriptBlock[];
   aesthetic: ScriptBlock[];
   educational: ScriptBlock[];
-};
+} | StoryboardSegment[];
 
 interface ScriptCardsProps {
   scripts?: ScriptsPayload | null;
@@ -26,6 +34,13 @@ export function ScriptCards({ scripts, isLoading }: ScriptCardsProps) {
     await navigator.clipboard.writeText(text);
     setCopiedId(id);
     toast.success('Generated script copied to clipboard!');
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const copyStoryboardSegment = async (idx: number, text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedId(`seg-${idx}`);
+    toast.success('Segment text copied to clipboard!');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -64,6 +79,43 @@ export function ScriptCards({ scripts, isLoading }: ScriptCardsProps) {
       <div className="flex flex-col items-center justify-center p-12 text-center h-full border-2 border-dashed border-zinc-800 rounded-lg bg-zinc-950/50">
         <Tv className="w-12 h-12 text-zinc-600 mb-4" />
         <p className="text-zinc-400">Upload a video to see generated scripts.</p>
+      </div>
+    );
+  }
+
+  if (Array.isArray(scripts)) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-zinc-400 mb-2 flex items-center gap-2">
+          <Tv className="w-4 h-4" /> Custom Storyboard Sequence
+        </h3>
+        {scripts.map((segment, idx) => (
+          <Card key={idx} className="border-zinc-800 bg-zinc-950 shadow-none hover:shadow-lg transition-shadow">
+            <CardContent className="pt-6 relative">
+              <div className="flex flex-col gap-3">
+                <div className="flex justify-between items-start">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/20 text-primary border border-primary/30 font-mono">
+                    [{segment.startTime}s - {segment.endTime}s]
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-zinc-500 hover:text-white"
+                    onClick={() => copyStoryboardSegment(idx, segment.text)}
+                  >
+                    {copiedId === `seg-${idx}` ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                  </Button>
+                </div>
+                <div className="text-xs font-medium text-zinc-400 italic bg-zinc-900/50 p-3 rounded-lg border border-zinc-800/50">
+                  🎥 {segment.visualContext}
+                </div>
+                <div className="text-sm text-zinc-200 pl-1 leading-relaxed">
+                  {segment.text}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }

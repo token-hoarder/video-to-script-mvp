@@ -11,6 +11,15 @@ import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
+  const [userScript, setUserScript] = useState("");
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+
+  const handleFileSelect = (selectedFile: File) => {
+    setFile(selectedFile);
+    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    setVideoPreviewUrl(URL.createObjectURL(selectedFile));
+  };
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [scripts, setScripts] = useState<ScriptsPayload | null>(null);
   const supabase = createClient();
@@ -75,7 +84,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ fileUrl: publicUrl }),
+        body: JSON.stringify({ fileUrl: publicUrl, userScript }),
       });
 
       const result = await response.json();
@@ -129,7 +138,18 @@ export default function Home() {
           </div>
           
           <div className="p-1 rounded-2xl bg-gradient-to-b from-white/5 to-transparent">
-            <UploadZone onFileSelect={setFile} disabled={isProcessing} />
+            <UploadZone onFileSelect={handleFileSelect} disabled={isProcessing} />
+          </div>
+          
+          <div className="flex flex-col gap-2 mt-2">
+            <label className="text-sm font-semibold text-zinc-300 px-1">Your Script (Optional)</label>
+            <textarea
+              className="w-full h-32 p-4 bg-zinc-950/80 border border-zinc-800 rounded-xl text-sm text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-y"
+              placeholder="Paste a script for the AI to time and match directly to your video's visuals..."
+              value={userScript}
+              onChange={(e) => setUserScript(e.target.value)}
+              disabled={isProcessing}
+            />
           </div>
           
           <Button 
@@ -147,12 +167,19 @@ export default function Home() {
           )}
         </section>
 
-        {/* Right Column: Scripts */}
-        <section className="flex-1 flex flex-col xl:w-1/2 mt-8 xl:mt-0 max-w-2xl mx-auto xl:mx-0 w-full">
+        {/* Right Column: Scripts & Video Preview */}
+        <section className="flex-1 flex flex-col xl:w-1/2 mt-8 xl:mt-0 max-w-2xl mx-auto xl:mx-0 w-full relative">
+          
+          {videoPreviewUrl && (
+            <div className="mb-8 rounded-xl overflow-hidden border border-zinc-800 bg-black shadow-2xl relative w-full aspect-video flex items-center justify-center">
+              <video src={videoPreviewUrl} controls className="w-full h-full object-contain" />
+            </div>
+          )}
+
           <div className="mb-4">
             <h2 className="text-xl font-semibold mb-1 text-white">Generated Scripts</h2>
             <p className="text-zinc-400 text-sm">
-              Ready-to-use voiceover drafts
+              Ready-to-use voiceover drafts and storyboards
             </p>
           </div>
           <div className="flex-1 pb-10">
