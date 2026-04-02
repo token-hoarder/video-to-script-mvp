@@ -1,3 +1,9 @@
+## [2026-04-02] - Auto-Generated Update
+
+- Added metadata preload and disabled picture-in-picture for the video player.
+
+---
+
 ## [2026-04-01] - Auto-Generated Update
 
 Feature: Introduced a draggable and resizable caption overlay for video previews with auto-play functionality upon script selection. Updated system architecture documentation to reflect revised service components and interaction flows.
