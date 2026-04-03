@@ -2,11 +2,11 @@
 
 ## 🚀 Current Sprint (In Progress)
 
-- [ ] **[P0] Tiered Auth:** Implement Supabase Anonymous + Google OAuth.
-  - [ ] Implement Anonymous Sign-ins for Guest Mode.
-  - [ ] Implement Google OAuth for permanent accounts.
-  - [ ] Add a Credits System (e.g., 3 tries for guests, 50 for registered users).
-  - [ ] Implement IP-based Throttling to prevent guests from gaming the system.
+- [/] **[P0] Tiered Auth:** Implement Supabase Anonymous + Google OAuth.
+  - [x] Implement Anonymous Sign-ins for Guest Mode. [DONE — `hooks/useGuestAuth.ts`, branch `feat/auth-sprint-v1`]
+  - [ ] Implement Google OAuth for permanent accounts. [`linkIdentity()` plumbed — needs Supabase Dashboard provider config]
+  - [x] Add a Credits System (3 tries for guests, 50 for registered). [DONE — `profiles` table + DB trigger + server-side guard in API route]
+  - [x] Implement IP-based Throttling to prevent guests from gaming the system. [DONE — `hashIp()` + in-memory throttle store in `route.ts`]
 
 - [ ] **[P0] The Script Vault:** Persistence via Video Hashing (No storage costs).
   - [ ] Implement Video Fingerprinting (Hashing) to identify files without storing them.
@@ -40,4 +40,4 @@
 - [ ] **B-Roll Director:** AI suggests missing shots to fill narrative gaps.
 
 ---
-*Last Updated: 2026-04-04 01:06 AM (GST)*
+*Last Updated: 2026-04-04 01:41 AM (GST)*
