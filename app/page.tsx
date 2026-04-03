@@ -25,6 +25,7 @@ export default function Home() {
   const [activeScriptId, setActiveScriptId] = useState<string | null>(null);
   const [activeScriptBlocks, setActiveScriptBlocks] = useState<any[]>([]);
   const [pendingEdits, setPendingEdits] = useState<Record<number, string>>({});
+  const [refiningSlot, setRefiningSlot] = useState<string | null>(null);
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [scripts, setScripts] = useState<ScriptsPayload | null>(null);
@@ -258,6 +259,86 @@ export default function Home() {
     }
   };
 
+  const handleRefineScript = async (slotId: string, instruction: string) => {
+    if (!uploadedVideoUrl || !scripts || !scripts[slotId]) return;
+
+    try {
+      setRefiningSlot(slotId);
+      
+      const response = await fetch('/api/generate-script', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+           fileUrl: uploadedVideoUrl, 
+           refineRequest: {
+              slotId,
+              currentBlocks: scripts[slotId],
+              instruction
+           }
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to refine script');
+      }
+
+      if (result.data) {
+        setScripts(result.data);
+        handleSelectScript(slotId, result.data[slotId]);
+        toast.success(`Successfully remixed the script!`);
+      }
+
+    } catch (err: any) {
+      console.error('Refinement error:', err);
+      toast.error(err.message || 'Failed to refine the script.');
+    } finally {
+      setRefiningSlot(null);
+    }
+  };
+
+  const handleGenerateCustomAI = async (prompt: string) => {
+    if (!uploadedVideoUrl) return;
+
+    try {
+      setRefiningSlot('custom_ai'); // reuse refiningSlot for localized loading tracking
+      
+      const response = await fetch('/api/generate-script', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+           fileUrl: uploadedVideoUrl, 
+           customPrompt: prompt
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate custom script');
+      }
+
+      if (result.data) {
+        setScripts(result.data);
+        if (result.data.custom_ai) {
+           handleSelectScript('custom_ai', result.data.custom_ai);
+        }
+        toast.success(`Generated custom AI script!`);
+      }
+
+    } catch (err: any) {
+      console.error('Custom Generation error:', err);
+      toast.error(err.message || 'Failed to generate custom script.');
+    } finally {
+      setRefiningSlot(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white selection:bg-primary/30 flex flex-col relative overflow-hidden font-sans">
       {/* Subtle modern gradient background */}
@@ -379,6 +460,9 @@ export default function Home() {
                   onSelectScript={handleSelectScript}
                   activeScriptId={activeScriptId}
                   customScriptBlocks={customBlocks}
+                  onRefineScript={handleRefineScript}
+                  onGenerateCustomAI={handleGenerateCustomAI}
+                  refiningSlot={refiningSlot}
                 />
              </div>
           </div>

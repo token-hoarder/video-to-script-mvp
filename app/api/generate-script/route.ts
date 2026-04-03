@@ -17,7 +17,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(req: NextRequest) {
   try {
-    const { fileUrl, userScript } = await req.json();
+    const { fileUrl, userScript, refineRequest, customPrompt } = await req.json();
 
     if (!fileUrl) {
       return NextResponse.json({ error: 'No file URL provided' }, { status: 400 });
@@ -54,8 +54,12 @@ export async function POST(req: NextRequest) {
       .eq('user_id', user.id)
       .single();
 
-    if (existing) {
-      return NextResponse.json({ data: existing.generated_content });
+    if (existing && !refineRequest && !customPrompt) {
+      // Ensure the core templates actually exist before returning the cached version
+      const content = existing.generated_content || {};
+      if (content.aesthetic && content.funny && content.educational) {
+        return NextResponse.json({ data: content });
+      }
     }
 
     // 1. Download the video from public URL via streaming buffer
@@ -106,9 +110,45 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      // Conditionally toggle mode if user provided script explicitly
-      const prompt = userScript 
-        ? `You are an Award-winning Cinematic Director and Storyteller. Analyze the attached video visual context and the provided user script. 
+      // Conditionally toggle mode based on user action
+      let prompt = ``;
+      if (refineRequest) {
+         prompt = `You are an expert Hollywood video editor and scriptwriter. Analyze the attached video file.
+Take the existing script blocks provided below and REMIX them strictly based on the user's instruction: "${refineRequest.instruction}".
+You MUST ensure the pacing and duration fit the EXACT video visual timestamps previously provided.
+Existing Script Blocks: ${JSON.stringify(refineRequest.currentBlocks, null, 2)}
+
+Divide the remixed script into logical segments.
+Provide timing at a 0.1s precision (e.g., 1.5).
+
+Output exactly a JSON array of objects with the keys: 
+- "startTime" (number: explicitly a float/second, e.g., 0.5)
+- "endTime" (number: explicitly a float/second, e.g., 3.2)
+- "text" (string: the spoken text or [Visual Break])
+- "visualTrigger" (string: description of the visual moment)
+- "isEdited" (boolean: true).
+Output ONLY a valid JSON array without markdown formatting. do NOT wrap in a root object key.`;
+      } else if (customPrompt) {
+         prompt = `You are a visionary Director. Analyze the attached video visual context. 
+The user has requested the following specific creative prompt: "${customPrompt}"
+
+Logic & Constraints:
+- Calculate the total duration of the uploaded video.
+- Use a pacing of 130 words per minute.
+- Write a short-form script tailored perfectly to the video length and visual cuts.
+- Divide the script into logical segments.
+- Provide timing at a 0.1s precision (e.g., 1.5).
+
+Output exactly a JSON array of objects with the keys: 
+- "startTime" (number: explicitly a float/second, e.g., 0.5)
+- "endTime" (number: explicitly a float/second, e.g., 3.2)
+- "text" (string: the spoken text or [Visual Break])
+- "visualTrigger" (string: description of the visual moment)
+- "isEdited" (boolean: true).
+Output ONLY a valid JSON array without markdown formatting. do NOT wrap in a root object key.`;
+      } else {
+        prompt = userScript 
+          ? `You are an Award-winning Cinematic Director and Storyteller. Analyze the attached video visual context and the provided user script. 
 User Script: "${userScript}"
 
 Your goal is to move away from literal descriptions (e.g., 'A person packs a bag') to emotional narratives (e.g., 'Packing isn't just about clothes; it's about what you leave behind').
@@ -116,23 +156,24 @@ Your goal is to move away from literal descriptions (e.g., 'A person packs a bag
 Logic & Constraints:
 - Calculate the total duration of the uploaded video.
 - Use a pacing of 130 words per minute.
-- You MUST fit the script to the video. If the script is too long for the video's duration, you MUST edit/trim the text to fit perfectly while keeping the emotional weight.
+- You MUST fit the script to the video. If the script is too long for the video's duration, you MUST edit/trim the text to fit perfectly.
 - Divide the script into logical segments (an array of objects).
-- Provide timing at a 0.1s precision (e.g., 1.5) to match the visual 'beats' you see in the video.
+- Provide timing at a 0.1s precision (e.g., 1.5).
 
 Output exactly a JSON array of objects with the keys: 
 - "startTime" (number: explicitly a float/second, e.g., 0.5)
 - "endTime" (number: explicitly a float/second, e.g., 3.2)
 - "text" (string: the spoken text or [Visual Break])
-- "visualTrigger" (string: description of the visual moment triggering the line)
-- "isEdited" (boolean: true if you altered the user's original text to fit spacing, false otherwise).
+- "visualTrigger" (string: description of the visual moment)
+- "isEdited" (boolean: true).
 Output ONLY a valid JSON array without markdown formatting.`
-        : `You are an expert short-form video scriptwriter for Instagram Reels and TikTok. Analyze the attached video file. Pay close attention to the visual elements, setting, and pacing. Your task is to output exactly three distinct voiceover scripts based on the video content: 
+          : `You are an expert short-form video scriptwriter for Instagram Reels and TikTok. Analyze the attached video file. Pay close attention to the visual elements, setting, and pacing. Your task is to output exactly three distinct voiceover scripts based on the video content: 
       1. A 'Funny/Relatable' script.
       2. An 'Aesthetic/Emotional' script. 
       3. An 'Educational/Hype' script.
       
-      For each script, ensure it is under 20 seconds of spoken time. Provide the exact timestamp ranges (e.g., [00:00 - 00:05]) where the text should be spoken to match the visual action. Output ONLY a valid JSON object without markdown formatting. The object must strictly contain the keys: "funny", "aesthetic", and "educational". Each key should contain an array of objects with "timestamp" and "text".`;
+      For each script, ensure it is under 20 seconds of spoken time. Provide the exact timestamp ranges (e.g., [00:00 - 00:05]) where the text should be spoken. Output ONLY a valid JSON object without markdown formatting. The object must strictly contain the keys: "funny", "aesthetic", and "educational". Each key should contain an array of objects with "startTime", "endTime", and "text".`;
+      }
 
       const result = await model.generateContent([
         prompt,
@@ -154,17 +195,31 @@ Output ONLY a valid JSON array without markdown formatting.`
       await fileManager.deleteFile(response.file.name);
 
       // 5. Store result in DB
-      const { error: dbError } = await supabase.from('scripts').insert({
-        user_id: user.id,
-        video_url: fileUrl,
-        generated_content: jsonOutput,
-      });
-
-      if (dbError) {
-        console.error('Failed to save to db:', dbError);
+      let payloadToSave = jsonOutput;
+      
+      if (refineRequest) {
+        payloadToSave = existing ? { ...existing.generated_content, [refineRequest.slotId]: jsonOutput } : { [refineRequest.slotId]: jsonOutput };
+      } else if (customPrompt) {
+        payloadToSave = existing ? { ...existing.generated_content, custom_ai: jsonOutput } : { custom_ai: jsonOutput };
+      } else {
+        payloadToSave = existing ? { ...existing.generated_content, ...jsonOutput } : jsonOutput;
+      }
+      
+      if (existing) {
+         const { error: dbError } = await supabase.from('scripts').update({
+           generated_content: payloadToSave
+         }).eq('id', existing.id);
+         if (dbError) console.error('Failed to update db:', dbError);
+      } else {
+         const { error: dbError } = await supabase.from('scripts').insert({
+           user_id: user.id,
+           video_url: fileUrl,
+           generated_content: payloadToSave,
+         });
+         if (dbError) console.error('Failed to save to db:', dbError);
       }
 
-      return NextResponse.json({ data: jsonOutput });
+      return NextResponse.json({ data: payloadToSave });
     } finally {
       // Clean up local temp file
       if (fs.existsSync(tempFilePath)) {
