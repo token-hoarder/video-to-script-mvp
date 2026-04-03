@@ -51,29 +51,48 @@ export function ScriptSidebar({
   };
 
   return (
-     <div className="flex flex-col gap-4 w-full">
-        <div className="flex items-center gap-2">
-           <h3 className="text-lg font-semibold tracking-tight text-white/90">Script Selection</h3>
+     <div className="flex flex-col gap-4 w-full max-w-sm mx-auto">
+        <div className="flex items-center gap-2 mb-2">
+           <h3 className="text-xl font-bold tracking-tight text-white">Pro Studio</h3>
         </div>
         
         {/* Custom Script Slot */}
-        <Card className={`border ${activeScriptId === 'custom' ? 'border-primary bg-primary/10 ring-1 ring-primary shadow-[0_0_15px_rgba(var(--primary),0.15)]' : 'border-zinc-800 bg-black/60'} transition-all hover:bg-zinc-900/80 overflow-hidden`}>
-           <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                 <div className="p-2 rounded-md bg-zinc-900 border border-zinc-800 shrink-0">
+        <Card className={`border-2 transition-all overflow-hidden ${activeScriptId === 'custom' ? 'border-primary bg-primary/5 shadow-[0_0_20px_rgba(var(--primary),0.2)]' : 'border-zinc-800 bg-secondary/50 hover:bg-secondary/40'}`}>
+           <CardContent className="p-4 flex flex-col items-center">
+              <div className="flex flex-col items-center gap-2 mb-4">
+                 <div className="p-3 rounded-full bg-zinc-900 border border-zinc-700 shadow-xl relative shrink-0">
                     {customSlot.icon}
                  </div>
-                 <span className="font-medium text-sm text-zinc-100 truncate">{customSlot.title}</span>
+                 <span className="font-semibold text-lg text-zinc-100 text-center text-balance">
+                    {customSlot.title}
+                 </span>
+                 <span className="text-xs text-muted-foreground text-center">
+                     Your draft inputs
+                 </span>
               </div>
-              <Button 
-                size="sm" 
-                variant={activeScriptId === 'custom' ? 'default' : 'outline'} 
-                className={`h-8 px-3 shrink-0 transition-colors w-full sm:w-auto ${activeScriptId !== 'custom' ? 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:text-white' : ''}`}
-                onClick={() => onSelectScript('custom', customScriptBlocks)}
-              >
-                 <Play className={`w-3.5 h-3.5 mr-1.5 fill-current ${activeScriptId === 'custom' ? 'animate-pulse text-white' : ''}`} /> 
-                 {activeScriptId === 'custom' ? 'Active' : 'Preview'}
-              </Button>
+              <div className="w-full mt-1">
+                 <Button 
+                   size="sm" 
+                   variant={activeScriptId === 'custom' ? 'default' : 'secondary'} 
+                   className="w-full h-9 font-medium"
+                   onClick={() => onSelectScript('custom', customScriptBlocks)}
+                 >
+                    {activeScriptId === 'custom' ? (
+                       <div className="flex items-center">
+                          <div className="relative flex h-2 w-2 mr-2">
+                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                             <span className="relative inline-flex rounded-full h-2 w-2 bg-red-400"></span>
+                          </div>
+                          <span>Active</span>
+                       </div>
+                    ) : (
+                       <div className="flex items-center">
+                          <Play className="w-3.5 h-3.5 mr-2 fill-current" /> 
+                          <span>Preview Draft</span>
+                       </div>
+                    )}
+                 </Button>
+              </div>
            </CardContent>
         </Card>
 
@@ -85,7 +104,7 @@ export function ScriptSidebar({
         </div>
         
         {/* Generative Slots */}
-        <div className="flex flex-col gap-3 min-w-0">
+        <div className="flex flex-col gap-4">
           {isAnalyzing && activeScriptId === null ? (
              <div className="flex flex-col items-center justify-center p-12 gap-5 border border-dashed border-zinc-800 rounded-xl bg-black/30 backdrop-blur-sm">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -100,141 +119,188 @@ export function ScriptSidebar({
                   const isMenuOpen = openRefineMenu === slot.id;
                   
                   return (
-                     <div key={slot.id} className="flex flex-col gap-1.5 w-full min-w-0">
-                        <Card className={`border ${isActive && !isRefining ? 'border-primary bg-primary/10 ring-1 ring-primary shadow-[0_0_15px_rgba(var(--primary),0.15)]' : 'border-zinc-800 bg-black/60'} transition-all overflow-hidden ${!blocks && !isAnalyzing ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : 'hover:bg-zinc-900/80'}`}>
-                           <CardContent className="p-4 flex flex-col gap-3">
-                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
-                                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                                    <div className="p-2 rounded-md bg-zinc-900 border border-zinc-800 shadow-sm relative shrink-0">
-                                       {isRefining ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : slot.icon}
+                     <Card 
+                        key={slot.id} 
+                        className={`transition-all overflow-hidden border-2 flex flex-col ${isActive && !isRefining ? 'border-primary bg-primary/5 shadow-[0_0_20px_rgba(var(--primary),0.2)]' : 'border-zinc-800 bg-secondary/50 hover:bg-secondary/40'} ${!blocks && !isAnalyzing ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''}`}
+                     >
+                        <CardContent className="p-4 flex flex-col items-center">
+                           {/* Top Row: Icon and Title */}
+                           <div className="flex flex-col items-center gap-2 mb-3">
+                              <div className="p-3 rounded-full bg-zinc-900 border border-zinc-700 shadow-xl relative shrink-0">
+                                 {isRefining ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : slot.icon}
+                              </div>
+                              <span className="font-semibold text-base text-zinc-100 text-center text-balance">
+                                 {slot.title}
+                              </span>
+                           </div>
+
+                           {/* Middle Row: Refine Trigger */}
+                           {blocks && (
+                              <div className="w-full border-t border-zinc-800/80 pt-3 pb-3 flex flex-col items-center gap-3">
+                                 <button
+                                    className="flex items-center text-xs text-muted-foreground hover:text-white transition-colors"
+                                    onClick={() => setOpenRefineMenu(isMenuOpen ? null : slot.id)}
+                                    disabled={isRefining}
+                                 >
+                                    <Sparkles className="w-3 h-3 mr-1.5 text-zinc-400" />
+                                    {isMenuOpen ? 'Close Menu' : 'Refine Output'}
+                                    <ChevronDown className={`w-3 h-3 ml-1.5 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
+                                 </button>
+
+                                 {/* Expansion Menu */}
+                                 {isMenuOpen && (
+                                    <div className="w-full animate-in fade-in slide-in-from-top-2 duration-200 bg-black/20 rounded-lg p-3 border border-zinc-800/50 mt-1">
+                                       <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2 font-bold text-left">Quick Vibes</p>
+                                       <div className="flex flex-wrap gap-1.5 mb-3">
+                                          {slot.vibes.map(vibe => (
+                                             <Button 
+                                                key={vibe} 
+                                                variant="secondary" 
+                                                size="sm" 
+                                                className="h-6 px-2 text-[10px] text-zinc-300 hover:text-white border border-zinc-800"
+                                                onClick={() => submitRefinement(slot.id, `Make this script feel more ${vibe}`)}
+                                             >
+                                                {vibe}
+                                             </Button>
+                                          ))}
+                                       </div>
+                                       <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2 font-bold mt-1 text-left">Custom Instruction</p>
+                                       <div className="flex flex-col gap-2">
+                                          <input
+                                             className="w-full bg-black/40 border border-zinc-800 text-sm text-zinc-200 rounded-md px-3 py-2 focus:outline-none focus:border-primary/50 placeholder:text-zinc-600"
+                                             placeholder="e.g. Make it more about the sunset..."
+                                             value={customInstructions[slot.id] || ''}
+                                             onChange={e => handleCustomInstructionChange(slot.id, e.target.value)}
+                                             onKeyDown={e => {
+                                                if (e.key === 'Enter' && customInstructions[slot.id]) {
+                                                   submitRefinement(slot.id, customInstructions[slot.id]);
+                                                }
+                                             }}
+                                          />
+                                          <Button 
+                                             size="sm" 
+                                             className="w-full h-8 bg-zinc-200 text-zinc-900 hover:bg-white"
+                                             disabled={!customInstructions[slot.id] || isRefining}
+                                             onClick={() => submitRefinement(slot.id, customInstructions[slot.id])}
+                                          >
+                                             Send Instruction <Send className="w-3 h-3 ml-1.5" />
+                                          </Button>
+                                       </div>
                                     </div>
-                                    <span className="font-medium text-sm text-zinc-100 truncate">{slot.title}</span>
-                                 </div>
-                                 
-                                 {blocks ? (
-                                    <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-                                       <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-8 px-2 text-zinc-400 hover:text-white shrink-0 flex-1 sm:flex-none"
-                                          onClick={() => setOpenRefineMenu(isMenuOpen ? null : slot.id)}
-                                          disabled={isRefining}
-                                       >
-                                          <Sparkles className="w-3.5 h-3.5 mr-1" />
-                                          Refine <ChevronDown className={`w-3.5 h-3.5 ml-1 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
-                                       </Button>
-                                       <Button 
-                                         size="sm" 
-                                         variant={isActive ? 'default' : 'outline'} 
-                                         className={`h-8 px-3 shrink-0 flex-1 sm:flex-none transition-colors ${!isActive ? 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:text-white' : ''}`}
-                                         onClick={() => onSelectScript(slot.id, blocks)}
-                                       >
-                                          <Play className={`w-3.5 h-3.5 mr-1.5 fill-current ${isActive ? 'animate-pulse text-white' : ''}`} /> 
-                                          {isActive ? 'Active' : 'Preview'}
-                                       </Button>
-                                    </div>
-                                 ) : (
-                                    isAnalyzing ? (
-                                       <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold px-2.5 py-1 rounded bg-zinc-900/50 border border-zinc-800/50 flex flex-row items-center gap-2 shrink-0"><Loader2 className="w-3 h-3 animate-spin"/> Generating</span>
-                                    ) : (
-                                       <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold px-2.5 py-1 rounded bg-zinc-900/50 border border-zinc-800/50 shrink-0">Empty</span>
-                                    )
                                  )}
                               </div>
-
-                              {/* Refinement Expansion Menu */}
-                              {isMenuOpen && blocks && (
-                                 <div className="pt-3 border-t border-zinc-800/80 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    <p className="text-xs text-zinc-400 mb-2 font-medium tracking-wide">Quick Vibes</p>
-                                    <div className="flex flex-wrap gap-2 mb-3">
-                                       {slot.vibes.map(vibe => (
-                                          <Button 
-                                             key={vibe} 
-                                             variant="outline" 
-                                             size="sm" 
-                                             className="h-7 text-xs bg-zinc-950 border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-full"
-                                             onClick={() => submitRefinement(slot.id, `Make this script feel more ${vibe}`)}
-                                          >
-                                             {vibe}
-                                          </Button>
-                                       ))}
-                                    </div>
-                                    <p className="text-xs text-zinc-400 mb-2 font-medium tracking-wide mt-1">Custom Instruction</p>
-                                    <div className="flex items-center gap-2">
-                                       <input
-                                          className="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 rounded-md px-3 py-1.5 focus:outline-none focus:border-primary/50"
-                                          placeholder="e.g. Make it more about the sunset..."
-                                          value={customInstructions[slot.id] || ''}
-                                          onChange={e => handleCustomInstructionChange(slot.id, e.target.value)}
-                                          onKeyDown={e => {
-                                             if (e.key === 'Enter' && customInstructions[slot.id]) {
-                                                submitRefinement(slot.id, customInstructions[slot.id]);
-                                             }
-                                          }}
-                                       />
-                                       <Button 
-                                          size="sm" 
-                                          className="h-[34px] w-[34px] p-0 bg-primary shrink-0 text-white hover:bg-primary/90"
-                                          disabled={!customInstructions[slot.id] || isRefining}
-                                          onClick={() => submitRefinement(slot.id, customInstructions[slot.id])}
-                                       >
-                                          <Send className="w-3.5 h-3.5" />
-                                       </Button>
-                                    </div>
-                                 </div>
-                              )}
-                           </CardContent>
-                        </Card>
-                     </div>
+                           )}
+                           
+                           {/* Bottom Row: Preview/Active Button */}
+                           {blocks ? (
+                              <div className="w-full mt-1">
+                                 <Button 
+                                   size="sm" 
+                                   variant={isActive ? 'default' : 'secondary'} 
+                                   className="w-full h-9 font-medium"
+                                   onClick={() => onSelectScript(slot.id, blocks)}
+                                 >
+                                    {isActive ? (
+                                       <div className="flex items-center">
+                                          <div className="relative flex h-2 w-2 mr-2">
+                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                             <span className="relative inline-flex rounded-full h-2 w-2 bg-red-400"></span>
+                                          </div>
+                                          <span>Active</span>
+                                       </div>
+                                    ) : (
+                                       <div className="flex items-center">
+                                          <Play className="w-3.5 h-3.5 mr-2 fill-current" /> 
+                                          <span>Preview {slot.title}</span>
+                                       </div>
+                                    )}
+                                 </Button>
+                              </div>
+                           ) : (
+                              <div className="w-full flex justify-center pt-2">
+                                 {isAnalyzing ? (
+                                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 flex items-center gap-2">
+                                       <Loader2 className="w-3 h-3 animate-spin text-primary"/> Generating...
+                                    </span>
+                                 ) : (
+                                    <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold px-3 py-1.5 rounded-full bg-zinc-900/40 border border-zinc-800/40">
+                                       Not Analyzed
+                                    </span>
+                                 )}
+                              </div>
+                           )}
+                        </CardContent>
+                     </Card>
                   );
                })}
 
                {/* Custom AI Prompt Slot */}
-               <Card className={`border w-full flex-1 min-w-0 ${activeScriptId === 'custom_ai' ? 'border-primary bg-primary/10 ring-1 ring-primary shadow-[0_0_15px_rgba(var(--primary),0.15)]' : 'border-zinc-800 bg-black/60'} transition-all mt-2 overflow-hidden`}>
-                  <CardContent className="p-4 flex flex-col gap-3 min-w-0">
-                     <div className="flex items-center justify-between cursor-pointer min-w-0 gap-3" onClick={() => setCustomAIOpen(!customAIOpen)}>
-                        <div className="flex items-center gap-3 min-w-0">
-                           <div className="p-2 rounded-md bg-zinc-900 border border-zinc-800 shadow-sm shrink-0">
-                              <Sparkles className="w-4 h-4 text-emerald-400" />
-                           </div>
-                           <span className="font-medium text-sm text-zinc-100 truncate">Custom AI Prompt</span>
+               <Card className={`border-2 transition-all mt-4 overflow-hidden ${activeScriptId === 'custom_ai' ? 'border-primary bg-primary/5 shadow-[0_0_20px_rgba(var(--primary),0.2)]' : 'border-zinc-800 bg-secondary/50 hover:bg-secondary/40'}`}>
+                  <CardContent className="p-4 flex flex-col items-center">
+                     <div className="flex flex-col items-center gap-2 mb-3">
+                        <div className="p-3 rounded-full bg-zinc-900 border border-zinc-700 shadow-xl relative shrink-0">
+                           <Sparkles className="w-5 h-5 text-emerald-400" />
                         </div>
-                        <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform shrink-0 ${customAIOpen ? 'rotate-180' : ''}`} />
+                        <span className="font-semibold text-base text-zinc-100 text-center text-balance">
+                           Custom AI Builder
+                        </span>
                      </div>
-                     
-                     {customAIOpen && (
-                        <div className="pt-3 border-t border-zinc-800/80 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-3 min-w-0">
-                           <textarea
-                              className="w-full bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 rounded-md p-3 min-h-[100px] focus:outline-none focus:border-primary/50 resize-none custom-scrollbar"
-                              placeholder="Write a completely custom prompt..."
-                              value={customAIPrompt}
-                              onChange={e => setCustomAIPrompt(e.target.value)}
-                           />
-                           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 min-w-0">
-                              <span className="text-[10px] text-zinc-500 font-mono shrink-0">Will perfectly fit video duration</span>
+                     <div className="w-full border-t border-zinc-800/80 pt-3 pb-2 flex flex-col items-center gap-3">
+                        <button
+                           className="flex items-center text-xs text-emerald-500/80 hover:text-emerald-400 transition-colors"
+                           onClick={() => setCustomAIOpen(!customAIOpen)}
+                        >
+                           <Sparkles className="w-3 h-3 mr-1.5" />
+                           {customAIOpen ? 'Close Workspace' : 'Open Workspace'}
+                           <ChevronDown className={`w-3 h-3 ml-1.5 transition-transform ${customAIOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {/* Expansion Menu */}
+                        {customAIOpen && (
+                           <div className="w-full animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-3 mt-1 bg-black/20 rounded-lg p-3 border border-zinc-800/50">
+                              <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold text-left">Custom Prompt</p>
+                              <textarea
+                                 className="w-full bg-black/40 border border-zinc-800 text-sm text-zinc-200 rounded-md p-3 min-h-[100px] focus:outline-none focus:border-emerald-500/50 resize-none custom-scrollbar placeholder:text-zinc-600"
+                                 placeholder="Provide a completely unhinged or specific instruction for the style..."
+                                 value={customAIPrompt}
+                                 onChange={e => setCustomAIPrompt(e.target.value)}
+                              />
                               <Button 
                                  size="sm" 
-                                 className="h-8 bg-emerald-500 hover:bg-emerald-600 text-white px-4 shrink-0 w-full sm:w-auto"
+                                 className="w-full h-9 bg-emerald-500 hover:bg-emerald-600 text-white font-medium shadow-lg"
                                  disabled={!customAIPrompt.trim() || refiningSlot === 'custom_ai'}
                                  onClick={() => onGenerateCustomAI(customAIPrompt)}
                               >
-                                 {refiningSlot === 'custom_ai' ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Sparkles className="w-3.5 h-3.5 mr-1" />}
-                                 {refiningSlot === 'custom_ai' ? 'Generating...' : 'Generate New Script'}
+                                 {refiningSlot === 'custom_ai' ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Sparkles className="w-3.5 h-3.5 mr-1.5" />}
+                                 {refiningSlot === 'custom_ai' ? 'Generating Script...' : 'Generate New Array'}
                               </Button>
                            </div>
-                           {scripts?.custom_ai && (
-                              <div className="pt-2 w-full min-w-0">
-                                 <Button 
-                                    size="sm" 
-                                    variant={activeScriptId === 'custom_ai' ? 'default' : 'outline'} 
-                                    className={`w-full h-8 px-3 shrink-0 transition-colors ${activeScriptId !== 'custom_ai' ? 'bg-zinc-900 text-zinc-300 border-zinc-700 hover:text-white' : ''}`}
-                                    onClick={() => onSelectScript('custom_ai', scripts.custom_ai)}
-                                 >
-                                    <Play className={`w-3.5 h-3.5 mr-1.5 fill-current ${activeScriptId === 'custom_ai' ? 'animate-pulse text-white' : ''}`} /> 
-                                    {activeScriptId === 'custom_ai' ? 'Active Custom Mix' : 'Preview Custom Mix'}
-                                 </Button>
-                              </div>
-                           )}
+                        )}
+                     </div>
+
+                     {scripts?.custom_ai && (
+                        <div className="w-full mt-2 pt-3 border-t border-zinc-800/80">
+                           <Button 
+                              size="sm" 
+                              variant={activeScriptId === 'custom_ai' ? 'default' : 'secondary'} 
+                              className="w-full h-9 font-medium"
+                              onClick={() => onSelectScript('custom_ai', scripts.custom_ai)}
+                           >
+                              {activeScriptId === 'custom_ai' ? (
+                                 <div className="flex items-center">
+                                    <div className="relative flex h-2 w-2 mr-2">
+                                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                       <span className="relative inline-flex rounded-full h-2 w-2 bg-red-400"></span>
+                                    </div>
+                                    <span>Active Output</span>
+                                 </div>
+                              ) : (
+                                 <div className="flex items-center">
+                                    <Play className="w-3.5 h-3.5 mr-2 fill-current" /> 
+                                    <span>Preview Custom Mix</span>
+                                 </div>
+                              )}
+                           </Button>
                         </div>
                      )}
                   </CardContent>
