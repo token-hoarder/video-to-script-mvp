@@ -109,42 +109,70 @@ export function StoryboardDetails({
 
               return (
                 <div key={idx} className={`flex flex-col gap-1.5 p-4 transition-all relative group/row ${isDirty ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-zinc-900/40 border-l-2 border-l-transparent'}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="text-[11px] font-mono font-semibold text-primary/70 whitespace-nowrap pt-0.5 tracking-wider uppercase flex items-center shrink-0">
+                  <div className="flex items-start justify-between">
+                    <button 
+                       onClick={() => onScrubVideo(start)}
+                       className="text-[11px] font-mono font-semibold text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 px-1.5 py-0.5 rounded transition-colors whitespace-nowrap tracking-wider uppercase flex items-center shrink-0 cursor-pointer"
+                       title="Jump to this frame in video"
+                    >
                       {start.toFixed(1)}s - {end.toFixed(1)}s
-                      {isDirty && <span className="ml-2 inline-block w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_5px_rgba(249,115,22,0.8)]" title="Unsaved changes" />}
+                      {isDirty && <span className="ml-2 inline-block w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.8)]" title="Unsaved changes" />}
+                    </button>
+                    
+                    <div className="flex items-center gap-1 opacity-60 group-hover/row:opacity-100 transition-opacity">
+                      {isDirty && (
+                        <div className="flex items-center gap-1 animate-in fade-in zoom-in duration-200 mr-2">
+                          <Button 
+                             variant="ghost" 
+                             size="sm" 
+                             className="h-6 w-6 p-0 text-green-500 hover:text-green-400 hover:bg-green-500/10 rounded-full"
+                             onClick={() => onSaveSegment(idx)}
+                             title="Save Segment (Commit)"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                             variant="ghost" 
+                             size="sm" 
+                             className="h-6 w-6 p-0 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-full"
+                             onClick={() => onUndoSegment(idx)}
+                             title="Undo Draft"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                      <Button 
+                         variant="ghost" 
+                         size="sm" 
+                         className="h-6 w-6 p-0 text-zinc-400 hover:text-white hover:bg-white/10 rounded-full"
+                         onClick={() => {
+                           navigator.clipboard.writeText(currentText);
+                           toast.success('Segment copied!');
+                         }}
+                         title="Copy this segment"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
-                    {isDirty && (
-                      <div className="flex items-center gap-1 animate-in fade-in zoom-in duration-200">
-                        <Button 
-                           variant="ghost" 
-                           size="sm" 
-                           className="h-6 w-6 p-0 text-green-500 hover:text-green-400 hover:bg-green-500/10 rounded-full"
-                           onClick={() => onSaveSegment(idx)}
-                           title="Save Segment (Commit)"
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                           variant="ghost" 
-                           size="sm" 
-                           className="h-6 w-6 p-0 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-full"
-                           onClick={() => onUndoSegment(idx)}
-                           title="Undo Draft"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
                   </div>
                   <textarea
                     value={currentText}
-                    onChange={(e) => onPendingEditChange(idx, e.target.value)}
-                    onFocus={() => onScrubVideo(start)}
-                    className={`w-full text-sm leading-relaxed tracking-wide resize-none bg-transparent outline-none transition-all duration-200 border rounded-md p-2 mt-1 min-h-[50px] custom-scrollbar
-                      ${isDirty ? 'border-primary/30 focus:border-primary/50 text-white' : 'border-transparent hover:border-zinc-800 focus:border-zinc-700 focus:bg-zinc-950/60 text-zinc-300'}
+                    onChange={(e) => {
+                       onPendingEditChange(idx, e.target.value);
+                       e.target.style.height = 'auto';
+                       e.target.style.height = e.target.scrollHeight + 'px';
+                    }}
+                    onFocus={(e) => {
+                       onScrubVideo(start);
+                       e.target.style.height = 'auto';
+                       e.target.style.height = e.target.scrollHeight + 'px';
+                    }}
+                    className={`w-full text-sm leading-relaxed tracking-wide resize-none bg-transparent outline-none transition-all duration-200 rounded-md p-1.5 min-h-[30px] overflow-hidden -ml-1.5
+                      ${isDirty ? 'text-white' : 'text-zinc-300'}
                       ${segment.text === '[Visual Break]' && !isDirty ? 'italic text-zinc-500' : ''}`}
                     placeholder="Enter segment text..."
+                    rows={1}
                   />
                 </div>
               );
