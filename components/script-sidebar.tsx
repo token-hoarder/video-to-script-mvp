@@ -9,7 +9,8 @@ export type ScriptsPayload = {
 
 interface ScriptSidebarProps {
   scripts: ScriptsPayload | null;
-  isAnalyzing: boolean;
+  analyzingSlot: string | null;
+  onGenerateScript: (slotId: string) => void;
   onSelectScript: (id: string, blocks: any[]) => void;
   activeScriptId: string | null;
   customScriptBlocks: any[];
@@ -20,7 +21,8 @@ interface ScriptSidebarProps {
 
 export function ScriptSidebar({ 
    scripts, 
-   isAnalyzing, 
+   analyzingSlot, 
+   onGenerateScript,
    onSelectScript, 
    activeScriptId, 
    customScriptBlocks,
@@ -105,29 +107,24 @@ export function ScriptSidebar({
         
         {/* Generative Slots */}
         <div className="flex flex-col gap-4">
-          {isAnalyzing && activeScriptId === null ? (
-             <div className="flex flex-col items-center justify-center p-12 gap-5 border border-dashed border-zinc-800 rounded-xl bg-black/30 backdrop-blur-sm">
-                <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                <p className="text-zinc-400 text-sm font-medium animate-pulse">Designing Narratives...</p>
-             </div>
-          ) : (
              <>
-               {aiSlots.map(slot => {
+                {aiSlots.map(slot => {
                   const blocks = scripts ? scripts[slot.id] : null;
                   const isActive = activeScriptId === slot.id;
                   const isRefining = refiningSlot === slot.id;
+                  const isGenerating = analyzingSlot === slot.id;
                   const isMenuOpen = openRefineMenu === slot.id;
                   
                   return (
                      <Card 
                         key={slot.id} 
-                        className={`transition-all overflow-hidden border-2 flex flex-col ${isActive && !isRefining ? 'border-primary bg-primary/5 shadow-[0_0_20px_rgba(var(--primary),0.2)]' : 'border-zinc-800 bg-secondary/50 hover:bg-secondary/40'} ${!blocks && !isAnalyzing ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''}`}
+                        className={`transition-all overflow-hidden border-2 flex flex-col ${isActive && !isRefining ? 'border-primary bg-primary/5 shadow-[0_0_20px_rgba(var(--primary),0.2)]' : 'border-zinc-800 bg-secondary/50 hover:bg-secondary/40'} ${!blocks && !isGenerating ? 'opacity-80 hover:opacity-100' : ''}`}
                      >
                         <CardContent className="p-4 flex flex-col items-center">
                            {/* Top Row: Icon and Title */}
                            <div className="flex flex-col items-center gap-2 mb-3">
                               <div className="p-3 rounded-full bg-zinc-900 border border-zinc-700 shadow-xl relative shrink-0">
-                                 {isRefining ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : slot.icon}
+                                 {isRefining || isGenerating ? <Loader2 className="w-5 h-5 text-zinc-400 animate-spin" /> : slot.icon}
                               </div>
                               <span className="font-semibold text-base text-zinc-100 text-center text-balance">
                                  {slot.title}
@@ -217,16 +214,26 @@ export function ScriptSidebar({
                                  </Button>
                               </div>
                            ) : (
-                              <div className="w-full flex justify-center pt-2">
-                                 {isAnalyzing ? (
-                                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 flex items-center gap-2">
-                                       <Loader2 className="w-3 h-3 animate-spin text-primary"/> Generating...
-                                    </span>
-                                 ) : (
-                                    <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold px-3 py-1.5 rounded-full bg-zinc-900/40 border border-zinc-800/40">
-                                       Not Analyzed
-                                    </span>
-                                 )}
+                              <div className="w-full pt-3 border-t border-zinc-800/80 mt-1">
+                                 <Button 
+                                   size="sm" 
+                                   variant="secondary" 
+                                   className="w-full h-9 font-medium border border-zinc-700/50 bg-black/40 hover:bg-white/10 text-zinc-300 transition-colors"
+                                   onClick={() => onGenerateScript(slot.id)}
+                                   disabled={analyzingSlot !== null}
+                                 >
+                                    {isGenerating ? (
+                                       <div className="flex items-center">
+                                          <Loader2 className="w-4 h-4 mr-2 animate-spin text-primary" />
+                                          <span className="text-primary font-semibold tracking-wide">Drafting...</span>
+                                       </div>
+                                    ) : (
+                                       <div className="flex items-center">
+                                          <Sparkles className="w-3.5 h-3.5 mr-2" />
+                                          <span>Generate Draft</span>
+                                       </div>
+                                    )}
+                                 </Button>
                               </div>
                            )}
                         </CardContent>
@@ -305,8 +312,7 @@ export function ScriptSidebar({
                      )}
                   </CardContent>
                </Card>
-             </>
-          )}
+            </>
         </div>
      </div>
   );

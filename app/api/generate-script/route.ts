@@ -17,7 +17,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(req: NextRequest) {
   try {
-    const { fileUrl, userScript, refineRequest, customPrompt } = await req.json();
+    const { fileUrl, userScript, refineRequest, customPrompt, generateMode } = await req.json();
 
     if (!fileUrl) {
       return NextResponse.json({ error: 'No file URL provided' }, { status: 400 });
@@ -54,10 +54,15 @@ export async function POST(req: NextRequest) {
       .eq('user_id', user.id)
       .single();
 
-    if (existing && !refineRequest && !customPrompt) {
+    if (existing && !refineRequest && !customPrompt && !generateMode) {
       // Ensure the core templates actually exist before returning the cached version
       const content = existing.generated_content || {};
       if (content.aesthetic && content.funny && content.educational) {
+        return NextResponse.json({ data: content });
+      }
+    } else if (existing && generateMode && !refineRequest && !customPrompt) {
+      const content = existing.generated_content || {};
+      if (content[generateMode]) {
         return NextResponse.json({ data: content });
       }
     }
@@ -146,6 +151,20 @@ Output exactly a JSON array of objects with the keys:
 - "visualTrigger" (string: description of the visual moment)
 - "isEdited" (boolean: true).
 Output ONLY a valid JSON array without markdown formatting. do NOT wrap in a root object key.`;
+      } else if (generateMode) {
+        prompt = `You are an expert short-form video scriptwriter for TikTok and Reels. Analyze the attached video. 
+Write a script specifically for the "${generateMode}" persona/style.
+- Calculate the total duration of the uploaded video.
+- Use a pacing of 130 words per minute.
+- Divide the script into logical segments perfectly fit to the video length.
+- Provide timing at a 0.1s precision.
+
+Output exactly a JSON array of objects with the keys: 
+- "startTime" (number: explicitly a float/second, e.g., 0.5)
+- "endTime" (number: explicitly a float/second, e.g., 3.2)
+- "text" (string: the spoken text or [Visual Break])
+- "visualTrigger" (string: description of the visual moment)
+Output ONLY a valid JSON array without markdown formatting. do NOT wrap in a root object key.`;
       } else {
         prompt = userScript 
           ? `You are an Award-winning Cinematic Director and Storyteller. Analyze the attached video visual context and the provided user script. 
@@ -201,6 +220,8 @@ Output ONLY a valid JSON array without markdown formatting.`
         payloadToSave = existing ? { ...existing.generated_content, [refineRequest.slotId]: jsonOutput } : { [refineRequest.slotId]: jsonOutput };
       } else if (customPrompt) {
         payloadToSave = existing ? { ...existing.generated_content, custom_ai: jsonOutput } : { custom_ai: jsonOutput };
+      } else if (generateMode) {
+        payloadToSave = existing ? { ...existing.generated_content, [generateMode]: jsonOutput } : { [generateMode]: jsonOutput };
       } else {
         payloadToSave = existing ? { ...existing.generated_content, ...jsonOutput } : jsonOutput;
       }

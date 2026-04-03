@@ -27,7 +27,7 @@ export default function Home() {
   const [pendingEdits, setPendingEdits] = useState<Record<number, string>>({});
   const [refiningSlot, setRefiningSlot] = useState<string | null>(null);
 
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [analyzingSlot, setAnalyzingSlot] = useState<string | null>(null);
   const [scripts, setScripts] = useState<ScriptsPayload | null>(null);
   
   // Track uploaded URL to avoid re-uploads on re-generation
@@ -165,15 +165,12 @@ export default function Home() {
     router.refresh();
   };
 
-  const processVideo = async () => {
+  const handleGenerateScript = async (slotId: string) => {
     if (!file && !uploadedVideoUrl) return;
 
     try {
-      setIsProcessing(true);
-      setScripts(null);
-      // Wait, we WANT to keep the video in the player, but we just generate new scripts
-      // Keep activeScriptId and activeBlock... wait, if generating, sure, keep them for now.
-
+      setAnalyzingSlot(slotId);
+      
       let targetVideoUrl = uploadedVideoUrl;
 
       // 1. Authenticate / get user
@@ -218,15 +215,15 @@ export default function Home() {
         setUploadedVideoUrl(publicUrl);
       }
 
-      toast.info('Drafting AI Scripts...');
+      toast.info(`Drafting Script...`);
 
-      // 3. Call backend API to process via Gemini (Don't pass userScript so it doesn't try to parse 'custom' inside AI)
+      // 3. Call backend API to process via Gemini
       const response = await fetch('/api/generate-script', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ fileUrl: targetVideoUrl, userScript: "" }),
+        body: JSON.stringify({ fileUrl: targetVideoUrl, generateMode: slotId }),
       });
 
       const result = await response.json();
@@ -239,23 +236,18 @@ export default function Home() {
         console.log('Scripts Received:', result.data);
         setScripts(result.data);
         
-        // Automatically select the first available AI script so the UI populates instantly
-        if (result.data.aesthetic && result.data.aesthetic.length > 0) {
-           handleSelectScript('aesthetic', result.data.aesthetic);
-        } else if (result.data.funny && result.data.funny.length > 0) {
-           handleSelectScript('funny', result.data.funny);
-        } else if (result.data.educational && result.data.educational.length > 0) {
-           handleSelectScript('educational', result.data.educational);
+        if (result.data[slotId] && result.data[slotId].length > 0) {
+           handleSelectScript(slotId, result.data[slotId]);
         }
 
-        toast.success('Scripts generated successfully!');
+        toast.success('Script generated successfully!');
       }
 
     } catch (err: any) {
       console.error('Processing error:', err);
       toast.error(err.message || 'Something went wrong');
     } finally {
-      setIsProcessing(false);
+      setAnalyzingSlot(null);
     }
   };
 
@@ -373,7 +365,7 @@ export default function Home() {
              </div>
              <div className="w-full p-1 rounded-2xl bg-gradient-to-b from-white/5 to-transparent relative group">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-                <UploadZone onFileSelect={handleFileSelect} disabled={isProcessing} />
+                <UploadZone onFileSelect={handleFileSelect} disabled={analyzingSlot !== null} />
              </div>
           </div>
         ) : (
@@ -420,24 +412,7 @@ export default function Home() {
                      </div>
                    </div>
                    
-                   <Button 
-                     size="lg" 
-                     className="w-full mt-2 py-6 font-medium text-base shadow-[0_0_20px_rgba(var(--primary),0.15)] bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 rounded-xl"
-                     onClick={processVideo}
-                     disabled={isProcessing}
-                   >
-                     {isProcessing ? (
-                       <div className="flex items-center">
-                         <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                         Scanning Visual Context...
-                       </div>
-                     ) : (
-                       <div className="flex items-center">
-                         <Sparkles className="w-5 h-5 mr-2" />
-                         Generate AI Templates
-                       </div>
-                     )}
-                   </Button>
+                   
                    
                    <StoryboardDetails 
                      activeScriptId={activeScriptId} 
@@ -456,7 +431,8 @@ export default function Home() {
              <div className="lg:col-span-1 border border-zinc-800/80 rounded-2xl bg-zinc-950/50 backdrop-blur-sm p-6 shadow-2xl h-fit sticky top-6">
                 <ScriptSidebar 
                   scripts={scripts}
-                  isAnalyzing={isProcessing}
+                  analyzingSlot={analyzingSlot}
+                  onGenerateScript={handleGenerateScript}
                   onSelectScript={handleSelectScript}
                   activeScriptId={activeScriptId}
                   customScriptBlocks={customBlocks}
