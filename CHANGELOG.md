@@ -1,3 +1,9 @@
+## [2026-04-03] - Auto-Generated Update
+
+Added inline editing capabilities for script segments in the storyboard. Users can now directly modify and commit changes to individual segments or all pending edits simultaneously. Pending changes are visually indicated and reflected in the caption overlay and copied script text, with automatic video scrubbing to the focused segment for preview.
+
+---
+
 ## [2026-04-02] - Auto-Generated Update
 
 - Added metadata preload and disabled picture-in-picture for the video player.

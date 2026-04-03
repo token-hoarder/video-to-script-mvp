@@ -3,66 +3,69 @@
 ```mermaid
 graph LR
     subgraph "Client / Browser"
-        A["User"]
-        B["Frontend UI"]
+        User["User"]
+        FrontendUI["Frontend UI"]
+        LoginPage["Login Page"]
     end
 
     subgraph "Next.js Application"
-        C["Next.js Router / Server"]
-        D["Auth Middleware"]
-        E["Next.js Server Actions (Auth)"]
-        F["API Route: Upload Content URL"]
-        G["API Route: Generate Script"]
-        H["Server-side Data Logic"]
+        AuthMiddleware["Auth Middleware"]
+        AuthActions["Auth Actions"]
+        GenerateScriptAPI["Generate Script API"]
+        UploadURLAPI["Upload URL API"]
+        SupabaseServerClient["Supabase Server Client"]
+        SupabaseBrowserClient["Supabase Browser Client"]
     end
 
     subgraph "Supabase Cloud"
-        I["Supabase Auth Service"]
-        J["Supabase Database"]
-        K["Supabase Storage"]
+        SupabaseAuth["Supabase Auth"]
+        SupabaseDatabase["Supabase Database"]
+        SupabaseStorage["Supabase Storage"]
     end
 
     subgraph "External Services"
-        L["External AI Service"]
+        AIScriptGeneration["AI Script Generation Service"]
+        VideoProcessingService["Video Processing / Analysis"]
     end
 
-    %% High-level Request Flow
-    A -- "Initial Request / Interaction" --> C
-    C -- "Serves UI / Routes Request" --> B
-    C -- "Authenticates Request" --> D
+    %% User Interaction & Navigation
+    User --> FrontendUI
+    User --> LoginPage
 
     %% Authentication Flow
-    D -- "Checks Session" --> I
-    I -- "Session Status" --> D
-    D -- "Authorizes / Redirects" --> C
+    LoginPage -- "Credentials" --> AuthActions
+    AuthActions -- "Sign In/Up Request" --> SupabaseAuth
+    SupabaseAuth -- "Session/Token" --> AuthActions
+    AuthActions -- "Set Session" --> SupabaseBrowserClient
+    AuthActions -- "Redirect" --> LoginPage
+    FrontendUI -- "Authenticated Request" --> AuthMiddleware
+    AuthMiddleware -- "Validates Session" --> GenerateScriptAPI
+    AuthMiddleware -- "Validates Session" --> UploadURLAPI
 
-    B -- "Submits Login Form" --> E
-    E -- "Authenticates User" --> I
-    I -- "Manages User Profile" --> J
-    J -- "User Data" --> I
-    I -- "Auth Token / Session" --> E
-    E -- "Sets Session / Redirects" --> B
+    %% Generate Script Flow
+    FrontendUI -- "Request Script Generation" --> GenerateScriptAPI
+    GenerateScriptAPI -- "Fetch Video Data" --> SupabaseServerClient
+    SupabaseServerClient -- "Query/Update" --> SupabaseDatabase
+    GenerateScriptAPI -- "Call AI Service" --> AIScriptGeneration
+    AIScriptGeneration -- "Generated Script" --> GenerateScriptAPI
+    GenerateScriptAPI -- "Save Script" --> SupabaseServerClient
+    SupabaseServerClient -- "Insert/Update" --> SupabaseDatabase
+    GenerateScriptAPI -- "Response with Script" --> FrontendUI
 
-    %% Content Upload & Processing Flow
-    B -- "Uploads Content URL" --> F
-    F -- "Stores Metadata" --> J
-    J -- "Content ID" --> F
-    F -- "Returns Confirmation" --> B
+    %% Upload URL Flow
+    FrontendUI -- "Submit Video URL" --> UploadURLAPI
+    UploadURLAPI -- "Save URL/Metadata" --> SupabaseServerClient
+    SupabaseServerClient -- "Insert/Update" --> SupabaseDatabase
+    UploadURLAPI -- "Initiate Processing (Optional)" --> VideoProcessingService
+    VideoProcessingService -- "Processing Status/Data" --> UploadURLAPI
+    UploadURLAPI -- "Response with Status" --> FrontendUI
 
-    %% Script Generation Flow
-    B -- "Requests Script Generation" --> G
-    G -- "Sends Prompt / Data" --> L
-    L -- "Returns Generated Script" --> G
-    G -- "Stores Script" --> J
-    J -- "Script ID" --> G
-    G -- "Returns Script" --> B
-
-    %% General Data / Storage Interaction
-    H -- "Performs Data Operations" --> J
-    J -- "Data Query Result" --> H
-    H -- "Manages Object Storage" --> K
-    K -- "File Reference / Content" --> H
-    H -- "Renders Data" --> B
+    %% General Data Access
+    FrontendUI -- "Display Data" --> SupabaseBrowserClient
+    SupabaseBrowserClient -- "Read Data" --> SupabaseDatabase
+    SupabaseBrowserClient -- "Upload/Download" --> SupabaseStorage
+    SupabaseServerClient -- "Read/Write" --> SupabaseDatabase
+    SupabaseServerClient -- "Upload/Download" --> SupabaseStorage
 ```
 
 *Last updated automatically by Gemini.*
