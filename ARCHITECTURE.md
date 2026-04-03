@@ -3,69 +3,70 @@
 ```mermaid
 graph LR
     subgraph "Client / Browser"
-        User["User"]
-        FrontendUI["Frontend UI"]
-        LoginPage["Login Page"]
+        A["User"]
+        B["Frontend UI (Next.js Pages/Components)"]
+        C["Login Form"]
     end
 
     subgraph "Next.js Application"
-        AuthMiddleware["Auth Middleware"]
-        AuthActions["Auth Actions"]
-        GenerateScriptAPI["Generate Script API"]
-        UploadURLAPI["Upload URL API"]
-        SupabaseServerClient["Supabase Server Client"]
-        SupabaseBrowserClient["Supabase Browser Client"]
+        D["Auth Middleware (Next.js Server)"]
+        E["Server Components / Actions"]
+        F["Generate Script API Route"]
+        G["Upload URL API Route"]
     end
 
     subgraph "Supabase Cloud"
-        SupabaseAuth["Supabase Auth"]
-        SupabaseDatabase["Supabase Database"]
-        SupabaseStorage["Supabase Storage"]
+        H["Supabase Authentication"]
+        I["Supabase Database (Postgres)"]
+        J["Supabase Storage (Object Storage)"]
     end
 
     subgraph "External Services"
-        AIScriptGeneration["AI Script Generation Service"]
-        VideoProcessingService["Video Processing / Analysis"]
+        K["AI Script Generation Service"]
+        L["Video Processing Service"]
     end
 
-    %% User Interaction & Navigation
-    User --> FrontendUI
-    User --> LoginPage
+    %% Flow 1: User Login
+    A -- "Navigates to Login" --> C
+    C -- "Submits Credentials" --> E
+    E -- "Requests Authentication" --> H
+    H -- "Authenticates User & Returns Session" --> E
+    E -- "Sets Session Cookie / Auth Token" --> D
+    E -- "Redirects / Updates UI" --> B
 
-    %% Authentication Flow
-    LoginPage -- "Credentials" --> AuthActions
-    AuthActions -- "Sign In/Up Request" --> SupabaseAuth
-    SupabaseAuth -- "Session/Token" --> AuthActions
-    AuthActions -- "Set Session" --> SupabaseBrowserClient
-    AuthActions -- "Redirect" --> LoginPage
-    FrontendUI -- "Authenticated Request" --> AuthMiddleware
-    AuthMiddleware -- "Validates Session" --> GenerateScriptAPI
-    AuthMiddleware -- "Validates Session" --> UploadURLAPI
+    %% Flow 2: Accessing Protected Content
+    A -- "Accesses Protected Page" --> B
+    B -- "Server Component Request" --> D
+    D -- "Validates Session" --> H
+    H -- "Returns User Context / Validation" --> D
+    D -- "Allows Access to Server Components" --> E
+    E -- "Renders Protected Content" --> B
 
-    %% Generate Script Flow
-    FrontendUI -- "Request Script Generation" --> GenerateScriptAPI
-    GenerateScriptAPI -- "Fetch Video Data" --> SupabaseServerClient
-    SupabaseServerClient -- "Query/Update" --> SupabaseDatabase
-    GenerateScriptAPI -- "Call AI Service" --> AIScriptGeneration
-    AIScriptGeneration -- "Generated Script" --> GenerateScriptAPI
-    GenerateScriptAPI -- "Save Script" --> SupabaseServerClient
-    SupabaseServerClient -- "Insert/Update" --> SupabaseDatabase
-    GenerateScriptAPI -- "Response with Script" --> FrontendUI
+    %% Flow 3: Generating a Script
+    A -- "Submits Script Request" --> B
+    B -- "Calls Generate Script API" --> F
+    F -- "Authenticates Request" --> D
+    D -- "Validates User Session" --> F
+    F -- "Stores Request/Context Metadata" --> I
+    F -- "Sends Request for Script Generation" --> K
+    K -- "Returns Generated Script" --> F
+    F -- "Saves Generated Script" --> I
+    I -- "Confirms Save" --> F
+    F -- "Returns Script to Client" --> B
 
-    %% Upload URL Flow
-    FrontendUI -- "Submit Video URL" --> UploadURLAPI
-    UploadURLAPI -- "Save URL/Metadata" --> SupabaseServerClient
-    SupabaseServerClient -- "Insert/Update" --> SupabaseDatabase
-    UploadURLAPI -- "Initiate Processing (Optional)" --> VideoProcessingService
-    VideoProcessingService -- "Processing Status/Data" --> UploadURLAPI
-    UploadURLAPI -- "Response with Status" --> FrontendUI
-
-    %% General Data Access
-    FrontendUI -- "Display Data" --> SupabaseBrowserClient
-    SupabaseBrowserClient -- "Read Data" --> SupabaseDatabase
-    SupabaseBrowserClient -- "Upload/Download" --> SupabaseStorage
-    SupabaseServerClient -- "Read/Write" --> SupabaseDatabase
-    SupabaseServerClient -- "Upload/Download" --> SupabaseStorage
+    %% Flow 4: Uploading a Video URL
+    A -- "Enters Video URL" --> B
+    B -- "Calls Upload URL API" --> G
+    G -- "Authenticates Request" --> D
+    D -- "Validates User Session" --> G
+    G -- "Stores Video Metadata & Status (e.g., 'Pending')" --> I
+    G -- "Triggers Video Processing" --> L
+    L -- "Downloads & Processes Video" --> L
+    L -- "Uploads Processed Video Assets" --> J
+    J -- "Stores Video Files" --> L
+    L -- "Updates Video Metadata & Status (e.g., 'Completed')" --> I
+    I -- "Confirms Update" --> G
+    G -- "Returns Processing Confirmation / Status" --> B
 ```
 
 *Last updated automatically by Gemini.*
