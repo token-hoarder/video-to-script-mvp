@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { createClient } from "@/utils/supabase/client";
 import { UploadZone } from "@/components/upload-zone";
 import { ScriptSidebar, ScriptsPayload } from "@/components/script-sidebar";
 import { StoryboardDetails } from "@/components/storyboard-details";
@@ -11,7 +10,9 @@ import { Label } from "@/components/ui/label";
 import { LogOut, Film, Loader2 } from "lucide-react";
 import { needsOptimization, optimizeVideoForAI } from "@/utils/video-compressor";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useGuestAuth } from "@/hooks/useGuestAuth";
+import { CreditBadge } from "@/components/usage-guard";
+import { createClient } from "@/utils/supabase/client";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -36,7 +37,7 @@ export default function Home() {
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
 
   const supabase = createClient();
-  const router = useRouter();
+  const { user, credits, isGuest, isLoading: authLoading, upgradeToGoogle, refreshCredits } = useGuestAuth();
 
   // Load saved script from storage
   useEffect(() => {
@@ -163,8 +164,9 @@ export default function Home() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
+    // After sign-out, useGuestAuth will auto sign in anonymously again on next render.
+    // For a full session clear (e.g. registered user logging out), reload the page.
+    window.location.reload();
   };
 
   const handleGenerateScript = async (slotId: string) => {
@@ -175,11 +177,9 @@ export default function Home() {
       
       let targetVideoUrl = uploadedVideoUrl;
 
-      // 1. Authenticate / get user
-      const { data: { user } } = await supabase.auth.getUser();
+      // 1. Authenticate — user is always set (anonymous or registered via useGuestAuth)
       if (!user) {
-        toast.error('You must be logged in to upload videos.');
-        router.push('/login');
+        toast.error('Session not ready. Please refresh.');
         return;
       }
 
@@ -243,6 +243,18 @@ export default function Home() {
       const result = await response.json();
 
       if (!response.ok) {
+        if (response.status === 402) {
+          // Credits exhausted — surface upgrade prompt
+          toast.error(result.error, {
+            description: 'Sign in with Google to unlock 50 credits.',
+            action: {
+              label: 'Unlock 50 Credits →',
+              onClick: upgradeToGoogle,
+            },
+            duration: 8000,
+          });
+          return;
+        }
         throw new Error(result.error || 'Failed to generate scripts');
       }
 
@@ -255,6 +267,8 @@ export default function Home() {
         }
 
         toast.success('Script generated successfully!');
+        // Refresh credit display after successful generation
+        refreshCredits();
       }
 
     } catch (err: any) {
@@ -359,10 +373,26 @@ export default function Home() {
           </div>
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">Studio Mode</span>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleLogout} className="text-zinc-400 hover:text-white rounded-full transition-colors">
-          <LogOut className="w-4 h-4 mr-2" />
-          Log out
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* Credit badge — shown only for anonymous (Preview Mode) users */}
+          <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={upgradeToGoogle} />
+          {!isGuest ? (
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-zinc-400 hover:text-white rounded-full transition-colors">
+              <LogOut className="w-4 h-4 mr-2" />
+              Log out
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={upgradeToGoogle}
+              id="header-upgrade-btn"
+              className="text-amber-400 hover:text-amber-300 hover:bg-amber-950/40 rounded-full transition-colors text-xs font-medium"
+            >
+              Save my work →
+            </Button>
+          )}
+        </div>
       </header>
 
       {/* Main Content */}
