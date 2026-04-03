@@ -24,6 +24,7 @@ export default function Home() {
   const [currentTime, setCurrentTime] = useState(0);
   const [activeScriptId, setActiveScriptId] = useState<string | null>(null);
   const [activeScriptBlocks, setActiveScriptBlocks] = useState<any[]>([]);
+  const [pendingEdits, setPendingEdits] = useState<Record<number, string>>({});
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [scripts, setScripts] = useState<ScriptsPayload | null>(null);
@@ -77,6 +78,7 @@ export default function Home() {
     setUserScript(text);
     if (activeScriptId === 'custom') {
        setActiveScriptBlocks(chunkScriptLocal(text, videoDuration));
+       setPendingEdits({});
     }
   };
 
@@ -87,12 +89,63 @@ export default function Home() {
   const handleSelectScript = (id: string, blocks: any[]) => {
     setActiveScriptId(id);
     setActiveScriptBlocks(blocks);
+    setPendingEdits({});
     
     // Auto-play and reset timeline when pressing Preview
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
       videoRef.current.play();
     }
+  };
+
+  const handleSaveSegment = (idx: number) => {
+     if (pendingEdits[idx] === undefined) return;
+     const newBlocks = [...activeScriptBlocks];
+     newBlocks[idx] = { ...newBlocks[idx], text: pendingEdits[idx] };
+     setActiveScriptBlocks(newBlocks);
+     
+     if (activeScriptId === 'custom') {
+        const fullText = newBlocks.filter(b => b.text !== '[Visual Break]').map(b => b.text).join(' ');
+        setUserScript(fullText);
+     }
+
+     const newPending = { ...pendingEdits };
+     delete newPending[idx];
+     setPendingEdits(newPending);
+  };
+
+  const handleUndoSegment = (idx: number) => {
+     const newPending = { ...pendingEdits };
+     delete newPending[idx];
+     setPendingEdits(newPending);
+  };
+
+  const handleSaveAll = () => {
+     const newBlocks = [...activeScriptBlocks];
+     Object.keys(pendingEdits).forEach(key => {
+        const idx = parseInt(key);
+        newBlocks[idx] = { ...newBlocks[idx], text: pendingEdits[idx] };
+     });
+     setActiveScriptBlocks(newBlocks);
+
+     if (activeScriptId === 'custom') {
+        const fullText = newBlocks.filter(b => b.text !== '[Visual Break]').map(b => b.text).join(' ');
+        setUserScript(fullText);
+     }
+
+     setPendingEdits({});
+     toast.success('All changes committed successfully');
+  };
+
+  const handlePendingEditChange = (idx: number, val: string) => {
+     setPendingEdits(prev => ({ ...prev, [idx]: val }));
+  };
+
+  const handleScrubVideo = (time: number) => {
+     if (videoRef.current) {
+        videoRef.current.currentTime = time;
+        videoRef.current.pause();
+     }
   };
 
   const handleFileSelect = (selectedFile: File) => {
@@ -250,7 +303,7 @@ export default function Home() {
                    />
                    <CaptionOverlay 
                      currentTime={currentTime} 
-                     blocks={activeScriptBlocks} 
+                     blocks={activeScriptBlocks.map((b, idx) => ({ ...b, text: pendingEdits[idx] !== undefined ? pendingEdits[idx] : b.text }))} 
                      position={captionPosition}
                      onPositionChange={setCaptionPosition}
                      videoRef={videoRef}
@@ -294,7 +347,16 @@ export default function Home() {
                      )}
                    </Button>
                    
-                   <StoryboardDetails activeScriptId={activeScriptId} blocks={activeScriptBlocks} />
+                   <StoryboardDetails 
+                     activeScriptId={activeScriptId} 
+                     blocks={activeScriptBlocks} 
+                     pendingEdits={pendingEdits}
+                     onPendingEditChange={handlePendingEditChange}
+                     onSaveSegment={handleSaveSegment}
+                     onUndoSegment={handleUndoSegment}
+                     onSaveAll={handleSaveAll}
+                     onScrubVideo={handleScrubVideo}
+                   />
                 </div>
              </div>
 
