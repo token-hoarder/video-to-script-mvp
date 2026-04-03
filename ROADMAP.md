@@ -2,9 +2,9 @@
 
 ## 🚀 Current Sprint (In Progress)
 
-- [/] **[P0] Tiered Auth:** Implement Supabase Anonymous + Google OAuth.
+- [x] **[P0] Tiered Auth:** Implement Supabase Anonymous + Google OAuth. [DONE]
   - [x] Implement Anonymous Sign-ins for Guest Mode. [DONE — `hooks/useGuestAuth.ts`, branch `feat/auth-sprint-v1`]
-  - [ ] Implement Google OAuth for permanent accounts. [`linkIdentity()` plumbed — needs Supabase Dashboard provider config]
+  - [x] Implement Google OAuth for permanent accounts. [DONE — `linkIdentity()` wired; Google provider enabled in Supabase Dashboard]
   - [x] Add a Credits System (3 tries for guests, 50 for registered). [DONE — `profiles` table + DB trigger + server-side guard in API route]
   - [x] Implement IP-based Throttling to prevent guests from gaming the system. [DONE — `hashIp()` + in-memory throttle store in `route.ts`]
 
