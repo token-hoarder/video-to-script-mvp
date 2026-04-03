@@ -6,6 +6,12 @@ Enhanced system architecture documentation with a detailed, flow-based diagram f
 
 ## [2026-04-03] - Auto-Generated Update
 
+Enhanced system architecture documentation with a detailed, flow-based diagram for improved clarity on user interactions and core processes.
+
+---
+
+## [2026-04-03] - Auto-Generated Update
+
 ### [2026-04-03] - Auto-Generated Update
 
 Added inline editing capabilities for script segments in the storyboard. Users can now directly modify and commit changes to individual segments or all pending edits simultaneously. Pending changes are visually indicated and reflected in the caption overlay and copied script text, with automatic video scrubbing to the focused segment for preview.
