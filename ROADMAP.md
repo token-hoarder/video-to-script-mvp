@@ -2,11 +2,11 @@
 
 ## 🚀 Current Sprint (In Progress)
 
-- [x] **[P0] Tiered Auth:** Implement Supabase Anonymous + Google OAuth. [DONE]
-  - [x] Implement Anonymous Sign-ins for Guest Mode. [DONE — `hooks/useGuestAuth.ts`, branch `feat/auth-sprint-v1`]
-  - [x] Implement Google OAuth for permanent accounts. [DONE — `linkIdentity()` wired; Google provider enabled in Supabase Dashboard]
-  - [x] Add a Credits System (3 tries for guests, 50 for registered). [DONE — `profiles` table + DB trigger + server-side guard in API route]
-  - [x] Implement IP-based Throttling to prevent guests from gaming the system. [DONE — `hashIp()` + in-memory throttle store in `route.ts`]
+- [x] **[P0] Tiered Auth:** Anonymous Login + Credits. [DONE]
+  - [x] Implement Anonymous Sign-ins for Guest Mode. [DONE — `hooks/useGuestAuth.ts`]
+  - [x] Add a Credits System (3 tries for guests, 50 for registered). [DONE — `profiles` table + DB trigger + server-side guard]
+  - [x] Implement IP-based Throttling. [DONE — `hashIp()` + in-memory store in API route]
+  - [ ] Google OAuth upgrade path (`linkIdentity`). [DEFERRED — code is ready, needs Google Cloud Console OAuth app setup]
 
 - [ ] **[P0] The Script Vault:** Persistence via Video Hashing (No storage costs).
   - [ ] Implement Video Fingerprinting (Hashing) to identify files without storing them.
