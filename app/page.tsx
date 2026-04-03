@@ -8,7 +8,8 @@ import { StoryboardDetails } from "@/components/storyboard-details";
 import { CaptionOverlay } from "@/components/caption-overlay";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { LogOut, Film, Sparkles, Loader2 } from "lucide-react";
+import { LogOut, Film, Loader2 } from "lucide-react";
+import { needsOptimization, optimizeVideoForAI } from "@/utils/video-compressor";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -29,6 +30,7 @@ export default function Home() {
 
   const [analyzingSlot, setAnalyzingSlot] = useState<string | null>(null);
   const [scripts, setScripts] = useState<ScriptsPayload | null>(null);
+  const [compressionProgress, setCompressionProgress] = useState<number | null>(null);
   
   // Track uploaded URL to avoid re-uploads on re-generation
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
@@ -182,12 +184,26 @@ export default function Home() {
       }
 
       if (file && !targetVideoUrl) {
-        // 2. Upload to Supabase Storage
-        const fileExt = file.name.split('.').pop();
+        // 2a. Optimize large files client-side before upload
+        let fileToUpload = file;
+        if (needsOptimization(file)) {
+          toast.info('Optimizing for AI Analysis...');
+          setCompressionProgress(0);
+          try {
+            fileToUpload = await optimizeVideoForAI(file, (progress) => {
+              setCompressionProgress(progress);
+            });
+          } finally {
+            setCompressionProgress(null);
+          }
+        }
+
+        // 2b. Upload (compressed or original) to Supabase Storage
+        const fileExt = 'mp4';
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
-        toast.info('Generating secure upload link...');
+        toast.info('Uploading to secure storage...');
 
         const uploadUrlRes = await fetch('/api/upload-url', {
           method: 'POST',
@@ -200,11 +216,9 @@ export default function Home() {
           throw new Error(uploadUrlData.error || 'Failed to generate secure upload link');
         }
 
-        toast.info('Uploading video to storage...');
-
         const { error: uploadError } = await supabase.storage
           .from('videos')
-          .uploadToSignedUrl(filePath, uploadUrlData.token, file);
+          .uploadToSignedUrl(filePath, uploadUrlData.token, fileToUpload);
 
         if (uploadError) {
           throw new Error(`Upload failed: ${uploadError.message}`);
@@ -381,6 +395,7 @@ export default function Home() {
                      playsInline
                      preload="metadata"
                      disablePictureInPicture
+                     crossOrigin="anonymous"
                      className="w-full h-full object-contain"
                      onTimeUpdate={handleTimeUpdate}
                      onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration)}
@@ -392,6 +407,28 @@ export default function Home() {
                      onPositionChange={setCaptionPosition}
                      videoRef={videoRef}
                    />
+                   {/* Compression progress overlay */}
+                   {compressionProgress !== null && (
+                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-20">
+                       <div className="text-center">
+                         <p className="text-white font-semibold text-lg mb-1">Optimizing for AI Analysis</p>
+                         <p className="text-zinc-400 text-sm">Preparing your video for the best results...</p>
+                       </div>
+                       <div className="w-64">
+                         <div className="flex justify-between text-xs text-zinc-400 mb-2">
+                           <span>Processing</span>
+                           <span>{Math.round(compressionProgress * 100)}%</span>
+                         </div>
+                         <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                           <div 
+                             className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full transition-all duration-300"
+                             style={{ width: `${Math.round(compressionProgress * 100)}%` }}
+                           />
+                         </div>
+                       </div>
+                       <Loader2 className="w-5 h-5 text-primary animate-spin mt-1" />
+                     </div>
+                   )}
                 </div>
 
                 {/* Real-time Custom Script Edit Box */}
