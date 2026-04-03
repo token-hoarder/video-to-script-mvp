@@ -3,50 +3,54 @@
 ```mermaid
 graph LR
     subgraph "Client / Browser"
-        A["User"]
-        B["Frontend UI"]
+        USR["User Interaction"]
+        FE_UI["Frontend UI (Next.js)"]
     end
 
     subgraph "Next.js Application"
-        C["Auth Middleware"]
-        D["Login/Auth Server Actions"]
-        E["API Route: Upload Video URL"]
-        F["API Route: Generate Script"]
-        G["Supabase Client/Server SDK"]
+        NAM["Next.js Auth Middleware"]
+        LSAP["Login / Auth Server Actions"]
+        APIGS["Next.js API: Generate Script"]
+        APIUV["Next.js API: Upload Video URL"]
     end
 
     subgraph "Supabase Cloud"
-        H["Supabase Authentication"]
-        I["Supabase Database"]
-        J["Supabase Storage"]
+        SB_A["Supabase Auth"]
+        SB_DB["Supabase Database"]
+        SB_STO["Supabase Storage"]
     end
 
     subgraph "External Services"
-        K["AI Script Generation Service"]
-        L["Video Processing Service"]
+        AI_S["External AI Service"]
     end
 
-    A --> B: "Accesses Application"
-    B --> C: "Initial Request / Navigation"
-    C --> D: "Redirect to Login (if unauthenticated)"
-    D --> G: "Submits Login Credentials"
-    G --> H: "Authenticates User"
-    H --> C: "Auth Status / Session"
-    C --> B: "Renders UI (authenticated / unauthenticated)"
+    %% User Request Lifecycle
+    USR --> FE_UI
 
-    B --> E: "Submits Video URL for Upload"
-    E --> G: "Upload Request"
-    G --> J: "Stores Video URL / Metadata"
-    J --> L: "Triggers Video Processing (Webhook / Storage Event)"
-    L --> I: "Updates Video Processing Status"
-    E --> B: "Confirmation / Status Update"
+    %% 1. User Login/Authentication Flow
+    FE_UI -- "1. Submit Credentials" --> LSAP
+    LSAP -- "2. Authenticate User" --> SB_A
+    SB_A -- "3. Session Token" --> LSAP
+    LSAP -- "4. Set Auth Cookie" --> NAM
+    NAM -- "5. Validate Session" --> SB_A
+    SB_A -- "6. Validated" --> NAM
+    NAM -- "7. Render UI" --> FE_UI
 
-    B --> F: "Requests Script Generation"
-    F --> I: "Fetches Video Details / Context"
-    F --> K: "Sends Prompt for Script"
-    K --> F: "Returns Generated Script"
-    F --> I: "Stores Generated Script"
-    F --> B: "Displays Generated Script"
+    %% 2. User Uploads Video URL Flow
+    FE_UI -- "8. Upload Video URL" --> APIUV
+    APIUV -- "9. Store URL/Metadata" --> SB_DB
+    SB_DB -- "10. Confirmation" --> APIUV
+    APIUV -- "11. Success Response" --> FE_UI
+
+    %% 3. User Generates Script Flow
+    FE_UI -- "12. Request Script" --> APIGS
+    APIGS -- "13. Fetch Video Details" --> SB_DB
+    SB_DB -- "14. Video Data" --> APIGS
+    APIGS -- "15. Send for Analysis" --> AI_S
+    AI_S -- "16. Generated Script" --> APIGS
+    APIGS -- "17. Store Script" --> SB_DB
+    SB_DB -- "18. Stored Confirmation" --> APIGS
+    APIGS -- "19. Script Response" --> FE_UI
 ```
 
 *Last updated automatically by Gemini.*
