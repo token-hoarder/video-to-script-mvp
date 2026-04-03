@@ -235,7 +235,18 @@ export default function Home() {
       }
 
       if (result.data) {
+        console.log('Scripts Received:', result.data);
         setScripts(result.data);
+        
+        // Automatically select the first available AI script so the UI populates instantly
+        if (result.data.aesthetic && result.data.aesthetic.length > 0) {
+           handleSelectScript('aesthetic', result.data.aesthetic);
+        } else if (result.data.funny && result.data.funny.length > 0) {
+           handleSelectScript('funny', result.data.funny);
+        } else if (result.data.educational && result.data.educational.length > 0) {
+           handleSelectScript('educational', result.data.educational);
+        }
+
         toast.success('Scripts generated successfully!');
       }
 
