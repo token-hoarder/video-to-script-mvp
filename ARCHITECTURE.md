@@ -3,63 +3,50 @@
 ```mermaid
 graph LR
     subgraph "Client / Browser"
-        User["User Interaction"]
-        LoginUI["Login Page UI"]
-        MainAppUI["Main Application UI"]
+        A["User"]
+        B["Frontend UI"]
     end
 
     subgraph "Next.js Application"
-        NextAuth["Next.js Auth Middleware"]
-        LoginActions["Login Server Actions"]
-        FrontendPages["Next.js Pages & Components"]
-        UploadURLAPI["Upload URL API Route"]
-        GenerateScriptAPI["Generate Script API Route"]
-        SupabaseClientUtils["Supabase Client/Server Utilities"]
+        C["Auth Middleware"]
+        D["Login/Auth Server Actions"]
+        E["API Route: Upload Video URL"]
+        F["API Route: Generate Script"]
+        G["Supabase Client/Server SDK"]
     end
 
     subgraph "Supabase Cloud"
-        AuthService["Supabase Auth Service"]
-        PostgresDB["Supabase PostgreSQL Database"]
-        StorageBucket["Supabase Storage Bucket"]
+        H["Supabase Authentication"]
+        I["Supabase Database"]
+        J["Supabase Storage"]
     end
 
     subgraph "External Services"
-        AIService["External AI Service"]
-        VideoProcessor["External Video Processing Service"]
+        K["AI Script Generation Service"]
+        L["Video Processing Service"]
     end
 
-    %% Flow: Authentication
-    User --> LoginUI
-    LoginUI --> LoginActions
-    LoginActions --> NextAuth
-    NextAuth --> AuthService
-    AuthService -- "Auth Token/Session" --> NextAuth
-    NextAuth -- "Set Session Cookie" --> LoginUI
-    LoginUI -- "Redirect to App" --> MainAppUI
+    A --> B: "Accesses Application"
+    B --> C: "Initial Request / Navigation"
+    C --> D: "Redirect to Login (if unauthenticated)"
+    D --> G: "Submits Login Credentials"
+    G --> H: "Authenticates User"
+    H --> C: "Auth Status / Session"
+    C --> B: "Renders UI (authenticated / unauthenticated)"
 
-    %% Flow: Initial Data Load / Display
-    MainAppUI --> FrontendPages
-    FrontendPages --> SupabaseClientUtils
-    SupabaseClientUtils --> PostgresDB -- "Fetch User/Project Data" --> FrontendPages
-    FrontendPages --> MainAppUI
+    B --> E: "Submits Video URL for Upload"
+    E --> G: "Upload Request"
+    G --> J: "Stores Video URL / Metadata"
+    J --> L: "Triggers Video Processing (Webhook / Storage Event)"
+    L --> I: "Updates Video Processing Status"
+    E --> B: "Confirmation / Status Update"
 
-    %% Flow: Upload URL / Video Processing
-    MainAppUI -- "Submit Video URL" --> UploadURLAPI
-    UploadURLAPI --> SupabaseClientUtils
-    SupabaseClientUtils --> PostgresDB -- "Store Initial Video Metadata" --> UploadURLAPI
-    UploadURLAPI --> VideoProcessor -- "Send URL for Processing" --> UploadURLAPI
-    VideoProcessor -- "Processing Status/Results (Webhook/Callback)" --> UploadURLAPI
-    UploadURLAPI --> SupabaseClientUtils
-    SupabaseClientUtils --> PostgresDB -- "Update Video Metadata" --> UploadURLAPI
-    UploadURLAPI -- "Confirmation/Update" --> MainAppUI
-
-    %% Flow: Generate Script
-    MainAppUI -- "Request Script Generation" --> GenerateScriptAPI
-    GenerateScriptAPI --> AIService -- "Generate Script Prompt" --> GenerateScriptAPI
-    AIService -- "Generated Script Response" --> GenerateScriptAPI
-    GenerateScriptAPI --> SupabaseClientUtils
-    SupabaseClientUtils --> PostgresDB -- "Save Generated Script" --> GenerateScriptAPI
-    GenerateScriptAPI -- "Display Script" --> MainAppUI
+    B --> F: "Requests Script Generation"
+    F --> I: "Fetches Video Details / Context"
+    F --> K: "Sends Prompt for Script"
+    K --> F: "Returns Generated Script"
+    F --> I: "Stores Generated Script"
+    F --> B: "Displays Generated Script"
 ```
 
 *Last updated automatically by Gemini.*
