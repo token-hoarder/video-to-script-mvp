@@ -1,16 +1,30 @@
 # 🗺️ Project Roadmap: AI Video Script Editor
 
 ## 🚀 Current Sprint (In Progress)
-- [ ] **[P0] Media Optimizer:** Implement `ffmpeg.wasm` for client-side downscaling (4K -> 720p).
+
 - [ ] **[P0] Tiered Auth:** Implement Supabase Anonymous + Google OAuth.
+  - [ ] Implement Anonymous Sign-ins for Guest Mode.
+  - [ ] Implement Google OAuth for permanent accounts.
+  - [ ] Add a Credits System (e.g., 3 tries for guests, 50 for registered users).
+  - [ ] Implement IP-based Throttling to prevent guests from gaming the system.
+
 - [ ] **[P0] The Script Vault:** Persistence via Video Hashing (No storage costs).
+  - [ ] Implement Video Fingerprinting (Hashing) to identify files without storing them.
+  - [ ] Create a Supabase `projects` table to store saved scripts mapped to video hashes.
+  - [ ] Add a 'Re-upload to Preview' workflow for returning users.
+
+---
 
 ## 🛠️ Feature Backlog
 
 ### Priority 0: Stability & Infrastructure
 - [x] **Pro Studio Sidebar UI:** Vertical module redesign. [DONE]
 - [x] **Live Storyboard Editor:** Edit/Save/Undo script segments. [DONE]
-- [ ] **Usage Analytics Log:** Track "Original vs AI" and editing habits.
+- [x] **Media Optimizer:** `ffmpeg.wasm` client-side downscaling (4K → 720p @ 30fps, >20MB gate). [DONE]
+- [ ] **Usage Analytics Log:** Track user behavior and editing habits.
+  - [ ] Track exact script logs (AI-generated vs. user-edited versions).
+  - [ ] Track Edit Distance — how much users modify the AI output.
+  - [ ] Log metadata: video aspect ratios, preferred refinement modes, session length.
 
 ### Priority 1: Value Add & Local "Gold Mines"
 - [ ] **Bi-lingual Cinematic:** English ↔ Arabic poetic translations (UAE Special).
@@ -26,4 +40,4 @@
 - [ ] **B-Roll Director:** AI suggests missing shots to fill narrative gaps.
 
 ---
-*Last Updated: 2026-04-04 01:00 AM (GST)*
+*Last Updated: 2026-04-04 01:06 AM (GST)*
