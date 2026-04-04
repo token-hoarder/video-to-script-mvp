@@ -68,21 +68,29 @@ jobs:
           run();
           "
           
-          # 3. Post to GitHub and Update Tech Debt Ledger
+          # 3. Post to GitHub
           if [ -s review_comment.md ]; then
-            # Post the GitHub Comment (Existing)
+            # Post the review as a GitHub comment
             if [ "$EVENT_NAME" == "pull_request" ]; then
               gh pr comment $PR_NUMBER --body-file review_comment.md
             else
               gh api repos/$REPO/commits/$COMMIT_SHA/comments -f body="$(cat review_comment.md)"
             fi
 
-            # NEW: Update the Tech Debt Ledger in the codebase
-            echo -e "\n## Audit: $(date +'%Y-%m-%d %H:%M')\n$(cat review_comment.md)\n" >> docs/TECH_DEBT.md
-            
+            # Update the Tech Debt Ledger via a PR (never push directly to main)
+            BRANCH="chore/tech-debt-audit-$(date +'%Y%m%d-%H%M')"
             git config --global user.name "Maintenance-Bot"
             git config --global user.email "actions@github.com"
+            git checkout -b "$BRANCH"
+            printf '\n## Audit: %s\n' "$(date +'%Y-%m-%d %H:%M')" >> docs/TECH_DEBT.md
+            cat review_comment.md >> docs/TECH_DEBT.md
+            printf '\n---\n' >> docs/TECH_DEBT.md
             git add docs/TECH_DEBT.md
-            git commit -m "chore: update tech debt ledger from AI audit [skip ci]"
-            git push origin main
+            git commit -m "chore: append AI audit findings to tech debt ledger [skip ci]"
+            git push origin "$BRANCH"
+            gh pr create \
+              --title "chore: AI audit findings $(date +'%Y-%m-%d')" \
+              --body "Automated tech-debt ledger update from the AI Code Reviewer workflow. Review and merge after triaging the findings." \
+              --base main \
+              --head "$BRANCH"
           fi
