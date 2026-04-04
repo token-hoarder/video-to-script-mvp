@@ -3,54 +3,56 @@
 ```mermaid
 graph LR
     subgraph "Client / Browser"
-        USR["User Interaction"]
-        FE_UI["Frontend UI (Next.js)"]
+        USR["User"]
+        FEUI["Frontend UI (Next.js Pages/Components)"]
     end
 
     subgraph "Next.js Application"
-        NAM["Next.js Auth Middleware"]
-        LSAP["Login / Auth Server Actions"]
-        APIGS["Next.js API: Generate Script"]
-        APIUV["Next.js API: Upload Video URL"]
+        direction LR
+        NM["Next.js Auth Middleware"]
+        LSA["Login Server Actions"]
+        AGS["API Route: Generate Script"]
+        AUV["API Route: Upload Video/URL"]
+        SSDK["Supabase SDK (Server/Client)"]
     end
 
     subgraph "Supabase Cloud"
-        SB_A["Supabase Auth"]
-        SB_DB["Supabase Database"]
-        SB_STO["Supabase Storage"]
+        SAUTH["Supabase Authentication"]
+        SDB["Supabase Database"]
+        SSTOR["Supabase Storage"]
     end
 
     subgraph "External Services"
-        AI_S["External AI Service"]
+        AIS["AI Generation Service"]
+        VPS["Video Processing Service"]
     end
 
-    %% User Request Lifecycle
-    USR --> FE_UI
+    USR --> FEUI
+    FEUI --> LSA["Login Server Actions (app/login/actions.ts)"]
+    LSA --> SSDK["Supabase SDK (utils/supabase/server.ts)"]
+    SSDK --> SAUTH["Supabase Authentication"]
+    SAUTH --> SSDK
+    SSDK --> NM["Next.js Auth Middleware (utils/supabase/middleware.ts)"]
+    NM -- "Auth Check/Redirect" --> FEUI
 
-    %% 1. User Login/Authentication Flow
-    FE_UI -- "1. Submit Credentials" --> LSAP
-    LSAP -- "2. Authenticate User" --> SB_A
-    SB_A -- "3. Session Token" --> LSAP
-    LSAP -- "4. Set Auth Cookie" --> NAM
-    NAM -- "5. Validate Session" --> SB_A
-    SB_A -- "6. Validated" --> NAM
-    NAM -- "7. Render UI" --> FE_UI
+    FEUI -- "Request AI Script" --> AGS["API Route: Generate Script (app/api/generate-script/route.ts)"]
+    AGS --> AIS["AI Generation Service"]
+    AIS -- "Generated Script" --> AGS
+    AGS --> SDB["Supabase Database"]
+    SDB -- "Script Saved" --> AGS
+    AGS -- "Display Script" --> FEUI
 
-    %% 2. User Uploads Video URL Flow
-    FE_UI -- "8. Upload Video URL" --> APIUV
-    APIUV -- "9. Store URL/Metadata" --> SB_DB
-    SB_DB -- "10. Confirmation" --> APIUV
-    APIUV -- "11. Success Response" --> FE_UI
+    FEUI -- "Submit Video URL" --> AUV["API Route: Upload Video/URL (app/api/upload-url/route.ts)"]
+    AUV --> SSTOR["Supabase Storage"]
+    AUV --> SDB
+    AUV --> VPS["Video Processing Service (Async Trigger)"]
+    VPS -- "Processing Status Update" --> SDB
+    AUV -- "Upload Confirmation" --> FEUI
 
-    %% 3. User Generates Script Flow
-    FE_UI -- "12. Request Script" --> APIGS
-    APIGS -- "13. Fetch Video Details" --> SB_DB
-    SB_DB -- "14. Video Data" --> APIGS
-    APIGS -- "15. Send for Analysis" --> AI_S
-    AI_S -- "16. Generated Script" --> APIGS
-    APIGS -- "17. Store Script" --> SB_DB
-    SB_DB -- "18. Stored Confirmation" --> APIGS
-    APIGS -- "19. Script Response" --> FE_UI
+    FEUI -- "Fetch Data" --> SSDK
+    SSDK --> SDB
+    SDB -- "Data" --> SSDK
+    SSDK -- "Display Data" --> FEUI
 ```
 
 *Last updated automatically by Gemini.*

@@ -1,3 +1,10 @@
+## [2026-04-04] - Auto-Generated Update
+
+**Features:**
+*   **Client-Side Video Optimization:** Implemented client-side video optimization for large video uploads (over 20MB) using `ffmpeg.wasm`. Videos are now automatically downscaled to 720p at 30fps prior to upload, improving efficiency for AI analysis. A real-time progress indicator is displayed during compression.
+
+---
+
 ## [2026-04-03] - Auto-Generated Update
 
 Enhanced system architecture documentation with a more concise and readable flow-based diagram for improved clarity on user interactions and core processes.
