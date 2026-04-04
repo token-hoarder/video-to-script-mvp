@@ -68,12 +68,21 @@ jobs:
           run();
           "
           
-          # 3. Post the AI's review to the correct location
+          # 3. Post to GitHub and Update Tech Debt Ledger
           if [ -s review_comment.md ]; then
+            # Post the GitHub Comment (Existing)
             if [ "$EVENT_NAME" == "pull_request" ]; then
               gh pr comment $PR_NUMBER --body-file review_comment.md
             else
-              # Use GitHub API to leave a comment directly on the specific commit
               gh api repos/$REPO/commits/$COMMIT_SHA/comments -f body="$(cat review_comment.md)"
             fi
+
+            # NEW: Update the Tech Debt Ledger in the codebase
+            echo -e "\n## Audit: $(date +'%Y-%m-%d %H:%M')\n$(cat review_comment.md)\n" >> docs/TECH_DEBT.md
+            
+            git config --global user.name "Maintenance-Bot"
+            git config --global user.email "actions@github.com"
+            git add docs/TECH_DEBT.md
+            git commit -m "chore: update tech debt ledger from AI audit [skip ci]"
+            git push origin main
           fi
