@@ -57,6 +57,7 @@ export function useGuestAuth(): GuestAuthState {
 
     async function initAuth() {
       setIsLoading(true);
+      console.log('DEBUG_AUTH: initAuth() — checking for existing session');
 
       // 1. Check if a session already exists
       const {
@@ -64,14 +65,19 @@ export function useGuestAuth(): GuestAuthState {
       } = await supabase.auth.getSession();
 
       if (session?.user) {
+        console.log('DEBUG_AUTH: existing session found — uid:', session.user.id, '| is_anonymous:', session.user.is_anonymous);
         if (mounted) {
           setUser(session.user);
           await fetchCredits(session.user.id);
         }
       } else {
         // 2. No session — sign in anonymously (Tier 1)
+        console.log('DEBUG_AUTH: no session found — calling signInAnonymously()');
         const { data, error } = await supabase.auth.signInAnonymously();
-        if (!error && data.user && mounted) {
+        if (error) {
+          console.error('DEBUG_AUTH: signInAnonymously() FAILED —', error.message, '| code:', error.status);
+        } else if (data.user && mounted) {
+          console.log('DEBUG_AUTH: signInAnonymously() OK — new uid:', data.user.id);
           setUser(data.user);
           // Profile row created by DB trigger; poll briefly for it
           await new Promise((r) => setTimeout(r, 500));
@@ -80,6 +86,7 @@ export function useGuestAuth(): GuestAuthState {
       }
 
       if (mounted) setIsLoading(false);
+      console.log('DEBUG_AUTH: initAuth() complete — isLoading → false');
     }
 
     initAuth();
@@ -89,10 +96,12 @@ export function useGuestAuth(): GuestAuthState {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
+      console.log('DEBUG_AUTH: onAuthStateChange fired — event:', _event, '| uid:', session?.user?.id ?? 'none', '| is_anonymous:', session?.user?.is_anonymous ?? 'n/a');
       setUser(session?.user ?? null);
       if (session?.user) {
         await fetchCredits(session.user.id);
       } else {
+        console.log('DEBUG_AUTH: onAuthStateChange — no user in session, clearing credits');
         setCredits(null);
       }
     });
@@ -109,9 +118,12 @@ export function useGuestAuth(): GuestAuthState {
    * and orphans all scripts.
    */
   const upgradeToGoogle = useCallback(async () => {
+    console.log('DEBUG_AUTH: upgradeToGoogle() called — calling linkIdentity({ provider: google })');
     const { error } = await supabase.auth.linkIdentity({ provider: 'google' });
     if (error) {
-      console.error('[useGuestAuth] linkIdentity failed:', error.message);
+      console.error('DEBUG_AUTH: linkIdentity() FAILED —', error.message);
+    } else {
+      console.log('DEBUG_AUTH: linkIdentity() initiated — awaiting OAuth redirect');
     }
     // After redirect: onAuthStateChange fires, profile update happens server-side
   }, [supabase]);

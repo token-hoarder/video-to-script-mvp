@@ -35,12 +35,15 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  const pathname = request.nextUrl.pathname;
+  console.log(`DEBUG_AUTH: middleware — pathname: "${pathname}" | user: ${user ? user.id : 'none'} | is_anonymous: ${user?.is_anonymous ?? 'n/a'}`);
+
   if (
     !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
+    !pathname.startsWith('/login') &&
+    !pathname.startsWith('/auth')
   ) {
-    // no user, potentially respond by redirecting the user to the login page
+    console.log(`DEBUG_AUTH: middleware — no user on "${pathname}", redirecting → /login`);
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
@@ -49,12 +52,15 @@ export async function updateSession(request: NextRequest) {
   // If user is logged in, redirect away from the login page
   if (
     user &&
-    request.nextUrl.pathname.startsWith('/login') 
+    pathname.startsWith('/login')
   ) {
+    console.log(`DEBUG_AUTH: middleware — authenticated user (${user.id}) on /login, redirecting → /`);
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)
   }
+
+  console.log(`DEBUG_AUTH: middleware — allowing "${pathname}" to proceed`);
 
   return supabaseResponse
 }

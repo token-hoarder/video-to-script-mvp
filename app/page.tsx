@@ -163,7 +163,13 @@ export default function Home() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    console.log('DEBUG_AUTH: handleLogout() triggered — calling supabase.auth.signOut()');
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('DEBUG_AUTH: signOut() FAILED —', error.message);
+    } else {
+      console.log('DEBUG_AUTH: signOut() OK — reloading page to reset anonymous session');
+    }
     // After sign-out, useGuestAuth will auto sign in anonymously again on next render.
     // For a full session clear (e.g. registered user logging out), reload the page.
     window.location.reload();
