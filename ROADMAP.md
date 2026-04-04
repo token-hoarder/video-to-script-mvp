@@ -25,8 +25,7 @@
   - [ ] Track exact script logs (AI-generated vs. user-edited versions).
   - [ ] Track Edit Distance — how much users modify the AI output.
   - [ ] Log metadata: video aspect ratios, preferred refinement modes, session length.
-- [ ] **Continuous Maintenance:** Weekly AI Deep Audits + Tech Debt Sweeps.
-- [x] **Media Optimizer:** (Fixed versioning & Error handling pending sweep).
+- [x] **Continuous Maintenance:** Weekly AI Deep Audits + Tech Debt Sweeps. [DONE — 2026-04-05 sweep: FFmpeg version locked to 0.12.10, try/catch added, CI workflow patched to branch-per-PR model]
 
 ### Priority 1: Value Add & Local "Gold Mines"
 - [ ] **Bi-lingual Cinematic:** English ↔ Arabic poetic translations (UAE Special).
@@ -43,4 +42,4 @@
 
 
 ---
-*Last Updated: 2026-04-04 01:41 AM (GST)*
+*Last Updated: 2026-04-05 01:10 AM (GST)*
