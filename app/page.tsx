@@ -193,6 +193,12 @@ export default function Home() {
             fileToUpload = await optimizeVideoForAI(file, (progress) => {
               setCompressionProgress(progress);
             });
+          } catch (compressionErr: any) {
+            toast.error('Video optimization failed. Uploading original file instead.', {
+              description: compressionErr?.message,
+            });
+            // Fall back to the original file so the user is not blocked
+            fileToUpload = file;
           } finally {
             setCompressionProgress(null);
           }
