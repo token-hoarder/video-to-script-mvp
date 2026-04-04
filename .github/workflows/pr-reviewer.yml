@@ -2,10 +2,11 @@ name: AI Code Reviewer
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
     types: [opened, synchronize]
+  schedule:
+    - cron: '0 0 * * 0' # Runs every Sunday at midnight
 
 jobs:
   review:

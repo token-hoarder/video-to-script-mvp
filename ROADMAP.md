@@ -25,6 +25,8 @@
   - [ ] Track exact script logs (AI-generated vs. user-edited versions).
   - [ ] Track Edit Distance — how much users modify the AI output.
   - [ ] Log metadata: video aspect ratios, preferred refinement modes, session length.
+- [ ] **Continuous Maintenance:** Weekly AI Deep Audits + Tech Debt Sweeps.
+- [x] **Media Optimizer:** (Fixed versioning & Error handling pending sweep).
 
 ### Priority 1: Value Add & Local "Gold Mines"
 - [ ] **Bi-lingual Cinematic:** English ↔ Arabic poetic translations (UAE Special).
@@ -38,6 +40,7 @@
 ### Priority 3: Advanced Intelligence
 - [ ] **Retention Score Predictor:** AI warning for "too much text" for shot length.
 - [ ] **B-Roll Director:** AI suggests missing shots to fill narrative gaps.
+
 
 ---
 *Last Updated: 2026-04-04 01:41 AM (GST)*
