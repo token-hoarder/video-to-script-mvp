@@ -2,10 +2,33 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { createHash } from 'crypto';
+
+// IP Throttle: max 5 generate attempts per hashed IP per hour
+// In-memory store — resets on cold start. Suitable for Vercel serverless.
+const IP_THROTTLE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const IP_THROTTLE_MAX = 5;
+const ipThrottleStore = new Map<string, { count: number; windowStart: number }>();
+
+function hashIp(ip: string): string {
+  return createHash('sha256').update(ip + (process.env.IP_HASH_SALT || 'default-salt')).digest('hex');
+}
+
+function isIpThrottled(ipHash: string): boolean {
+  const now = Date.now();
+  const record = ipThrottleStore.get(ipHash);
+  if (!record || now - record.windowStart > IP_THROTTLE_WINDOW_MS) {
+    ipThrottleStore.set(ipHash, { count: 1, windowStart: now });
+    return false;
+  }
+  if (record.count >= IP_THROTTLE_MAX) return true;
+  record.count++;
+  return false;
+}
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY!);
@@ -44,6 +67,41 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // ── Credit Guard (Step 2 — AUTH_FLOW.md) ────────────────────────────────
+    // Server-side only — never trust client-reported credit counts.
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('[CreditGuard] Failed to load profile:', profileError?.message);
+      return NextResponse.json({ error: 'Could not verify your account credits. Please refresh and try again.' }, { status: 500 });
+    }
+
+    if (profile.credits <= 0) {
+      return NextResponse.json(
+        { error: "You've used all 3 free analyses. Sign in with Google to get 50 credits." },
+        { status: 402 }
+      );
+    }
+
+    // ── IP Throttle Guard (Step 3 — AUTH_FLOW.md) ────────────────────────────
+    const headersList = await headers();
+    const rawIp =
+      headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      headersList.get('x-real-ip') ||
+      '0.0.0.0';
+    const ipHash = hashIp(rawIp);
+
+    if (isIpThrottled(ipHash)) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait before trying again.' },
+        { status: 429 }
+      );
     }
 
     // Check if scripts already exists for this path to avoid duplicate processing
@@ -240,7 +298,15 @@ Output ONLY a valid JSON array without markdown formatting.`
          if (dbError) console.error('Failed to save to db:', dbError);
       }
 
-      return NextResponse.json({ data: payloadToSave });
+      // ── Decrement Credits (Step 5 — AUTH_FLOW.md) ──────────────────────────
+      // Decrement AFTER successful generation — prevents double-charge on error.
+      const { error: creditError } = await supabase
+        .from('profiles')
+        .update({ credits: profile.credits - 1, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+      if (creditError) console.error('[CreditGuard] Failed to decrement credits:', creditError.message);
+
+      return NextResponse.json({ data: payloadToSave, creditsRemaining: profile.credits - 1 });
     } finally {
       // Clean up local temp file
       if (fs.existsSync(tempFilePath)) {
