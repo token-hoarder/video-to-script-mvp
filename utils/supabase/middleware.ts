@@ -38,6 +38,25 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   console.log(`DEBUG_AUTH: middleware — pathname: "${pathname}" | user: ${user ? user.id : 'none'} | is_anonymous: ${user?.is_anonymous ?? 'n/a'}`);
 
+  // Safety net: non-anonymous user with no profile row = orphaned pre-trigger
+  // dev account or a corrupted session. Sign them out server-side so the client
+  // lands fresh and useGuestAuth creates a proper anonymous session.
+  if (user && !user.is_anonymous) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (!profile) {
+      console.log(`DEBUG_AUTH: middleware — ORPHAN ACCOUNT detected (${user.id}), signing out and redirecting → /`);
+      await supabase.auth.signOut()
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
+  }
+
   if (
     !user &&
     !pathname.startsWith('/login') &&

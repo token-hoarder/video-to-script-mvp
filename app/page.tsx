@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { UploadZone } from "@/components/upload-zone";
 import { ScriptSidebar, ScriptsPayload } from "@/components/script-sidebar";
 import { StoryboardDetails } from "@/components/storyboard-details";
@@ -37,6 +38,7 @@ export default function Home() {
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
 
   const supabase = createClient();
+  const router = useRouter();
   const { user, credits, isGuest, isLoading: authLoading, upgradeToGoogle, refreshCredits } = useGuestAuth();
 
   // Load saved script from storage
@@ -163,16 +165,18 @@ export default function Home() {
   };
 
   const handleLogout = async () => {
-    console.log('DEBUG_AUTH: handleLogout() triggered — calling supabase.auth.signOut()');
-    const { error } = await supabase.auth.signOut();
+    console.log('DEBUG_AUTH: handleLogout() triggered — calling supabase.auth.signOut({ scope: global })');
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
     if (error) {
       console.error('DEBUG_AUTH: signOut() FAILED —', error.message);
     } else {
-      console.log('DEBUG_AUTH: signOut() OK — reloading page to reset anonymous session');
+      console.log('DEBUG_AUTH: signOut() OK — invalidating Router Cache then hard-navigating to /');
     }
-    // After sign-out, useGuestAuth will auto sign in anonymously again on next render.
-    // For a full session clear (e.g. registered user logging out), reload the page.
-    window.location.reload();
+    // Step 1: Tell Next.js to discard the Router Cache.
+    //         This forces middleware to re-run with the now-cleared auth cookie.
+    router.refresh();
+    // Step 2: Hard navigation — avoids reload() racing the async cookie clear.
+    window.location.href = '/';
   };
 
   const handleGenerateScript = async (slotId: string) => {
