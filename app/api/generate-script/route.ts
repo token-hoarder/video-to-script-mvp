@@ -323,7 +323,10 @@ Output ONLY a valid JSON array without markdown formatting.`
     // Analyze error string to safely map known issues
     const rawError = err.message ? err.message.toLowerCase() : '';
     
-    if (err.status === 429 || rawError.includes('quota') || rawError.includes('429') || rawError.includes('exhausted') || rawError.includes('rate limit')) {
+    if (err.status === 503 || rawError.includes('503') || rawError.includes('service unavailable')) {
+      safeMessage = 'The Google Gemini AI is currently overloaded. Please try again in a few seconds.';
+      statusCode = 503;
+    } else if (err.status === 429 || rawError.includes('quota') || rawError.includes('429') || rawError.includes('exhausted') || rawError.includes('rate limit')) {
       safeMessage = 'Our AI is currently experiencing high demand. Please try again in a few minutes.';
       statusCode = 429;
     } else if (rawError.includes('gemini video processing failed')) {

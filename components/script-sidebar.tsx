@@ -279,7 +279,7 @@ export function ScriptSidebar({
                                  onClick={() => onGenerateCustomAI(customAIPrompt)}
                               >
                                  {refiningSlot === 'custom_ai' ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Sparkles className="w-3.5 h-3.5 mr-1.5" />}
-                                 {refiningSlot === 'custom_ai' ? 'Generating Script...' : 'Generate New Array'}
+                                 {refiningSlot === 'custom_ai' ? 'Generating Script...' : 'Generate Custom Script'}
                               </Button>
                            </div>
                         )}
