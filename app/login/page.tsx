@@ -1,9 +1,7 @@
-import { login, signup } from './actions'
+import { AuthButtons } from '@/components/auth-buttons'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-
 export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-black text-white p-4">
@@ -39,12 +37,7 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-2">
-            <Button type="submit" formAction={login} className="w-full bg-white text-black hover:bg-zinc-200">
-              Log in
-            </Button>
-            <Button type="submit" formAction={signup} variant="outline" className="w-full border-zinc-700 hover:bg-zinc-800 hover:text-white bg-transparent">
-              Sign up
-            </Button>
+            <AuthButtons />
           </CardFooter>
         </form>
       </Card>

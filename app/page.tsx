@@ -15,6 +15,7 @@ import { useGuestAuth } from "@/hooks/useGuestAuth";
 import { CreditBadge } from "@/components/usage-guard";
 import { createClient } from "@/utils/supabase/client";
 import { logout } from "@/app/login/actions";
+import { SubmitButton } from "@/components/submit-button";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -40,7 +41,9 @@ export default function Home() {
 
   const supabase = createClient();
   const router = useRouter();
-  const { user, credits, isGuest, isLoading: authLoading, upgradeToGoogle, refreshCredits } = useGuestAuth();
+  const { user, credits, isGuest, isLoading: authLoading, isUpgrading, refreshCredits } = useGuestAuth();
+
+  const handleUpgrade = () => router.push('/login');
 
   // Load saved script from storage
   useEffect(() => {
@@ -410,23 +413,31 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-3">
           {/* Credit badge — shown only for anonymous (Preview Mode) users */}
-          <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={upgradeToGoogle} />
+          <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={handleUpgrade} />
           {!isGuest ? (
             <form action={logout}>
-              <Button type="submit" variant="ghost" size="sm" className="text-zinc-400 hover:text-white rounded-full transition-colors">
+              <SubmitButton variant="ghost" size="sm" className="text-zinc-400 hover:text-white rounded-full transition-colors" pendingText="Logging out...">
                 <LogOut className="w-4 h-4 mr-2" />
                 Log out
-              </Button>
+              </SubmitButton>
             </form>
           ) : (
             <Button
               variant="ghost"
               size="sm"
-              onClick={upgradeToGoogle}
+              onClick={handleUpgrade}
+              disabled={isUpgrading}
               id="header-upgrade-btn"
               className="text-amber-400 hover:text-amber-300 hover:bg-amber-950/40 rounded-full transition-colors text-xs font-medium"
             >
-              Save my work →
+              {isUpgrading ? (
+                 <>
+                   <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                   Saving...
+                 </>
+              ) : (
+                 'Save my work →'
+              )}
             </Button>
           )}
         </div>

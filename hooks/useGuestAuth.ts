@@ -16,12 +16,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import { toast } from 'sonner';
 
 export interface GuestAuthState {
   user: User | null;
   credits: number | null;
   isLoading: boolean;
   isGuest: boolean;
+  isUpgrading: boolean;
   upgradeToGoogle: () => Promise<void>;
   refreshCredits: () => Promise<void>;
 }
@@ -30,6 +32,7 @@ export function useGuestAuth(): GuestAuthState {
   const [user, setUser] = useState<User | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   const supabase = createClient();
 
@@ -118,17 +121,35 @@ export function useGuestAuth(): GuestAuthState {
    * and orphans all scripts.
    */
   const upgradeToGoogle = useCallback(async () => {
+    setIsUpgrading(true);
     console.log('DEBUG_AUTH: upgradeToGoogle() called — calling linkIdentity({ provider: google })');
-    const { error } = await supabase.auth.linkIdentity({ provider: 'google' });
-    if (error) {
-      console.error('DEBUG_AUTH: linkIdentity() FAILED —', error.message);
-    } else {
-      console.log('DEBUG_AUTH: linkIdentity() initiated — awaiting OAuth redirect');
+    
+    // Pass explicit redirectTo for production / Vercel to work reliably
+    const redirectTo = `${window.location.origin}/auth/callback?next=/`;
+    
+    try {
+      const { error } = await supabase.auth.linkIdentity({ 
+        provider: 'google',
+        options: {
+          redirectTo
+        }
+      });
+      
+      if (error) {
+        console.error('DEBUG_AUTH: linkIdentity() FAILED —', error.message);
+        toast.error('Failed to connect to Google: ' + error.message);
+        setIsUpgrading(false);
+      } else {
+        console.log('DEBUG_AUTH: linkIdentity() initiated — awaiting OAuth redirect');
+        // Do not reset isUpgrading, let the page redirect away
+      }
+    } catch (e: any) {
+        toast.error('An unexpected error occurred.');
+        setIsUpgrading(false);
     }
-    // After redirect: onAuthStateChange fires, profile update happens server-side
   }, [supabase]);
 
   const isGuest = user?.is_anonymous ?? true;
 
-  return { user, credits, isLoading, isGuest, upgradeToGoogle, refreshCredits };
+  return { user, credits, isLoading, isUpgrading, isGuest, upgradeToGoogle, refreshCredits };
 }
