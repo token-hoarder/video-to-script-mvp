@@ -87,10 +87,10 @@ export function UnlockCTA({ onUpgrade }: { onUpgrade: () => Promise<void> }) {
       </div>
 
       <div className="space-y-1">
-        <p className="text-sm font-semibold text-zinc-100">
+        <p className="text-sm font-semibold text-foreground">
           You've used all 3 free analyses
         </p>
-        <p className="text-xs text-zinc-400">
+        <p className="text-xs text-muted-foreground">
           Sign in with Google to unlock 50 credits — your scripts stay intact.
         </p>
       </div>
@@ -122,7 +122,7 @@ export function UnlockCTA({ onUpgrade }: { onUpgrade: () => Promise<void> }) {
         Unlock 50 Credits →
       </button>
 
-      <p className="text-[10px] text-zinc-500">
+      <p className="text-[10px] text-muted-foreground">
         Your in-progress scripts are automatically saved.
       </p>
     </motion.div>
