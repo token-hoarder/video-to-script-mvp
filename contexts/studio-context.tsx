@@ -4,13 +4,13 @@
  * StudioContext — Shared state across Script Studio (/) and Hashtag Studio (/hashtags).
  *
  * Why: Next.js App Router unmounts pages on navigation, destroying local useState.
- * Placing shared state here (at layout level) keeps it alive across page switches.
+ * Placing shared state here (at layout level) keeps it enough alive across page switches.
  *
  * State that lives here:
  *   - uploadedVideoUrl  — Supabase public URL (avoids re-upload when switching pages)
  *   - videoPreviewUrl   — Local blob URL for the <video> element
  *   - scripts           — All generated script slots (ScriptsPayload)
- *   - hashtags          — { core, trending, kept } generated hashtag sets
+ *   - hashtags          — { core, trending, cultural, kept } generated hashtag sets
  *
  * Persisted to localStorage: uploadedVideoUrl, scripts, hashtags.kept
  * NOT persisted: videoPreviewUrl (blob URLs die on refresh)
@@ -57,10 +57,16 @@ export function StudioProvider({ children }: { children: ReactNode }) {
 
       const savedKept = localStorage.getItem('studio-hashtags-kept');
       if (savedKept) {
-        setHashtagsRaw({ core: [], trending: [], kept: JSON.parse(savedKept) });
+        setHashtagsRaw({
+          core: [],
+          trending: [],
+          cultural: [],
+          kept: JSON.parse(savedKept)
+        });
       }
-    } catch {
+    } catch (error) {
       // Silently fail if localStorage is unavailable (SSR guard)
+      console.error('Failed to rehydrate StudioContext from localStorage', error);
     }
   }, []);
 
