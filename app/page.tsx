@@ -39,7 +39,7 @@ export default function Home() {
   // Track uploaded URL to avoid re-uploads on re-generation
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
   const router = useRouter();
   const { user, credits, isGuest, isLoading: authLoading, isUpgrading, refreshCredits } = useGuestAuth();
 
