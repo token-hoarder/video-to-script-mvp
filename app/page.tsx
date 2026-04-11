@@ -8,7 +8,7 @@ import { StoryboardDetails } from "@/components/storyboard-details";
 import { CaptionOverlay } from "@/components/caption-overlay";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { LogOut, Film, Loader2 } from "lucide-react";
+import { LogOut, Film, Loader2, Hash } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { needsOptimization, optimizeVideoForAI } from "@/utils/video-compressor";
 import { toast } from "sonner";
@@ -17,11 +17,13 @@ import { CreditBadge } from "@/components/usage-guard";
 import { createClient } from "@/utils/supabase/client";
 import { logout } from "@/app/login/actions";
 import { SubmitButton } from "@/components/submit-button";
+import { useStudio } from "@/contexts/studio-context";
+import Link from "next/link";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [userScript, setUserScript] = useState("");
-  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+  // videoPreviewUrl lives in shared context so /hashtags can show the same video
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoDuration, setVideoDuration] = useState(15);
@@ -34,11 +36,10 @@ export default function Home() {
   const [refiningSlot, setRefiningSlot] = useState<string | null>(null);
 
   const [analyzingSlot, setAnalyzingSlot] = useState<string | null>(null);
-  const [scripts, setScripts] = useState<ScriptsPayload | null>(null);
   const [compressionProgress, setCompressionProgress] = useState<number | null>(null);
-  
-  // Track uploaded URL to avoid re-uploads on re-generation
-  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
+
+  // Shared persistent state from StudioContext (survives navigation to /hashtags and back)
+  const { uploadedVideoUrl, setUploadedVideoUrl, videoPreviewUrl, setVideoPreviewUrl, scripts, setScripts } = useStudio();
 
   const [supabase] = useState(() => createClient());
   const router = useRouter();
@@ -162,7 +163,8 @@ export default function Home() {
   const handleFileSelect = (selectedFile: File) => {
     setFile(selectedFile);
     if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
-    setVideoPreviewUrl(URL.createObjectURL(selectedFile));
+    const newPreviewUrl = URL.createObjectURL(selectedFile);
+    setVideoPreviewUrl(newPreviewUrl);
     setActiveScriptId(null);
     setActiveScriptBlocks([]);
     setScripts(null);
@@ -413,6 +415,14 @@ export default function Home() {
           <span className="text-foreground">Studio Mode</span>
         </div>
         <div className="flex items-center gap-2">
+          {/* Hashtag Studio nav link */}
+          <Link
+            href="/hashtags"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
+          >
+            <Hash className="w-3.5 h-3.5" />
+            Hashtags
+          </Link>
           {/* Credit badge — shown only for anonymous (Preview Mode) users */}
           <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={handleUpgrade} />
           {!isGuest ? (

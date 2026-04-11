@@ -3,6 +3,7 @@ import { Public_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { StudioProvider } from "@/contexts/studio-context";
 
 const publicSans = Public_Sans({
   subsets: ["latin"],
@@ -33,7 +34,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <StudioProvider>
+            {children}
+          </StudioProvider>
           <Toaster />
         </ThemeProvider>
       </body>
