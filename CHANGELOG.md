@@ -1,5 +1,11 @@
 ## [2026-04-11] - Auto-Generated Update
 
+Implemented a 100MB file size limit for video uploads and enhanced MIME type handling for improved video processing.
+
+---
+
+## [2026-04-11] - Auto-Generated Update
+
 **Features:**
 *   Implemented `StudioContext` for persistent state management within the application.
 *   Introduced a new AI-powered hashtag generation tool, enabling users to upload videos and receive intelligent, categorized hashtag suggestions. This feature includes user authentication, credit management, and video optimization.
