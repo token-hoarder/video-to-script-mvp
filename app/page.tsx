@@ -281,7 +281,7 @@ export default function Home() {
             description: 'Sign in with Google to unlock 50 credits.',
             action: {
               label: 'Unlock 50 Credits →',
-              onClick: upgradeToGoogle,
+              onClick: handleUpgrade,
             },
             duration: 8000,
           });
