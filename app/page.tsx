@@ -43,7 +43,7 @@ export default function Home() {
   const router = useRouter();
   const { user, credits, isGuest, isLoading: authLoading, isUpgrading, refreshCredits } = useGuestAuth();
 
-  const handleUpgrade = () => router.push('/login');
+  const handleUpgrade = async () => router.push('/login');
 
   // Load saved script from storage
   useEffect(() => {

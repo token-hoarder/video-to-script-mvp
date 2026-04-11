@@ -69,12 +69,14 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // If user is logged in, redirect away from the login page
+  // If user is logged in and NOT anonymous, redirect away from the login page
+  // (Anonymous users MUST be able to access /login to upgrade their accounts)
   if (
     user &&
+    !user.is_anonymous &&
     pathname.startsWith('/login')
   ) {
-    console.log(`DEBUG_AUTH: middleware — authenticated user (${user.id}) on /login, redirecting → /`);
+    console.log(`DEBUG_AUTH: middleware — permanent authenticated user (${user.id}) on /login, redirecting → /`);
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)
