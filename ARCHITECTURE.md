@@ -8,50 +8,58 @@ graph LR
     end
 
     subgraph "Next.js Application"
-        NextApp["Next.js Runtime"]
-        AuthMiddleware["Auth Middleware"]
-        ServerActions["Next.js Server Actions (Auth)"]
-        APIRoute_GenerateScript["API: Generate Script"]
-        APIRoute_UploadURL["API: Upload Video URL"]
+        SSR["Next.js Server-Side Rendering"]
+        AuthMiddleware["Supabase Auth Middleware"]
+        AuthActions["Auth Server Actions"]
+        UploadAPI["Video Upload API Route"]
+        ScriptGenAPI["AI Script Generation API Route"]
+        VideoProcessor["Video Processing Utility"]
     end
 
     subgraph "Supabase Cloud"
-        SupabaseAuth["Supabase Auth"]
+        SupabaseAuth["Supabase Authentication"]
         SupabaseDB["Supabase Database"]
         SupabaseStorage["Supabase Storage"]
     end
 
     subgraph "External Services"
-        ExternalAIService["AI Script Generation Service"]
-        ExternalVideoService["External Video Processing"]
+        ExternalAI["External AI Service (LLM / Media Analysis)"]
     end
 
-    %% Initial Load & Auth Check
-    User --> FrontendUI
-    FrontendUI -- Initial Page Load --> NextApp
-    NextApp -- Auth Check (via middleware) --> AuthMiddleware
-    AuthMiddleware -- Verifies Session --> SupabaseAuth
-    SupabaseAuth -- Returns Session Status --> AuthMiddleware
-    AuthMiddleware -- Passes Request --> NextApp
+    %% Flow 1: Initial Page Load & Authentication Check
+    User --> FrontendUI["Load Application"]
+    FrontendUI --> SSR["Request Page"]
+    SSR --> AuthMiddleware["Verify Session"]
+    AuthMiddleware --> SupabaseAuth["Check Authentication"]
+    SupabaseAuth -- "Session Status" --> AuthMiddleware
+    AuthMiddleware -- "Render Page" --> SSR
+    SSR --> FrontendUI["Display Content"]
 
-    %% User Login Flow
-    FrontendUI -- Login Request --> ServerActions
-    ServerActions -- Authenticates User --> SupabaseAuth
-    SupabaseAuth -- Provides Session --> ServerActions
-    ServerActions -- Sets Auth Cookies / Redirects --> FrontendUI
+    %% Flow 2: User Login
+    FrontendUI -- "Submit Login Form" --> AuthActions["Handle Login"]
+    AuthActions --> SupabaseAuth["Authenticate User"]
+    SupabaseAuth -- "Auth Token/Session" --> AuthActions
+    AuthActions -- "Set Session Cookie" --> FrontendUI
+    AuthActions -- "Redirect/Refresh UI" --> FrontendUI
 
-    %% Script Generation Flow
-    FrontendUI -- Requests Script Generation --> APIRoute_GenerateScript
-    APIRoute_GenerateScript -- Calls AI Model --> ExternalAIService
-    ExternalAIService -- Returns Generated Script --> APIRoute_GenerateScript
-    APIRoute_GenerateScript -- Saves Script Data --> SupabaseDB
+    %% Flow 3: Video Upload Process
+    FrontendUI -- "Upload Video Request" --> UploadAPI["Initiate Upload"]
+    UploadAPI --> SupabaseStorage["Get Upload URL/Perform Upload"]
+    SupabaseStorage -- "Upload Success/URL" --> UploadAPI
+    UploadAPI --> VideoProcessor["Trigger Video Processing"]
+    VideoProcessor -- "Processed Video Metadata" --> SupabaseDB["Store Video Data"]
+    SupabaseDB -- "Confirmation" --> UploadAPI
+    UploadAPI -- "Upload Confirmation" --> FrontendUI
 
-    %% Video Upload/Processing Flow (via URL)
-    FrontendUI -- Submits Video URL --> APIRoute_UploadURL
-    APIRoute_UploadURL -- Initiates Processing --> ExternalVideoService
-    ExternalVideoService -- Stores Processed Video Assets --> SupabaseStorage
-    ExternalVideoService -- Notifies Completion / Metadata --> APIRoute_UploadURL
-    APIRoute_UploadURL -- Saves Video Metadata --> SupabaseDB
+    %% Flow 4: AI Script Generation
+    FrontendUI -- "Request AI Script" --> ScriptGenAPI["Process Script Request"]
+    ScriptGenAPI --> SupabaseDB["Retrieve Video Metadata"]
+    SupabaseDB -- "Video Details" --> ScriptGenAPI
+    ScriptGenAPI --> ExternalAI["Send to AI for Analysis"]
+    ExternalAI -- "Generated Script" --> ScriptGenAPI
+    ScriptGenAPI --> SupabaseDB["Save Generated Script"]
+    SupabaseDB -- "Script Saved" --> ScriptGenAPI
+    ScriptGenAPI -- "Display Script" --> FrontendUI
 ```
 
 *Last updated automatically by Gemini.*
