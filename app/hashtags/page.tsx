@@ -34,11 +34,10 @@ function HashtagChip({
       exit={{ opacity: 0, scale: 0.85 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all border select-none cursor-pointer ${
-        isKept
-          ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80 hover:text-foreground hover:border-primary/40'
-      }`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all border select-none cursor-pointer ${isKept
+        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+        : 'bg-muted text-muted-foreground border-border hover:bg-muted/80 hover:text-foreground hover:border-primary/40'
+        }`}
     >
       {isKept && <Check className="w-3 h-3 shrink-0" />}
       {tag}
@@ -61,6 +60,11 @@ export default function HashtagsPage() {
 
   // ── File selection ────────────────────────────────────────────────────────
   const handleFileSelect = (selectedFile: File) => {
+    const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+    if (selectedFile.size > MAX_SIZE) {
+      toast.error('File is too large. Please select a video under 100MB.');
+      return;
+    }
     setFile(selectedFile);
     if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
     setVideoPreviewUrl(URL.createObjectURL(selectedFile));
@@ -77,7 +81,7 @@ export default function HashtagsPage() {
     if (needsOptimization(file)) {
       toast.info('Optimizing video for analysis…');
       try {
-        fileToUpload = await optimizeVideoForAI(file, () => {});
+        fileToUpload = await optimizeVideoForAI(file, () => { });
       } catch {
         toast.error('Video optimization failed. Uploading original.');
       }
@@ -102,11 +106,13 @@ export default function HashtagsPage() {
     }
 
     // Step 2: PUT the file directly to Supabase storage using the signed URL
+    // Robust MIME type handling: try to detect from file, fallback to video/mp4
+    const contentType = fileToUpload.type || 'video/mp4';
     const directUploadRes = await fetch(uploadUrlData.signedUrl, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${uploadUrlData.token}`,
-        'Content-Type': fileToUpload.type || 'video/mp4',
+        'Content-Type': contentType,
       },
       body: fileToUpload,
     });
