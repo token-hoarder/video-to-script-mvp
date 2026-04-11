@@ -41,7 +41,9 @@ export default function Home() {
 
   const supabase = createClient();
   const router = useRouter();
-  const { user, credits, isGuest, isLoading: authLoading, isUpgrading, upgradeToGoogle, refreshCredits } = useGuestAuth();
+  const { user, credits, isGuest, isLoading: authLoading, isUpgrading, refreshCredits } = useGuestAuth();
+
+  const handleUpgrade = () => router.push('/login');
 
   // Load saved script from storage
   useEffect(() => {
@@ -411,7 +413,7 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-3">
           {/* Credit badge — shown only for anonymous (Preview Mode) users */}
-          <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={upgradeToGoogle} />
+          <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={handleUpgrade} />
           {!isGuest ? (
             <form action={logout}>
               <SubmitButton variant="ghost" size="sm" className="text-zinc-400 hover:text-white rounded-full transition-colors" pendingText="Logging out...">
@@ -423,7 +425,7 @@ export default function Home() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={upgradeToGoogle}
+              onClick={handleUpgrade}
               disabled={isUpgrading}
               id="header-upgrade-btn"
               className="text-amber-400 hover:text-amber-300 hover:bg-amber-950/40 rounded-full transition-colors text-xs font-medium"
