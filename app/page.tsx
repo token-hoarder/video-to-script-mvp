@@ -9,6 +9,7 @@ import { CaptionOverlay } from "@/components/caption-overlay";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { LogOut, Film, Loader2 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { needsOptimization, optimizeVideoForAI } from "@/utils/video-compressor";
 import { toast } from "sonner";
 import { useGuestAuth } from "@/hooks/useGuestAuth";
@@ -39,11 +40,11 @@ export default function Home() {
   // Track uploaded URL to avoid re-uploads on re-generation
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
   const router = useRouter();
   const { user, credits, isGuest, isLoading: authLoading, isUpgrading, refreshCredits } = useGuestAuth();
 
-  const handleUpgrade = () => router.push('/login');
+  const handleUpgrade = async () => router.push('/login');
 
   // Load saved script from storage
   useEffect(() => {
@@ -281,7 +282,7 @@ export default function Home() {
             description: 'Sign in with Google to unlock 50 credits.',
             action: {
               label: 'Unlock 50 Credits →',
-              onClick: upgradeToGoogle,
+              onClick: handleUpgrade,
             },
             duration: 8000,
           });
@@ -398,25 +399,25 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-primary/30 flex flex-col relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 flex flex-col relative overflow-hidden font-sans">
       {/* Subtle modern gradient background */}
-      <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-primary/5 via-black to-black pointer-events-none" />
+      <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-primary/5 via-background to-background pointer-events-none" />
       <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Header */}
-      <header className="relative z-10 flex h-16 items-center justify-between border-b border-white/5 px-6 shrink-0 bg-black/40 backdrop-blur-xl">
+      <header className="relative z-10 flex h-16 items-center justify-between border-b border-border px-6 shrink-0 bg-background/80 backdrop-blur-xl">
         <div className="flex items-center gap-3 font-semibold text-xl tracking-tight">
           <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
             <Film className="w-5 h-5 text-primary" />
           </div>
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">Studio Mode</span>
+          <span className="text-foreground">Studio Mode</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Credit badge — shown only for anonymous (Preview Mode) users */}
           <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={handleUpgrade} />
           {!isGuest ? (
             <form action={logout}>
-              <SubmitButton variant="ghost" size="sm" className="text-zinc-400 hover:text-white rounded-full transition-colors" pendingText="Logging out...">
+              <SubmitButton variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground rounded-full transition-colors" pendingText="Logging out...">
                 <LogOut className="w-4 h-4 mr-2" />
                 Log out
               </SubmitButton>
@@ -440,6 +441,7 @@ export default function Home() {
               )}
             </Button>
           )}
+          <ThemeToggle />
         </div>
       </header>
 
@@ -449,9 +451,9 @@ export default function Home() {
           <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full relative z-10 py-12">
              <div className="flex flex-col items-center mb-10">
                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-center mb-6 text-balance leading-tight">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-white to-white/60">Script</span> your video.
+                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-foreground to-foreground/60">Script</span> your video.
                </h1>
-               <p className="text-zinc-400 text-center max-w-xl text-lg sm:text-xl text-balance">
+               <p className="text-muted-foreground text-center max-w-xl text-lg sm:text-xl text-balance">
                  Generate viral TikTok & Reels scripts perfectly matched to the visual cuts in your footage.
                </p>
              </div>
@@ -464,7 +466,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
              {/* Left/Center Column: Studio Player */}
              <div className="lg:col-span-2 flex flex-col gap-6">
-                <div className="rounded-xl overflow-hidden border border-zinc-800/80 bg-black shadow-2xl relative w-full aspect-[9/16] sm:aspect-video flex items-center justify-center max-h-[60vh] ring-1 ring-white/5 mx-auto group">
+                <div className="rounded-xl overflow-hidden border border-border bg-black shadow-2xl relative w-full aspect-[9/16] sm:aspect-video flex items-center justify-center max-h-[60vh] ring-1 ring-border/50 mx-auto group">
                    <video 
                      ref={videoRef}
                      src={videoPreviewUrl} 
@@ -490,10 +492,10 @@ export default function Home() {
                      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-20">
                        <div className="text-center">
                          <p className="text-white font-semibold text-lg mb-1">Optimizing for AI Analysis</p>
-                         <p className="text-zinc-400 text-sm">Preparing your video for the best results...</p>
+                         <p className="text-zinc-300 text-sm">Preparing your video for the best results...</p>
                        </div>
                        <div className="w-64">
-                         <div className="flex justify-between text-xs text-zinc-400 mb-2">
+                         <div className="flex justify-between text-xs text-zinc-300 mb-2">
                            <span>Processing</span>
                            <span>{Math.round(compressionProgress * 100)}%</span>
                          </div>
@@ -511,19 +513,19 @@ export default function Home() {
 
                 {/* Real-time Custom Script Edit Box */}
                 <div className="flex flex-col gap-3">
-                   <Label htmlFor="script" className="text-sm font-medium tracking-wide text-zinc-300 ml-1">
+                   <Label htmlFor="script" className="text-sm font-medium tracking-wide text-foreground ml-1">
                      Your Custom Script
                    </Label>
                    <div className="relative group">
                      <textarea
                        id="script"
                        placeholder="E.g. Paste a script here. It will automatically space out perfectly along your video timeline..." 
-                       className="w-full min-h-[140px] resize-y bg-zinc-950 border border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-primary/50 text-base leading-relaxed p-4 rounded-xl shadow-inner transition-all duration-300 group-hover:border-zinc-700 custom-scrollbar"
+                       className="w-full min-h-[140px] resize-y bg-background border border-border text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 text-base leading-relaxed p-4 rounded-xl shadow-inner transition-all duration-300 group-hover:border-primary/30 custom-scrollbar"
                        value={userScript}
                        onChange={(e) => handleLocalCustomEdit(e.target.value)}
                      />
                      <div className="absolute top-4 right-4 opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        <span className="text-xs font-mono font-medium text-zinc-500 bg-zinc-900 px-2 py-1 rounded-md border border-zinc-800">{userScript.length} chars</span>
+                        <span className="text-xs font-mono font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md border border-border">{userScript.length} chars</span>
                      </div>
                    </div>
                    
@@ -543,7 +545,7 @@ export default function Home() {
              </div>
 
              {/* Right Column: Script Switcher */}
-             <div className="lg:col-span-1 border border-zinc-800/80 rounded-2xl bg-zinc-950/50 backdrop-blur-sm p-6 shadow-2xl h-fit sticky top-6">
+             <div className="lg:col-span-1 border border-border rounded-2xl bg-card/80 backdrop-blur-sm p-6 shadow-xl h-fit sticky top-6">
                 <ScriptSidebar 
                   scripts={scripts}
                   analyzingSlot={analyzingSlot}

@@ -34,7 +34,7 @@ export function useGuestAuth(): GuestAuthState {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpgrading, setIsUpgrading] = useState(false);
 
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
 
   const fetchCredits = useCallback(
     async (userId: string) => {
