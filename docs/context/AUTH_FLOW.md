@@ -113,6 +113,8 @@ POST /api/generate-script
 - **Credit counter** is displayed subtly in the header (e.g., `✦ 2 analyses left`).
 - When credits hit 0, the "Generate Draft" button is replaced with a **"Unlock 50 Credits →"** CTA that opens the Google OAuth flow inline.
 - On OAuth success, the UI updates the credit counter without a page reload (optimistic update).
+- **Interactive UI Feedback:** Authentication buttons (Log in, Sign up, Save my work, Log out) MUST have individual loading states (e.g. spinners) that trigger only on the clicked button, preventing full-form lockups or generic "Loading..." text without spatial context.
+- **Production OAuth Routing:** The `linkIdentity` (Save my work) function requires an explicit `redirectTo` option (e.g., `${window.location.origin}/auth/callback?next=/`) in production (Vercel) to successfully redirect the user to the Google Consent screen and back.
 
 ---
 

@@ -15,6 +15,7 @@ import { useGuestAuth } from "@/hooks/useGuestAuth";
 import { CreditBadge } from "@/components/usage-guard";
 import { createClient } from "@/utils/supabase/client";
 import { logout } from "@/app/login/actions";
+import { SubmitButton } from "@/components/submit-button";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -40,7 +41,7 @@ export default function Home() {
 
   const supabase = createClient();
   const router = useRouter();
-  const { user, credits, isGuest, isLoading: authLoading, upgradeToGoogle, refreshCredits } = useGuestAuth();
+  const { user, credits, isGuest, isLoading: authLoading, isUpgrading, upgradeToGoogle, refreshCredits } = useGuestAuth();
 
   // Load saved script from storage
   useEffect(() => {
@@ -413,20 +414,28 @@ export default function Home() {
           <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={upgradeToGoogle} />
           {!isGuest ? (
             <form action={logout}>
-              <Button type="submit" variant="ghost" size="sm" className="text-zinc-400 hover:text-white rounded-full transition-colors">
+              <SubmitButton variant="ghost" size="sm" className="text-zinc-400 hover:text-white rounded-full transition-colors" pendingText="Logging out...">
                 <LogOut className="w-4 h-4 mr-2" />
                 Log out
-              </Button>
+              </SubmitButton>
             </form>
           ) : (
             <Button
               variant="ghost"
               size="sm"
               onClick={upgradeToGoogle}
+              disabled={isUpgrading}
               id="header-upgrade-btn"
               className="text-amber-400 hover:text-amber-300 hover:bg-amber-950/40 rounded-full transition-colors text-xs font-medium"
             >
-              Save my work →
+              {isUpgrading ? (
+                 <>
+                   <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                   Saving...
+                 </>
+              ) : (
+                 'Save my work →'
+              )}
             </Button>
           )}
         </div>
