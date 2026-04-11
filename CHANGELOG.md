@@ -1,5 +1,16 @@
 ## [2026-04-11] - Auto-Generated Update
 
+feat: Revamped authentication system
+
+*   Introduced a new authentication flow with Google OAuth integration for both sign-in and anonymous user upgrades.
+*   Redesigned the login and signup pages for improved user experience.
+*   Implemented loading states for all authentication actions and buttons, providing clearer visual feedback.
+*   Enhanced the guest user "Save my work" process to seamlessly transition to a full account.
+
+---
+
+## [2026-04-11] - Auto-Generated Update
+
 - Implemented a server-side logout action to enhance authentication flow.
 - Improved video upload reliability and efficiency with client-side optimization and a more robust direct upload mechanism to Supabase Storage.
 - Added specific error handling for Google Gemini AI service unavailability (503 errors).
