@@ -1,0 +1,36 @@
+# 🚫 GIT BRANCH POLICY
+- **Main Branch Lock:** You are strictly PROHIBITED from pushing to the 'main' branch.
+- **Feature Branching:** All code must be developed and pushed to branches prefixed with `feat/` or `fix/`.
+- **Merge Process:** You may create Pull Requests, but you cannot merge them.
+- **Immediate Action:** If you find yourself on the 'main' branch, you must immediately checkout a new feature branch before making any file changes.
+
+# 🛡️ AGENT GUARDRAILS & POLICIES
+- **Atomic Commits:** You MUST commit changes after every sub-task. If a task fails, revert to the last clean commit before trying a different approach.
+- **No Deletion Policy:** You are strictly forbidden from deleting core UI components (Video Player, Storyboard) unless explicitly instructed in the ROADMAP.
+- **Test-Before-Done:** A task is NOT finished until `npm run test` passes. You cannot mark [DONE] in ROADMAP.md if there are failing tests.
+- **Token Conservation:** If you fail to solve a bug 3 times in a row, PAUSE and leave a detailed 'BLOCKER' comment in the roadmap. Do not keep spinning.
+- **Normalization Priority:** Never change the `IScript` or `Segment` interfaces. These are the project DNA.
+
+# 🧹 THE JANITOR CLAUSE
+- **Proactive Audits:** Before starting any new feature from the ROADMAP, check `docs/TECH_DEBT.md`. 
+- **Auto-Cleanup:** If there are unresolved bugs or version mismatches (e.g., FFmpeg versioning) that affect your current task, you must fix them first.
+- **Ledger Maintenance:** Once a debt item is fixed, remove it from `docs/TECH_DEBT.md` and move it to `docs/changelog.md`.
+
+## 🏗️ DEVELOPMENT METHODOLOGY
+- **Test-Driven AI (TDAI):** For all logic-heavy tasks (Auth, Hashing, API), you must write or update tests in the `tests/` folder BEFORE implementation.
+- **Atomic Commits:** Commit your changes after every successful sub-task. Use descriptive messages (e.g., `feat(auth): implement ip-hashing`).
+- **Context Awareness:** Always refer to `docs/context/CORE_INTERFACES.md` to ensure data structure consistency (IScript, ScriptBlock).
+
+# 📝 DOCUMENTATION AUTOPILOT
+- **Definition of Done:** A task is only complete when code passes tests, and you have updated both `docs/changelog.md` and `ROADMAP.md`.
+- **Refactor Changelog:** Keep the changelog professional by summarizing repetitive auto-generated entries.
+- **Mermaid Sync:** If you modify core data flows, you must update the diagrams in `ARCHITECTURE.md` to match the new implementation.
+
+# 🧠 KNOWLEDGE-FIRST MANDATE
+- **DNA Consistency:** Always refer to `docs/context/CORE_INTERFACES.md` before modifying script logic to prevent the "Missing Overlay" bug.
+- **Auth Specs:** When building tiered access, strictly follow the credit and throttling rules in `docs/context/AUTH_FLOW.md`.
+- **Tech Stack Constraints:** Adhere to the Next.js 16.2.1 App Router conventions defined in `docs/context/SYSTEM_STATE.md`. Do not use patterns from your training data that conflict with this version.
+
+# 🛡️ ADVANCED SECURITY (LAYER 3+)
+- **Secret Verification:** Strictly follow `docs/context/SECURITY_POLICY.md`. Use `.env.example` for new variables and never commit actual keys.
+- **Strict Mode:** You must respect `.gitignore` at all times. Do not attempt to read or modify ignored files.
