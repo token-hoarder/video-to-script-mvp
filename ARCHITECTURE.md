@@ -3,56 +3,90 @@
 ```mermaid
 graph LR
     subgraph "Client / Browser"
-        User["User Interaction"]
-        FrontendUI["Frontend UI / Pages"]
+        A["User / Client Request"]
+        B["Frontend UI / Page Rendering"]
+        C["User Input / Actions (e.g., Form Submit, Click)"]
     end
 
     subgraph "Next.js Application"
-        NextJSApp["Next.js Server / Client Runtime"]
-        AuthMiddleware["Auth Middleware"]
-        LoginPage["Login Page / Server Actions"]
-        UploadAPI["Upload API (e.g., /api/upload-url)"]
-        GenerateScriptAPI["Generate Script API (e.g., /api/generate-script)"]
-        VideoProcessingLogic["Video Processing Logic"]
+        D["Auth Middleware (Edge Runtime)"]
+        E["Next.js Server Actions / Page Data Fetch"]
+        F["Next.js API Routes (e.g., /api/...)"]
+        G["Supabase SDK Integration (Client/Server)"]
     end
 
     subgraph "Supabase Cloud"
-        SupabaseAuth["Supabase Authentication"]
-        SupabaseDB["Supabase Database"]
-        SupabaseStorage["Supabase Storage"]
+        H["Supabase Auth Service"]
+        I["Supabase Database (Postgres)"]
+        J["Supabase Storage (Object Storage)"]
     end
 
     subgraph "External Services"
-        AIMLService["AI/ML Service (e.g., LLM)"]
+        K["AI - Script Generation API"]
+        L["AI - Hashtag Generation API"]
+        M["External Video Processing Service"]
     end
 
-    %% User Request Flows
-    User --> FrontendUI
-    FrontendUI -- "Initial Page Load / Navigation" --> NextJSApp
+    %% User Authentication Flow
+    A --> D
+    D -- "Session Check" --> H
+    H -- "Session Status" --> D
+    D -- "Authenticated" --> B
+    D -- "Unauthenticated / Login Required" --> E
+    E -- "Login / Signup Request" --> H
+    H -- "Session Created" --> E
+    E -- "Redirect / Auth Success" --> B
 
-    NextJSApp -- "Authorizes Request" --> AuthMiddleware
-    AuthMiddleware -- "Validates Session" --> SupabaseAuth
-    SupabaseAuth -- "Session Status / User ID" --> NextJSApp
+    %% Video Upload Flow
+    C -- "Upload Video Action" --> B
+    B -- "Initiate Upload Request" --> F
+    F --> G
+    G -- "Get Signed URL / Direct Upload" --> J
+    J -- "Upload Success / URL" --> G
+    G --> F
+    F -- "Store Video Metadata" --> I
+    I -- "Metadata Stored" --> F
+    F -- "Confirmation" --> B
+    J -- "New Object Event (Optional Trigger)" --> M
+    M -- "Processed Video / Metadata Update" --> J
+    M -- "Processed Video / Metadata Update" --> I
 
-    FrontendUI -- "Submits Login Credentials" --> LoginPage
-    LoginPage -- "Authenticates User" --> SupabaseAuth
-    SupabaseAuth -- "Returns Auth Token / Session" --> NextJSApp
+    %% AI Script Generation Flow
+    C -- "Generate Script Action" --> B
+    B -- "Generation Request" --> F
+    F -- "Fetch Video / Context" --> I
+    I -- "Video / Context Data" --> F
+    F -- "Call AI Service" --> K
+    K -- "Generated Script" --> F
+    F -- "Store Script" --> I
+    I -- "Script Stored" --> F
+    F -- "Return Script" --> B
 
-    FrontendUI -- "Uploads Video" --> UploadAPI
-    UploadAPI -- "Stores File" --> SupabaseStorage
-    SupabaseStorage -- "File URL / ID" --> UploadAPI
-    UploadAPI -- "Triggers Processing" --> VideoProcessingLogic
-    VideoProcessingLogic -- "Updates Video Metadata" --> SupabaseDB
+    %% AI Hashtag Generation Flow
+    C -- "Generate Hashtags Action" --> B
+    B -- "Generation Request" --> F
+    F -- "Fetch Video / Script Context" --> I
+    I -- "Video / Script Data" --> F
+    F -- "Call AI Service" --> L
+    L -- "Generated Hashtags" --> F
+    F -- "Store Hashtags" --> I
+    I -- "Hashtags Stored" --> F
+    F -- "Return Hashtags" --> B
 
-    FrontendUI -- "Requests Script Generation" --> GenerateScriptAPI
-    GenerateScriptAPI -- "Sends Video Context / Prompt" --> AIMLService
-    AIMLService -- "Returns Generated Script" --> GenerateScriptAPI
-    GenerateScriptAPI -- "Stores Script Data" --> SupabaseDB
+    %% General Data Fetching / Interaction
+    B -- "Load Page Data" --> E
+    E --> G
+    G -- "Query Data" --> I
+    I -- "Return Data" --> G
+    G --> E
+    E -- "Render Data" --> B
 
-    %% Data Fetching and Rendering
-    NextJSApp -- "Fetches Application Data" --> SupabaseDB
-    SupabaseDB -- "Application Data" --> NextJSApp
-    NextJSApp -- "Renders UI / Data" --> FrontendUI
+    %% Supabase SDK bridging Next.js Application and Supabase Cloud
+    F --> G
+    E --> G
+    G --> H
+    G --> I
+    G --> J
 ```
 
 *Last updated automatically by Gemini.*

@@ -1,5 +1,14 @@
 ## [2026-04-11] - Auto-Generated Update
 
+**Features:**
+*   Implemented `StudioContext` for persistent state management within the application.
+*   Introduced a new AI-powered hashtag generation tool, enabling users to upload videos and receive intelligent, categorized hashtag suggestions. This feature includes user authentication, credit management, and video optimization.
+*   Added `.clinerules` to establish comprehensive development policies, git workflow, and AI agent guardrails.
+
+---
+
+## [2026-04-11] - Auto-Generated Update
+
 Implemented a global dark/light theme toggle, accompanied by a significant UI overhaul across the login and main application pages to enhance visual consistency and user experience. The guest upgrade toast notification now utilizes the unified `handleUpgrade` action.
 
 ---
