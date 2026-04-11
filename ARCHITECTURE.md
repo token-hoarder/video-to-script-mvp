@@ -2,60 +2,57 @@
 
 ```mermaid
 graph LR
-    subgraph Client["Client / Browser"]
-        U["User Interaction"]
-        FEUI["Frontend UI / Pages"]
+    subgraph "Client / Browser"
+        User["User Interaction"]
+        FrontendUI["Frontend UI / Pages"]
     end
 
-    subgraph NextApp["Next.js Application"]
-        NJS["Next.js Server"]
-        NJSAuth["Auth Middleware (Supabase)"]
-        APILogin["Login API / Server Action"]
-        APIUploadURL["Upload URL API"]
-        APIGenScript["Generate Script API"]
+    subgraph "Next.js Application"
+        NextJSApp["Next.js Server / Client Runtime"]
+        AuthMiddleware["Auth Middleware"]
+        LoginPage["Login Page / Server Actions"]
+        UploadAPI["Upload API (e.g., /api/upload-url)"]
+        GenerateScriptAPI["Generate Script API (e.g., /api/generate-script)"]
+        VideoProcessingLogic["Video Processing Logic"]
     end
 
-    subgraph Supabase["Supabase Cloud"]
-        SBAuth["Supabase Auth"]
-        SBDb["Supabase Database"]
-        SBStorage["Supabase Storage"]
+    subgraph "Supabase Cloud"
+        SupabaseAuth["Supabase Authentication"]
+        SupabaseDB["Supabase Database"]
+        SupabaseStorage["Supabase Storage"]
     end
 
-    subgraph External["External Services"]
-        ExAI["External AI Service"]
+    subgraph "External Services"
+        AIMLService["AI/ML Service (e.g., LLM)"]
     end
 
-    %% Initial Page Load / Authentication Flow
-    U --> FEUI
-    FEUI -- "Page Request" --> NJS
-    NJS --> NJSAuth
-    NJSAuth -- "Validate Session / Auth Cookie" --> SBAuth
-    SBAuth -- "Session Valid" --> NJS
-    NJS -- "Render Page" --> FEUI
-    NJSAuth -- "Redirect to Login Page" --> FEUI
+    %% User Request Flows
+    User --> FrontendUI
+    FrontendUI -- "Initial Page Load / Navigation" --> NextJSApp
 
-    %% Login/Signup Flow
-    FEUI -- "Login/Signup Form Submit" --> APILogin
-    APILogin -- "Authenticate User" --> SBAuth
-    SBAuth -- "Return User Session" --> APILogin
-    APILogin -- "Set Session Cookie / Redirect" --> FEUI
+    NextJSApp -- "Authorizes Request" --> AuthMiddleware
+    AuthMiddleware -- "Validates Session" --> SupabaseAuth
+    SupabaseAuth -- "Session Status / User ID" --> NextJSApp
 
-    %% Video Upload Flow
-    FEUI -- "Request Pre-signed Upload URL" --> APIUploadURL
-    APIUploadURL -- "Generate Signed URL" --> SBStorage
-    SBStorage -- "Return Signed URL" --> APIUploadURL
-    APIUploadURL -- "Send Signed URL" --> FEUI
-    FEUI -- "Direct Video Upload" --> SBStorage
-    SBStorage -- "Video Stored / Trigger" --> SBDb["Supabase Database"]
+    FrontendUI -- "Submits Login Credentials" --> LoginPage
+    LoginPage -- "Authenticates User" --> SupabaseAuth
+    SupabaseAuth -- "Returns Auth Token / Session" --> NextJSApp
 
-    %% AI Script Generation Flow
-    FEUI -- "Trigger Script Generation" --> APIGenScript
-    APIGenScript -- "Fetch Video Metadata / Context" --> SBDb
-    APIGenScript -- "Call External AI Model" --> ExAI
-    ExAI -- "Return Generated Script" --> APIGenScript
-    APIGenScript -- "Store Script in DB" --> SBDb
-    SBDb -- "Script Saved" --> APIGenScript
-    APIGenScript -- "Return Script to Client" --> FEUI
+    FrontendUI -- "Uploads Video" --> UploadAPI
+    UploadAPI -- "Stores File" --> SupabaseStorage
+    SupabaseStorage -- "File URL / ID" --> UploadAPI
+    UploadAPI -- "Triggers Processing" --> VideoProcessingLogic
+    VideoProcessingLogic -- "Updates Video Metadata" --> SupabaseDB
+
+    FrontendUI -- "Requests Script Generation" --> GenerateScriptAPI
+    GenerateScriptAPI -- "Sends Video Context / Prompt" --> AIMLService
+    AIMLService -- "Returns Generated Script" --> GenerateScriptAPI
+    GenerateScriptAPI -- "Stores Script Data" --> SupabaseDB
+
+    %% Data Fetching and Rendering
+    NextJSApp -- "Fetches Application Data" --> SupabaseDB
+    SupabaseDB -- "Application Data" --> NextJSApp
+    NextJSApp -- "Renders UI / Data" --> FrontendUI
 ```
 
 *Last updated automatically by Gemini.*

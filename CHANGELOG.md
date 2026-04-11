@@ -1,5 +1,11 @@
 ## [2026-04-11] - Auto-Generated Update
 
+Implemented a global dark/light theme toggle, accompanied by a significant UI overhaul across the login and main application pages to enhance visual consistency and user experience. The guest upgrade toast notification now utilizes the unified `handleUpgrade` action.
+
+---
+
+## [2026-04-11] - Auto-Generated Update
+
 feat: Revamped authentication system
 
 *   Introduced a new authentication flow with Google OAuth integration for both sign-in and anonymous user upgrades.
