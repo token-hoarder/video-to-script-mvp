@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useGuestAuth } from "@/hooks/useGuestAuth";
 import { CreditBadge } from "@/components/usage-guard";
 import { createClient } from "@/utils/supabase/client";
+import { logout } from "@/app/login/actions";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -165,18 +166,84 @@ export default function Home() {
   };
 
   const handleLogout = async () => {
-    console.log('DEBUG_AUTH: handleLogout() triggered — calling supabase.auth.signOut({ scope: global })');
-    const { error } = await supabase.auth.signOut({ scope: 'global' });
-    if (error) {
-      console.error('DEBUG_AUTH: signOut() FAILED —', error.message);
-    } else {
-      console.log('DEBUG_AUTH: signOut() OK — invalidating Router Cache then hard-navigating to /');
+    console.log('DEBUG_AUTH: handleLogout() triggered — calling server action to destroy cookie');
+    await logout();
+  };
+
+  const uploadVideoIfNeeded = async (): Promise<string | null> => {
+    if (uploadedVideoUrl) return uploadedVideoUrl;
+    if (!file) {
+      toast.error('Please select a video first');
+      return null;
     }
-    // Step 1: Tell Next.js to discard the Router Cache.
-    //         This forces middleware to re-run with the now-cleared auth cookie.
-    router.refresh();
-    // Step 2: Hard navigation — avoids reload() racing the async cookie clear.
-    window.location.href = '/';
+    if (!user) {
+      toast.error('Session not ready. Please refresh.');
+      return null;
+    }
+
+    let fileToUpload = file;
+    if (needsOptimization(file)) {
+      toast.info('Optimizing for AI Analysis...');
+      setCompressionProgress(0);
+      try {
+        fileToUpload = await optimizeVideoForAI(file, (progress) => {
+          setCompressionProgress(progress);
+        });
+      } catch (compressionErr: any) {
+        toast.error('Video optimization failed. Uploading original file instead.', {
+          description: compressionErr?.message,
+        });
+        fileToUpload = file;
+      } finally {
+        setCompressionProgress(null);
+      }
+    }
+
+    const fileExt = 'mp4';
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `${user.id}/${fileName}`;
+
+    toast.info('Uploading to secure storage...');
+    console.log('DEBUG: Fetching /api/upload-url...');
+
+    const uploadUrlRes = await fetch('/api/upload-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filePath })
+    });
+
+    console.log('DEBUG: Got response from /api/upload-url', uploadUrlRes.status);
+    const uploadUrlData = await uploadUrlRes.json();
+    console.log('DEBUG: uploadUrlData parsed', uploadUrlData);
+    
+    if (!uploadUrlRes.ok) {
+      throw new Error(uploadUrlData.error || 'Failed to generate secure upload link');
+    }
+
+    console.log('DEBUG: Starting direct fetch PUT upload...');
+    
+    // We bypass supabase.storage.uploadToSignedUrl because it is silently hanging/swallowing the true error.
+    // Native fetch gives us the exact network layer behavior.
+    const directUploadRes = await fetch(uploadUrlData.signedUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${uploadUrlData.token}`,
+        'Content-Type': fileToUpload.type || 'video/mp4',
+      },
+      body: fileToUpload
+    });
+
+    console.log('DEBUG: Direct upload finished. Status:', directUploadRes.status);
+
+    if (!directUploadRes.ok) {
+      const errText = await directUploadRes.text();
+      throw new Error(`Upload failed (Status ${directUploadRes.status}): ${errText}`);
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(filePath);
+    console.log('DEBUG: Final publicUrl generated:', publicUrl);
+    setUploadedVideoUrl(publicUrl);
+    return publicUrl;
   };
 
   const handleGenerateScript = async (slotId: string) => {
@@ -185,64 +252,10 @@ export default function Home() {
     try {
       setAnalyzingSlot(slotId);
       
-      let targetVideoUrl = uploadedVideoUrl;
-
-      // 1. Authenticate — user is always set (anonymous or registered via useGuestAuth)
-      if (!user) {
-        toast.error('Session not ready. Please refresh.');
-        return;
-      }
-
-      if (file && !targetVideoUrl) {
-        // 2a. Optimize large files client-side before upload
-        let fileToUpload = file;
-        if (needsOptimization(file)) {
-          toast.info('Optimizing for AI Analysis...');
-          setCompressionProgress(0);
-          try {
-            fileToUpload = await optimizeVideoForAI(file, (progress) => {
-              setCompressionProgress(progress);
-            });
-          } catch (compressionErr: any) {
-            toast.error('Video optimization failed. Uploading original file instead.', {
-              description: compressionErr?.message,
-            });
-            // Fall back to the original file so the user is not blocked
-            fileToUpload = file;
-          } finally {
-            setCompressionProgress(null);
-          }
-        }
-
-        // 2b. Upload (compressed or original) to Supabase Storage
-        const fileExt = 'mp4';
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `${user.id}/${fileName}`;
-
-        toast.info('Uploading to secure storage...');
-
-        const uploadUrlRes = await fetch('/api/upload-url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filePath })
-        });
-
-        const uploadUrlData = await uploadUrlRes.json();
-        if (!uploadUrlRes.ok) {
-          throw new Error(uploadUrlData.error || 'Failed to generate secure upload link');
-        }
-
-        const { error: uploadError } = await supabase.storage
-          .from('videos')
-          .uploadToSignedUrl(filePath, uploadUrlData.token, fileToUpload);
-
-        if (uploadError) {
-          throw new Error(`Upload failed: ${uploadError.message}`);
-        }
-
-        const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(filePath);
-        targetVideoUrl = publicUrl;
-        setUploadedVideoUrl(publicUrl);
+      const targetVideoUrl = await uploadVideoIfNeeded();
+      if (!targetVideoUrl) {
+         setAnalyzingSlot(null);
+         return;
       }
 
       toast.info(`Drafting Script...`);
@@ -337,18 +350,24 @@ export default function Home() {
   };
 
   const handleGenerateCustomAI = async (prompt: string) => {
-    if (!uploadedVideoUrl) return;
+    if (!file && !uploadedVideoUrl) return;
 
     try {
       setRefiningSlot('custom_ai'); // reuse refiningSlot for localized loading tracking
       
+      const targetVideoUrl = await uploadVideoIfNeeded();
+      if (!targetVideoUrl) {
+         setRefiningSlot(null);
+         return;
+      }
+
       const response = await fetch('/api/generate-script', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-           fileUrl: uploadedVideoUrl, 
+           fileUrl: targetVideoUrl, 
            customPrompt: prompt
         }),
       });
@@ -393,10 +412,12 @@ export default function Home() {
           {/* Credit badge — shown only for anonymous (Preview Mode) users */}
           <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={upgradeToGoogle} />
           {!isGuest ? (
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-zinc-400 hover:text-white rounded-full transition-colors">
-              <LogOut className="w-4 h-4 mr-2" />
-              Log out
-            </Button>
+            <form action={logout}>
+              <Button type="submit" variant="ghost" size="sm" className="text-zinc-400 hover:text-white rounded-full transition-colors">
+                <LogOut className="w-4 h-4 mr-2" />
+                Log out
+              </Button>
+            </form>
           ) : (
             <Button
               variant="ghost"
