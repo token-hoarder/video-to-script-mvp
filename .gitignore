@@ -50,3 +50,8 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 .aider*
+docs/stitch/UI/DESIGN.md
+docs/stitch/DESIGN.md
+docs/stitch/Hashtag Page/Hashtag Page.html
+docs/stitch/Landing Page/Landing Page code.html
+docs/stitch/Studio Page/code.html

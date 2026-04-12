@@ -48,15 +48,16 @@ export function CreditBadge({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.04 }}
       whileTap={{ scale: 0.97 }}
-      className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 dark:bg-amber-950/40 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 backdrop-blur-sm transition-colors hover:border-amber-500/40 hover:bg-amber-500/20 dark:hover:bg-amber-900/50"
+      className="inline-flex items-center gap-1.5 rounded-full bg-[#fff4de] dark:bg-[#3d2700] px-3 py-1 text-xs font-semibold text-[#8b5a00] dark:text-[#ffca68] backdrop-blur-sm transition-all hover:bg-[#ffeac2] dark:hover:bg-[#523400] shadow-[0_4px_12px_rgba(234,179,8,0.1)]"
       aria-label={`${credits} analyses remaining — click to unlock more`}
       id="credit-badge"
     >
-      <Sparkles className="h-3 w-3 text-amber-400" aria-hidden />
+      <span className="material-symbols-outlined text-[14px]" aria-hidden>flare</span>
       {credits > 0 ? (
         <span>
           ✦ <span className="font-semibold tabular-nums">{credits}</span>{' '}
-          {credits === 1 ? 'analysis' : 'analyses'} left
+          <span className="hidden sm:inline">{credits === 1 ? 'analysis' : 'analyses'} left</span>
+          <span className="sm:hidden">left</span>
         </span>
       ) : (
         <span className="text-destructive dark:text-rose-300">No analyses left</span>
