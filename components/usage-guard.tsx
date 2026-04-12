@@ -13,6 +13,7 @@
  */
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Lock, Zap } from 'lucide-react';
 
@@ -39,7 +40,19 @@ export function CreditBadge({
   isGuest,
   onUpgrade,
 }: Pick<UsageGuardProps, 'credits' | 'isGuest' | 'onUpgrade'>) {
-  if (!isGuest || credits === null) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted || !isGuest) return null;
+
+  if (credits === null) {
+    return (
+      <div className="inline-flex items-center gap-1.5 rounded-full bg-[#fff4de] dark:bg-[#3d2700] px-3 py-1 text-xs font-semibold text-[#8b5a00] dark:text-[#ffca68] backdrop-blur-sm animate-pulse shadow-[0_4px_12px_rgba(234,179,8,0.1)]">
+        <span className="material-symbols-outlined text-[14px]">flare</span>
+        <span>✦ 3 left</span>
+      </div>
+    );
+  }
 
   return (
     <motion.button

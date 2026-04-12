@@ -370,36 +370,38 @@ export default function Home() {
 
         {!videoPreviewUrl ? (
           /* Empty State (Center Panel) */
-          <section className="flex-1 overflow-y-auto p-4 md:p-8 flex items-center justify-center relative">
-              <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-primary/5 via-background to-background pointer-events-none" />
-              <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
-              
-              <div className="max-w-2xl w-full flex flex-col items-center text-center relative z-10 px-4">
-                 <span className="text-[10px] sm:text-[11px] font-bold text-primary uppercase tracking-[0.2em] block mb-4">ViralScript</span>
-                 <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] font-bold tracking-tight text-on-surface leading-tight mb-5">
-                   Script your video.
-                 </h1>
-                 <p className="text-on-surface-variant text-base sm:text-lg max-w-xl mx-auto font-light mb-10">
-                   Drop your footage — our AI watches it, then writes a time-synced viral script matched perfectly to your visual cuts.
-                 </p>
-                 
-                 <label 
-                   onDragOver={(e) => e.preventDefault()}
-                   onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files?.[0]) handleFileSelect(e.dataTransfer.files[0]); }}
-                   className="relative block w-full bg-surface-container-lowest rounded-[2rem] border-2 border-dashed border-primary-container hover:border-primary transition-colors flex flex-col items-center justify-center p-12 overflow-hidden group cursor-pointer shadow-sm hover:shadow-xl hover:shadow-primary/5"
-                 >
-                    <input type="file" ref={fileInputRef} className="hidden" accept="video/mp4,video/quicktime" onChange={(e) => { if(e.target.files?.[0]) handleFileSelect(e.target.files[0]); }} />
-                    <div className="w-24 h-24 bg-primary-container/30 rounded-full flex items-center justify-center mb-6 shadow-[0_20px_40px_rgba(0,83,221,0.12)] text-primary group-hover:scale-110 transition-transform">
-                      <span className="material-symbols-outlined text-5xl">cloud_upload</span>
-                    </div>
-                    <h2 className="text-2xl font-bold text-on-surface mb-2">Drop your video here</h2>
-                    <p className="text-on-surface-variant text-sm font-medium">Supports MP4, MOV up to 500MB</p>
-                 </label>
-              </div>
-          </section>
+          <div className="flex-1 flex overflow-hidden relative">
+            <section className="flex-1 overflow-y-auto p-4 md:p-8 flex items-center justify-center relative">
+                <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-primary/5 via-background to-background pointer-events-none" />
+                <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
+                
+                <div className="max-w-2xl w-full flex flex-col items-center text-center relative z-10 px-4">
+                   <span className="text-[10px] sm:text-[11px] font-bold text-primary uppercase tracking-[0.2em] block mb-4">ViralScript</span>
+                   <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] font-bold tracking-tight text-on-surface leading-tight mb-5">
+                     Script your video.
+                   </h1>
+                   <p className="text-on-surface-variant text-base sm:text-lg max-w-xl mx-auto font-light mb-10">
+                     Drop your footage — our AI watches it, then writes a time-synced viral script matched perfectly to your visual cuts.
+                   </p>
+                   
+                   <label 
+                     onDragOver={(e) => e.preventDefault()}
+                     onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files?.[0]) handleFileSelect(e.dataTransfer.files[0]); }}
+                     className="relative block w-full bg-surface-container-lowest rounded-[2rem] border-2 border-dashed border-primary-container hover:border-primary transition-colors flex flex-col items-center justify-center p-12 overflow-hidden group cursor-pointer shadow-sm hover:shadow-xl hover:shadow-primary/5"
+                   >
+                      <input type="file" ref={fileInputRef} className="hidden" accept="video/mp4,video/quicktime" onChange={(e) => { if(e.target.files?.[0]) handleFileSelect(e.target.files[0]); }} />
+                      <div className="w-24 h-24 bg-primary-container/30 rounded-full flex items-center justify-center mb-6 shadow-[0_20px_40px_rgba(0,83,221,0.12)] text-primary group-hover:scale-110 transition-transform">
+                        <span className="material-symbols-outlined text-5xl">cloud_upload</span>
+                      </div>
+                      <h2 className="text-2xl font-bold text-on-surface mb-2">Drop your video here</h2>
+                      <p className="text-on-surface-variant text-sm font-medium">Supports MP4, MOV up to 500MB</p>
+                   </label>
+                </div>
+            </section>
+          </div>
         ) : (
           /* Active Workspace (Center + Right) */
-          <>
+          <div className="flex flex-col lg:flex-row flex-1 overflow-hidden relative">
             {/* Center Panel: Video Preview */}
             <section className="flex-1 flex flex-col overflow-hidden bg-background relative z-10 p-4 md:p-6 lg:p-8">
                <div className="flex justify-between items-end mb-4 shrink-0">
@@ -416,7 +418,7 @@ export default function Home() {
                </div>
 
                {/* Video Player Surface */}
-               <div className="relative flex-1 bg-inverse-surface rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-hidden group border border-outline-variant/10 flex items-center justify-center min-h-[40vh] md:min-h-0">
+               <div className="relative flex-1 bg-[#0a0f12] dark:bg-[#000000] rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-hidden group border border-outline-variant/10 flex items-center justify-center min-h-[40vh] md:min-h-0">
                   <video 
                      ref={videoRef}
                      src={videoPreviewUrl} 
@@ -425,7 +427,7 @@ export default function Home() {
                      playsInline
                      preload="metadata"
                      disablePictureInPicture
-                     className="w-full h-full object-contain bg-black/50"
+                     className="w-full h-full object-contain"
                      onTimeUpdate={handleTimeUpdate}
                      onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration)}
                   />
@@ -512,7 +514,7 @@ export default function Home() {
                  refiningSlot={refiningSlot}
                />
             </div>
-          </>
+          </div>
         )}
       </main>
     </div>

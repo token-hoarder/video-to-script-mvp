@@ -17,8 +17,8 @@ export function AppHeader() {
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#f6fafe]/60 dark:bg-[#0b141a]/60 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,83,221,0.08)]">
-      <div className="flex justify-between items-center px-4 md:px-8 h-16 w-full gap-2">
-        <div className="flex items-center gap-4 md:gap-8 flex-1">
+      <div className="flex justify-between items-center px-4 md:px-8 h-16 w-full gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-4 md:gap-8 shrink-0">
           <Link href="/" className="text-xl font-bold tracking-tighter text-primary dark:text-[#ffffff] hover:opacity-80 transition-opacity">
             ViralScript
           </Link>
@@ -39,7 +39,7 @@ export function AppHeader() {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 md:gap-4 flex-1">
+        <div className="flex items-center justify-end gap-2 md:gap-4 shrink-0">
           <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={handleUpgrade} />
           
           {!isGuest ? (
@@ -73,7 +73,9 @@ export function AppHeader() {
             </button>
           )}
           
-          <ThemeToggle />
+          <div className="shrink-0">
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </nav>
