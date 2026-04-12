@@ -460,11 +460,41 @@ export default function Home() {
         {!videoPreviewUrl ? (
           <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full relative z-10 py-12">
              <div className="flex flex-col items-center mb-10">
-               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-center mb-6 text-balance leading-tight">
+               {/* Eyebrow badge */}
+               <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-5">
+                 <span className="relative flex h-1.5 w-1.5">
+                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
+                 </span>
+                 AI-powered · No editing skills needed
+               </div>
+
+               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-center mb-5 text-balance leading-tight">
                   <span className="text-transparent bg-clip-text bg-gradient-to-br from-foreground to-foreground/60">Script</span> your video.
                </h1>
-               <p className="text-muted-foreground text-center max-w-xl text-lg sm:text-xl text-balance">
-                 Generate viral TikTok & Reels scripts perfectly matched to the visual cuts in your footage.
+               <p className="text-muted-foreground text-center max-w-xl text-lg sm:text-xl text-balance mb-8">
+                 Drop your TikTok or Reels footage — our AI watches it, then writes a time-synced viral script matched perfectly to your visual cuts.
+               </p>
+
+               {/* Feature pills */}
+               <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+                 <div className="flex items-center gap-2 rounded-full bg-muted px-3.5 py-1.5 text-sm text-foreground border border-border">
+                   <svg className="w-4 h-4 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.882V15.118a1 1 0 01-1.447.91L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>
+                   AI reads your video
+                 </div>
+                 <div className="flex items-center gap-2 rounded-full bg-muted px-3.5 py-1.5 text-sm text-foreground border border-border">
+                   <svg className="w-4 h-4 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                   Captions sync to cuts
+                 </div>
+                 <div className="flex items-center gap-2 rounded-full bg-muted px-3.5 py-1.5 text-sm text-foreground border border-border">
+                   <svg className="w-4 h-4 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" /></svg>
+                   4 style modes + custom
+                 </div>
+               </div>
+
+               {/* Trust line */}
+               <p className="text-xs text-muted-foreground/60 text-center">
+                 Try free — no account needed · 3 analyses included
                </p>
              </div>
              <div className="w-full p-1 rounded-2xl bg-gradient-to-b from-white/5 to-transparent relative group">
@@ -472,6 +502,7 @@ export default function Home() {
                 <UploadZone onFileSelect={handleFileSelect} disabled={analyzingSlot !== null} />
              </div>
           </div>
+
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
              {/* Left/Center Column: Studio Player */}
