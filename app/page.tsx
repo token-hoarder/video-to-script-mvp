@@ -53,11 +53,11 @@ export default function LandingPage() {
             {/* Floating Visual Element */}
             <div className="mt-20 relative mx-auto max-w-4xl antigravity-float">
               <div className="aspect-video rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 bg-surface-container-lowest p-2">
-                <img 
-                  className="w-full h-full object-cover rounded-2xl" 
-                  alt="Minimalist user interface showing a video script editor" 
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr0uLvRsPqIee_gsyh_HN5JnD2A92hOKBpP9UjNkrwoxJ3a0kOnjIRf8uNzDMdRZRrz4CTz76nhh5w0J5h2WfaDv2nA3axFTBH5lTnnSZisZWWyIBl3fTRzyQ_d0eIQjtflo1kIZhdefYXW-Qavbeepqz39X8w9FK76bNCrZ_3toAzAo2kU45jbmH-PJDB1ZHM7QTpb5Gz2xsA_JeTrL5FV0zZSCdL74mPj_4bJnjZH9fZ-tu3Ed7Nwd84NcCQA42mAUdO3u7XPPk-" 
-                />
+                <div className="w-full h-full rounded-2xl bg-gradient-to-br from-surface-container-high to-background border border-outline-variant/10 flex flex-col items-center justify-center gap-4 text-primary relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,83,221,0.05)_0%,transparent_100%)]"></div>
+                  <span className="material-symbols-outlined text-6xl opacity-80" style={{ fontVariationSettings: "'FILL' 1" }}>video_library</span>
+                  <span className="text-[10px] font-bold tracking-[0.3em] uppercase opacity-60">Studio Interface Preview</span>
+                </div>
               </div>
             </div>
           </div>
@@ -84,12 +84,15 @@ export default function LandingPage() {
                     Our AI analyzes millions of top-performing videos to structure your script with the perfect narrative arc. From the first second to the final call to action.
                   </p>
                 </div>
-                <div className="mt-8 rounded-2xl overflow-hidden aspect-[16/7] bg-surface-container-low">
-                  <img 
-                    className="w-full h-full object-cover opacity-80" 
-                    alt="abstract visual representation of a data sequence" 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuA--gIa1-ymAGA9BIlv1-sTdb_vPsmDz9xtVujnvr8CJiMZ_IDsB6feJE-Da9qhYS2sdAaLBbrksabs1oBC2tOb-3s4zBHFFvPE_iIi8c6kxT13R8GFfRdywgt6dPL9IKrCsP0JZ8CQvu0GpqunFQjfBLUYI9YI9LVms7OnUZx_57Z6mR9d4d3PYK5u-dDL3jLZfUmSLLo6HuFV6Pi26bhAkr6lXxGElDkKnTG4_M2iW49T8D-NIhjy8Ylgne1a8yuU03qIWl-v6uA_" 
-                  />
+                <div className="mt-8 rounded-2xl overflow-hidden aspect-[16/7] bg-gradient-to-r from-primary/5 to-secondary-container/10 border border-outline-variant/5 flex flex-col items-center justify-center">
+                   <div className="flex gap-2 items-end h-16 opacity-80">
+                      <div className="w-4 bg-primary rounded-t-md animate-pulse h-full"></div>
+                      <div className="w-4 bg-primary/80 rounded-t-md animate-pulse h-3/4" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-4 bg-primary/60 rounded-t-md animate-pulse h-1/2" style={{ animationDelay: '300ms' }}></div>
+                      <div className="w-4 bg-primary/40 rounded-t-md animate-pulse h-full" style={{ animationDelay: '450ms' }}></div>
+                      <div className="w-4 bg-secondary rounded-t-md animate-pulse h-2/3" style={{ animationDelay: '600ms' }}></div>
+                   </div>
+                   <span className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mt-4 opacity-50">Algorithmic Sequence</span>
                 </div>
               </div>
             </div>
@@ -130,12 +133,9 @@ export default function LandingPage() {
 
             {/* Medium Feature Card */}
             <div className="md:col-span-8 bg-surface-container-lowest rounded-3xl p-8 md:p-12 shadow-[0_20px_40px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgba(0,83,221,0.05)] flex items-center gap-8 border border-outline-variant/10 transition-all">
-              <div className="hidden lg:block w-1/3 aspect-square rounded-2xl overflow-hidden">
-                <img 
-                  className="w-full h-full object-cover" 
-                  alt="professional content creator studio setup" 
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuCQE7AxCMzRDKKm7Ia20PQNop_0a4-HvrJRipfDf_NBnga0PPr_DYbPoS1i2JEYSLLlCeaa4n3T5aH1GoNPqDmmQp9ZGEiwy8a9lsS9Mc_hcbcxh3-rLkKfVSCIVHjW7SDqGrrw-qgXal2sJn8Eldxki65kQGVcUMHNtKBHhhvIzmtm6kCWcaNYNTDFaqLXtxgux15tOcVNEIM3oxJvSuFFNn_p0SDRf5WCbnY5vKT4vHqtPktKUXJY8LV0Q7KcSRzPkwvhqWe6Vj" 
-                />
+              <div className="hidden lg:flex w-1/3 aspect-square rounded-2xl bg-gradient-to-tr from-surface-container to-surface-container-high border border-outline-variant/10 items-center justify-center relative overflow-hidden group">
+                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <span className="material-symbols-outlined text-7xl text-on-surface-variant/40 group-hover:scale-110 group-hover:text-primary transition-all duration-500 font-light">camera_video</span>
               </div>
               <div className="flex-1">
                 <h3 className="text-2xl font-bold mb-4">Project Studio V1.0</h3>
