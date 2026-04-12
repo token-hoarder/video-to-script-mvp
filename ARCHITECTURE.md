@@ -4,62 +4,64 @@
 graph LR
     subgraph "Client / Browser"
         U["User"]
-        FE["Frontend UI"]
+        FUI["Frontend UI (Pages, Forms)"]
     end
 
     subgraph "Next.js Application"
         AM["Auth Middleware"]
-        ASA["Auth Server Actions"]
-        subgraph "API Routes"
-            UAPI["Upload Video API"]
-            GSAPI["Generate Script API"]
-            GHAPI["Generate Hashtags API"]
-        end
+        SAA["Supabase Auth Server Actions"]
+        VUA["Video Upload API"]
+        CGA["Content Generation API"]
+        DF["Data Fetching / Server Components"]
     end
 
     subgraph "Supabase Cloud"
-        SA["Supabase Auth"]
-        SD["Supabase Database"]
+        SA["Supabase Authentication"]
+        SDB["Supabase Database"]
         SS["Supabase Storage"]
     end
 
     subgraph "External Services"
-        EAI["External AI Service"]
+        AIML["AI/ML Language Model"]
     end
 
-    %% User Interaction and Auth Flow
-    U -- "Interacts" --> FE
-    FE -- "Login Request (Client/Server Actions)" --> ASA
-    ASA -- "Authenticate User" --> SA
-    SA -- "Session/Token" --> ASA
-    ASA -- "Set Cookie / Redirect" --> FE
-    AM -- "Verify Session" --> SA
-    SA -- "Session Valid" --> AM
-    AM -- "Allow Access to Page" --> FE
+    %% Flow 1: Initial Page Load & Auth Check
+    U --> FUI
+    FUI -- "Page Request" --> AM
+    AM -- "Validate Session" --> SA
+    SA -- "Session Status" --> AM
+    AM -- "Render Page" --> DF
+    DF -- "Fetch Initial Data" --> SDB
+    SDB -- "Data" --> DF
+    DF --> FUI
 
-    %% Content Upload Flow
-    FE -- "Video Upload Request" --> UAPI
-    UAPI -- "Get Signed URL / Upload File" --> SS
-    SS -- "Upload Acknowledge / URL" --> UAPI
-    UAPI -- "Store Video Metadata" --> SD
-    SD -- "Metadata Stored" --> UAPI
-    UAPI -- "Success Response" --> FE
+    %% Flow 2: User Login / Authentication
+    FUI -- "Login / SignUp Request" --> SAA
+    SAA -- "Authenticate User" --> SA
+    SA -- "User Session" --> SAA
+    SAA -- "Set Auth Cookies" --> FUI
 
-    %% AI Generation Flow (Script)
-    FE -- "Request Script Generation" --> GSAPI
-    GSAPI -- "Invoke LLM for Script" --> EAI
-    EAI -- "Generated Script Content" --> GSAPI
-    GSAPI -- "Store Script Data" --> SD
-    SD -- "Script Data Stored" --> GSAPI
-    GSAPI -- "Return Script to UI" --> FE
+    %% Flow 3: Video Upload Process
+    FUI -- "Request Signed Upload URL" --> VUA
+    VUA -- "Generate Signed URL" --> SS
+    SS -- "Signed URL" --> VUA
+    VUA -- "Return Signed URL" --> FUI
+    FUI -- "Direct Video Upload" --> SS
+    SS -- "Upload Confirmation / Metadata" --> SDB
 
-    %% AI Generation Flow (Hashtags)
-    FE -- "Request Hashtag Generation" --> GHAPI
-    GHAPI -- "Invoke LLM for Hashtags" --> EAI
-    EAI -- "Generated Hashtags List" --> GHAPI
-    GHAPI -- "Store Hashtags Data" --> SD
-    SD -- "Hashtags Data Stored" --> GHAPI
-    GHAPI -- "Return Hashtags to UI" --> FE
+    %% Flow 4: Content Generation (Script / Hashtags)
+    FUI -- "Generate Content Request" --> CGA
+    CGA -- "Retrieve Context Data" --> SDB
+    SDB -- "Context Data" --> CGA
+    CGA -- "Query AI/ML Model" --> AIML
+    AIML -- "Generated Content" --> CGA
+    CGA -- "Store Results" --> SDB
+    SDB -- "Results Saved" --> CGA
+    CGA -- "Return Results" --> FUI
+
+    %% General Data Display / Updates
+    FUI -- "Display Data" --> U
+    SAA -- "Redirect/Update UI" --> FUI
 ```
 
 *Last updated automatically by Gemini.*

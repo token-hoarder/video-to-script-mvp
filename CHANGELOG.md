@@ -1,5 +1,15 @@
 ## [2026-04-12] - Auto-Generated Update
 
+*   **Introduced a unified app shell experience**, featuring a new left-hand navigation sidebar on the Hashtag Studio page.
+*   **Refined the user interface with updated color palettes** and consistent button styling across the application.
+*   **Enhanced visual clarity and navigation** with custom scrollbar styles and updated page descriptions.
+*   **Improved onboarding messaging** on the landing page with details on free usage.
+*   **Added functionality to easily remove uploaded videos** and reset results within the Hashtag Studio.
+
+---
+
+## [2026-04-12] - Auto-Generated Update
+
 ### Feat: Antigravity UI Design System & Video Upload Enhancements
 
 *   **Features:** Integrated the new "Antigravity" UI design system, establishing a comprehensive color palette and theme variables for both light and dark modes. Updated UI elements, notably hashtag chips, to align with the new design and incorporate Material Symbols for iconography.
