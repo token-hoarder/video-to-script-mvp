@@ -2,19 +2,26 @@ import { AuthButtons } from '@/components/auth-buttons'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { Film } from 'lucide-react'
+import { Film, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background text-foreground p-4 relative transition-colors duration-300">
 
-      {/* App branding top-left */}
-      <div className="absolute top-6 left-6 flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
-          <Film className="w-4 h-4 text-primary" />
+      {/* Navigation Back */}
+      <Link 
+        href="/" 
+        className="absolute top-6 left-6 flex items-center gap-2 group text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+          <Film className="w-4 h-4" />
         </div>
-        <span className="text-sm font-semibold text-foreground/80 tracking-tight">Studio Mode</span>
-      </div>
+        <div className="flex flex-col">
+          <span className="text-xs font-semibold tracking-tight">Studio Mode</span>
+          <span className="text-[10px] opacity-70 group-hover:opacity-100 italic transition-opacity">← Back to work</span>
+        </div>
+      </Link>
 
       {/* Theme Toggle */}
       <div className="absolute top-4 right-4">
@@ -60,6 +67,16 @@ export default function LoginPage() {
           {/* All buttons inside the same form context — no CardFooter split */}
           <AuthButtons />
         </form>
+
+        <div className="pt-2 text-center border-t border-border/50">
+          <Link 
+            href="/" 
+            className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-1 group"
+          >
+            <ArrowLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" />
+            Continue as Guest
+          </Link>
+        </div>
 
       </div>
     </div>

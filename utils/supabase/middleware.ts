@@ -60,6 +60,8 @@ export async function updateSession(request: NextRequest) {
   if (
     !user &&
     pathname !== '/' &&
+    !pathname.startsWith('/studio') &&
+    !pathname.startsWith('/hashtags') &&
     !pathname.startsWith('/login') &&
     !pathname.startsWith('/auth')
   ) {

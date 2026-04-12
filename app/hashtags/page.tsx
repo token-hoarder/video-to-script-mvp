@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { AppHeader } from '@/components/app-header';
 import { Clapperboard, Hash, Copy, Check, RefreshCw, Loader2, Sparkles, LogOut, Film, MessageSquarePlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -201,49 +202,7 @@ export default function HashtagsPage() {
       {/* Gradient bg accent */}
       <div className="absolute top-0 inset-x-0 h-72 bg-gradient-to-b from-primary/5 via-background to-background pointer-events-none" />
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header className="relative z-10 flex h-16 items-center justify-between border-b border-border px-6 shrink-0 bg-background/80 backdrop-blur-xl">
-        <div className="flex items-center gap-3 font-semibold text-xl tracking-tight">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-            <Film className="w-5 h-5 text-primary" />
-          </div>
-          <span className="text-foreground">Studio Mode</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Back to Script Studio */}
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
-          >
-            <Clapperboard className="w-3.5 h-3.5" />
-            Scripts
-          </Link>
-
-          <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={handleUpgrade} />
-
-          {!isGuest ? (
-            <form action={logout}>
-              <SubmitButton variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground rounded-full transition-colors" pendingText="Logging out…">
-                <LogOut className="w-4 h-4 mr-2" />
-                Log out
-              </SubmitButton>
-            </form>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleUpgrade}
-              disabled={isUpgrading}
-              className="text-amber-400 hover:text-amber-300 hover:bg-amber-950/40 rounded-full transition-colors text-xs font-medium"
-            >
-              Save my work →
-            </Button>
-          )}
-
-          <ThemeToggle />
-        </div>
-      </header>
+      <AppHeader />
 
       {/* ── Main Content ───────────────────────────────────────────────────── */}
       <main className="relative z-10 flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-6">
