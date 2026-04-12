@@ -145,7 +145,7 @@ Output ONLY valid JSON, no markdown:
 
       let responseText = result.response.text();
       responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-      const jsonOutput = JSON.parse(responseText) as { core: string[], trending: string[] };
+      const jsonOutput = JSON.parse(responseText) as { core: string[], trending: string[], cultural: string[] };
 
       // Clean up Gemini file
       await fileManager.deleteFile(uploadResponse.file.name);
