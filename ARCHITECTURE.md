@@ -2,77 +2,63 @@
 
 ```mermaid
 graph LR
-    %% Subgraphs for Bounded Contexts
     subgraph "Client / Browser"
         User["User Interaction"]
-        FrontendUI["Frontend UI (Pages & Components)"]
+        UI["Frontend UI"]
     end
 
     subgraph "Next.js Application"
-        NextJSApp["Next.js Server (Pages/Layouts)"]
-        AuthMiddleware["Auth Middleware (utils/supabase/middleware)"]
-        ServerActions["Server Actions (login/actions.ts)"]
-        APIRoutes["Next.js API Routes (app/api/...)"]
-        VideoProcessingUtility["Video Processing Utility (utils/video-compressor.ts)"]
+        AM["Auth Middleware"]
+        NSA["Next.js Server Actions"]
+        NAR["Next.js API Routes"]
+        SSC["Supabase Client/Server SDK"]
     end
 
     subgraph "Supabase Cloud"
-        SupabaseAuth["Supabase Authentication"]
-        SupabaseDB["Supabase Database"]
-        SupabaseStorage["Supabase Storage"]
+        SA["Supabase Auth"]
+        SD["Supabase Database"]
+        SS["Supabase Storage"]
     end
 
     subgraph "External Services"
-        AIMLService["External AI/ML Service"]
+        ESAI["AI Content Generation"]
+        ESVP["External Video Processing (Optional)"]
     end
 
-    %% Flow Diagram
-    User --> FrontendUI["Renders UI & Interacts"]
+    User -- "1. Access Page/Interact" --> UI
+    UI -- "2. Initial Request / Page Load" --> AM
+    AM -- "3. Authenticate Session" --> SA
+    SA -- "4. Session Valid/Invalid" --> AM
+    AM -- "5. Render UI (SSR/CSR)" --> UI
 
-    %% 1. Initial Load & Authentication Flow
-    FrontendUI -- "Request Page Load" --> NextJSApp["Render Server Component / Page"]
-    NextJSApp --> AuthMiddleware["Check Session & Permissions"]
-    AuthMiddleware -- "Auth Status" --> SupabaseAuth["Verify/Refresh Session"]
-    SupabaseAuth --> AuthMiddleware
-    AuthMiddleware --> NextJSApp["Serve Content / Redirect"]
-    NextJSApp --> FrontendUI
+    UI -- "6. User Login/Action" --> NSA
+    NSA -- "7. Authenticate User" --> SA
+    SA -- "8. Update Session / User Data" --> NSA
+    NSA -- "9. Update UI / Redirect" --> UI
 
-    FrontendUI -- "Login/Logout Action" --> ServerActions["Handle Auth Request"]
-    ServerActions --> SupabaseAuth["Authenticate User"]
-    SupabaseAuth --> ServerActions
-    ServerActions --> FrontendUI
+    UI -- "10. Initiate Video Upload" --> NAR
+    NAR -- "11. Request Signed Upload URL" --> SS
+    SS -- "12. Return Signed URL" --> NAR
+    NAR -- "13. Provide Signed URL" --> UI
+    UI -- "14. Direct Video Upload" --> SS
+    SS -- "15. Upload Confirmation" --> NAR
+    NAR -- "16. Save Video Metadata" --> SD
+    SD -- "17. Metadata Confirmation" --> NAR
+    NAR -- "18. Notify UI of Upload Success" --> UI
 
-    %% 2. Video Upload Flow
-    FrontendUI -- "Upload Video File" --> APIRoutes["/api/upload-url (Generate Signed URL)"]
-    APIRoutes --> SupabaseStorage["Provision Upload URL"]
-    SupabaseStorage --> APIRoutes
-    APIRoutes --> SupabaseDB["Store Video Metadata"]
-    SupabaseDB --> APIRoutes
-    APIRoutes --> FrontendUI["Confirm Upload & Display Status"]
+    UI -- "19. Request AI Script/Hashtags" --> NAR
+    NAR -- "20. Fetch Video Context / User Data" --> SD
+    SD -- "21. Context Data" --> NAR
+    NAR -- "22. Call External AI Service" --> ESAI
+    ESAI -- "23. Generated Content" --> NAR
+    NAR -- "24. Save Generated Content" --> SD
+    SD -- "25. Save Confirmation" --> NAR
+    NAR -- "26. Return Generated Content" --> UI
 
-    %% (Optional) Video Processing after upload or async
-    APIRoutes -- "Trigger Processing" --> VideoProcessingUtility["Compress/Process Video"]
-    VideoProcessingUtility --> SupabaseStorage["Store Processed Video"]
+    NAR -- "27. Trigger Video Processing (e.g., Compression)" --> ESVP
+    ESVP -- "28. Processed Video Output" --> SS
+    SS -- "29. Store Processed Video" --> SD
 
-    %% 3. Script Generation Flow
-    FrontendUI -- "Request Script Generation" --> APIRoutes["/api/generate-script"]
-    APIRoutes --> AIMLService["Request Script (LLM Interaction)"]
-    AIMLService -- "Generated Script" --> APIRoutes
-    APIRoutes --> SupabaseDB["Save Generated Script"]
-    SupabaseDB --> APIRoutes
-    APIRoutes --> FrontendUI["Display Script"]
-
-    %% 4. Hashtag Generation Flow
-    FrontendUI -- "Request Hashtag Generation" --> APIRoutes["/api/generate-hashtags"]
-    APIRoutes --> AIMLService["Request Hashtags (LLM Interaction)"]
-    AIMLService -- "Generated Hashtags" --> APIRoutes
-    APIRoutes --> SupabaseDB["Save Generated Hashtags"]
-    SupabaseDB --> APIRoutes
-    APIRoutes --> FrontendUI["Display Hashtags"]
-
-    %% 5. Data Retrieval for UI
-    NextJSApp -- "Fetch Data for Server Components" --> SupabaseDB["Retrieve Data (e.g., scripts, hashtags)"]
-    SupabaseDB --> NextJSApp
 ```
 
 *Last updated automatically by Gemini.*

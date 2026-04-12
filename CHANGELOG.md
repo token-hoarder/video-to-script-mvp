@@ -1,5 +1,12 @@
 ## [2026-04-12] - Auto-Generated Update
 
+- Implemented real-time upload progress tracking for media files.
+- Added ability to download saved hashtag sets as a text file.
+
+---
+
+## [2026-04-12] - Auto-Generated Update
+
 **Features:**
 *   Implemented key user experience improvements, including a concise landing page hero and optimized icon-first sidebar layouts for improved navigation and clarity.
 *   Enhanced light mode accessibility and readability through a comprehensive contrast audit, applying UI adjustments across the application, notably on the Hashtag Studio page.
