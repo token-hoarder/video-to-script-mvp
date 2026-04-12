@@ -177,7 +177,7 @@ export default function HashtagsPage() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const hasVideo = Boolean(uploadedVideoUrl || file);
+  const hasVideo = Boolean(uploadedVideoUrl || file || videoPreviewUrl);
 
   return (
     <div className="bg-background text-on-surface h-screen flex flex-col font-sans overflow-hidden transition-colors duration-300">
@@ -196,10 +196,10 @@ export default function HashtagsPage() {
                <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
                <span className="text-sm">AI Scripts</span>
              </Link>
-             <div className="flex items-center gap-3 p-3 bg-primary/10 text-primary rounded-xl font-bold transition-transform translate-x-1 cursor-default">
-               <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>tag</span>
-               <span className="text-sm">Hashtag Generator</span>
-             </div>
+              <div className="flex items-center gap-3 p-3 bg-primary/10 text-primary rounded-xl font-bold transition-transform translate-x-1 cursor-default">
+                <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>tag</span>
+                <span className="text-sm">Hashtag Generator</span>
+              </div>
              <div className="flex items-center gap-3 p-3 text-on-surface-variant/40 rounded-xl cursor-not-allowed font-semibold">
                <span className="material-symbols-outlined text-[20px]">video_library</span>
                <span className="text-sm">Media Library</span>
@@ -212,11 +212,17 @@ export default function HashtagsPage() {
           
           <div className="mt-auto p-4 bg-surface-container-low rounded-2xl flex items-center gap-3 border border-outline-variant/10">
              <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold shadow-inner">
-                {user ? user.email?.substring(0,2).toUpperCase() : 'G'}
+                {user ? (isGuest ? 'G' : user.email?.substring(0,2).toUpperCase()) : 'G'}
              </div>
              <div>
-                <p className="text-xs font-bold text-on-surface truncate max-w-[120px]">{user ? user.email : 'Guest Creator'}</p>
-                <p className="text-[10px] text-primary font-bold uppercase tracking-widest">{isGuest ? 'Preview Mode' : 'Pro Member'}</p>
+                {(!user || isGuest) ? (
+                  <p className="text-sm font-bold text-on-surface">Guest Mode</p>
+                ) : (
+                  <>
+                    <p className="text-xs font-bold text-on-surface truncate max-w-[120px]">{user.email}</p>
+                    <p className="text-[10px] text-primary font-bold uppercase tracking-widest">Pro Member</p>
+                  </>
+                )}
              </div>
           </div>
         </aside>
@@ -329,18 +335,21 @@ export default function HashtagsPage() {
                         <button 
                           onClick={(e) => { e.preventDefault(); runAnalysis(); }}
                           disabled={isAnalyzing}
-                          className="bg-primary hover:bg-primary-dim text-on-primary px-10 py-4 rounded-full font-bold text-lg tracking-tight shadow-[0_24px_48px_rgba(0,83,221,0.3)] active:scale-95 transition-all flex items-center gap-3 disabled:opacity-70 disabled:scale-100 relative z-20"
+                          className="bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary hover:bg-primary-container/80 dark:hover:bg-primary-dim px-10 py-4 rounded-full font-bold text-lg tracking-tight shadow-[0_24px_48px_rgba(0,83,221,0.1)] active:scale-95 transition-all flex items-center gap-3 disabled:opacity-70 disabled:scale-100 relative z-20"
                         >
                           {isAnalyzing ? "Analyzing..." : "Analyze Hashtags"}
-                          <span className={`material-symbols-outlined text-2xl ${isAnalyzing ? "animate-spin" : ""}`} style={{ fontVariationSettings: "'FILL' 1" }}>{isAnalyzing ? "autorenew" : "auto_awesome"}</span>
+                          <span className={`material-symbols-outlined text-2xl ${isAnalyzing ? "animate-spin" : ""}`} style={{ fontVariationSettings: "'FILL' 1" }}>{isAnalyzing ? "progress_activity" : "auto_awesome"}</span>
                         </button>
                       ) : (
-                        <div className="bg-primary hover:bg-primary-dim text-on-primary px-10 py-4 rounded-full font-bold text-lg tracking-tight shadow-[0_24px_48px_rgba(0,83,221,0.3)] transition-all flex items-center gap-3">
+                        <div className="bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary hover:bg-primary-container/80 dark:hover:bg-primary-dim px-10 py-4 rounded-full font-bold text-lg tracking-tight shadow-[0_24px_48px_rgba(0,83,221,0.1)] transition-all flex items-center gap-3">
                           Browse Files
                         </div>
                       )}
                       {hasVideo && !isAnalyzing && (
-                         <div className="text-[11px] font-bold text-outline-variant uppercase tracking-widest hover:text-primary transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}>Change video</div>
+                        <div className="flex items-center gap-4 mt-2">
+                           <div className="text-[11px] font-bold text-outline-variant uppercase tracking-widest hover:text-primary transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}>Change video</div>
+                           <div className="text-[11px] font-bold text-outline-variant uppercase tracking-widest hover:text-error transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); setFile(null); setUploadedVideoUrl(null); setVideoPreviewUrl(null); setUserHint(''); }}>Remove video</div>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -358,7 +367,7 @@ export default function HashtagsPage() {
                       disabled={isAnalyzing}
                       className="bg-surface-container-highest hover:bg-primary/10 text-primary-dim px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors disabled:opacity-50"
                     >
-                      <span className={`material-symbols-outlined text-[16px] ${isAnalyzing ? "animate-spin" : ""}`}>refresh</span> {isAnalyzing ? "Regenerating" : "More"}
+                      <span className={`material-symbols-outlined text-[16px] ${isAnalyzing ? "animate-spin" : ""}`}>progress_activity</span> {isAnalyzing ? "Regenerating" : "More"}
                     </button>
                   </div>
 
@@ -394,10 +403,10 @@ export default function HashtagsPage() {
                     </div>
                   )}
 
-                  {/* Clear Search & Upload */}
+                  {/* Reset Results */}
                   <div className="mt-4 flex justify-end">
-                     <button onClick={() => { setHashtags(null); setFile(null); setUploadedVideoUrl(null); setVideoPreviewUrl(null); }} className="text-xs font-semibold text-outline-variant hover:text-error transition-colors flex items-center gap-1">
-                       <span className="material-symbols-outlined text-[16px]">device_reset</span> Re-upload
+                     <button onClick={() => { setHashtags(null); setUserHint(''); }} className="text-[10px] font-bold uppercase tracking-widest text-outline-variant hover:text-error transition-colors flex items-center gap-1">
+                       <span className="material-symbols-outlined text-[14px]">delete</span> Reset Results
                      </button>
                   </div>
                 </div>

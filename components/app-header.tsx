@@ -42,6 +42,11 @@ export function AppHeader() {
         <div className="flex items-center justify-end gap-2 md:gap-4 shrink-0">
           <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={handleUpgrade} />
           
+          {/* Mobile Only Guest Profile Indicator */}
+          <div className="md:hidden flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-secondary-container text-on-secondary-container font-bold text-[10px] sm:text-xs shrink-0 shadow-inner">
+             {isGuest ? 'G' : 'U'}
+          </div>
+          
           {!isGuest ? (
             <form action={logout}>
               <SubmitButton 
@@ -57,7 +62,7 @@ export function AppHeader() {
               onClick={handleUpgrade}
               disabled={isUpgrading}
               id="header-upgrade-btn"
-              className="bg-primary text-on-primary px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-semibold text-xs sm:text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95 flex items-center justify-center shrink-0"
+              className="bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-semibold text-xs sm:text-sm shadow-md hover:bg-primary-container/80 dark:hover:bg-primary-dim transition-all active:scale-95 flex items-center justify-center shrink-0"
             >
               {isUpgrading ? (
                  <>

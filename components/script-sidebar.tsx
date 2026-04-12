@@ -15,6 +15,7 @@ interface ScriptSidebarProps {
   onRefineScript: (slotId: string, instruction: string) => void;
   onGenerateCustomAI: (prompt: string) => void;
   refiningSlot: string | null;
+  onClearScripts: () => void;
 }
 
 export function ScriptSidebar({ 
@@ -26,7 +27,8 @@ export function ScriptSidebar({
    customScriptBlocks,
    onRefineScript,
    onGenerateCustomAI,
-   refiningSlot
+   refiningSlot,
+   onClearScripts
 }: ScriptSidebarProps) {
   const [openRefineMenu, setOpenRefineMenu] = useState<string | null>(null);
   const [customInstructions, setCustomInstructions] = useState<Record<string, string>>({});
@@ -38,10 +40,10 @@ export function ScriptSidebar({
       title: 'Aesthetic',
       icon: 'flare',
       color: 'text-primary',
-      bgHover: 'hover:bg-primary',
-      bgActive: 'bg-primary',
-      textHover: 'group-hover:text-on-primary',
-      subTextHover: 'group-hover:text-on-primary/70',
+      bgHover: 'hover:bg-primary/5 dark:hover:bg-primary/10',
+      bgActive: 'bg-primary/10 border-primary/30',
+      textHover: 'group-hover:text-primary',
+      subTextHover: 'group-hover:text-on-surface-variant',
       vibes: ['Poetic', 'Cinematic', 'Raw'],
       desc: 'Calm, visual-heavy storytelling scripts.'
     },
@@ -50,10 +52,10 @@ export function ScriptSidebar({
       title: 'Funny / Meme',
       icon: 'sentiment_very_satisfied',
       color: 'text-secondary',
-      bgHover: 'hover:bg-secondary',
-      bgActive: 'bg-secondary',
-      textHover: 'group-hover:text-on-secondary',
-      subTextHover: 'group-hover:text-on-secondary/70',
+      bgHover: 'hover:bg-secondary/5 dark:hover:bg-secondary/10',
+      bgActive: 'bg-secondary/10 border-secondary/30',
+      textHover: 'group-hover:text-secondary',
+      subTextHover: 'group-hover:text-on-surface-variant',
       vibes: ['GenZ Brainrot', 'Sarcastic', 'Over-the-top'],
       desc: 'High engagement, relatable humor loops.'
     },
@@ -62,10 +64,10 @@ export function ScriptSidebar({
       title: 'Educational',
       icon: 'lightbulb',
       color: 'text-tertiary',
-      bgHover: 'hover:bg-tertiary',
-      bgActive: 'bg-tertiary',
-      textHover: 'group-hover:text-on-tertiary',
-      subTextHover: 'group-hover:text-on-tertiary/70',
+      bgHover: 'hover:bg-tertiary/5 dark:hover:bg-tertiary/10',
+      bgActive: 'bg-tertiary/10 border-tertiary/30',
+      textHover: 'group-hover:text-tertiary',
+      subTextHover: 'group-hover:text-on-surface-variant',
       vibes: ['Step-by-step', 'Authoritative', 'Mind-blowing'],
       desc: 'Direct, informative, and authority-building.'
     },
@@ -77,9 +79,21 @@ export function ScriptSidebar({
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      <div className="flex items-center gap-2">
-        <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>auto_fix_high</span>
-        <h2 className="text-sm font-bold uppercase tracking-wider text-on-surface">PRO STUDIO</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>auto_fix_high</span>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-on-surface">PRO STUDIO</h2>
+        </div>
+        <button 
+           onClick={() => {
+             setCustomAIPrompt('');
+             onClearScripts();
+           }} 
+           className="text-[10px] uppercase font-bold tracking-widest text-outline-variant hover:text-error transition-colors flex items-center gap-1 relative z-50 cursor-pointer"
+           title="Start Fresh"
+        >
+           <span className="material-symbols-outlined text-[14px]">delete</span> Reset
+        </button>
       </div>
 
       {/* Custom AI Input */}
@@ -95,7 +109,7 @@ export function ScriptSidebar({
         {scripts?.custom_ai ? (
           <div className="mt-4 flex gap-2">
             <button 
-              className={`flex-1 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${activeScriptId === 'custom_ai' ? 'bg-primary text-on-primary ring-2 ring-primary/20' : 'bg-surface-container text-on-surface hover:bg-primary-container/50'}`}
+              className={`flex-1 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${activeScriptId === 'custom_ai' ? 'bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary ring-2 ring-primary/20' : 'bg-surface-container text-on-surface hover:bg-primary-container/20 dark:hover:bg-primary/20'}`}
               onClick={() => onSelectScript('custom_ai', scripts.custom_ai!)}
             >
               {activeScriptId === 'custom_ai' ? <><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> Active Mix</> : <><span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span> Preview</>}
@@ -105,16 +119,16 @@ export function ScriptSidebar({
               onClick={() => onGenerateCustomAI(customAIPrompt)}
               disabled={refiningSlot === 'custom_ai'}
             >
-               <span className={`material-symbols-outlined text-[16px] ${refiningSlot === 'custom_ai' ? 'animate-spin' : ''}`}>autorenew</span>
+               <span className={`material-symbols-outlined text-[16px] ${refiningSlot === 'custom_ai' ? 'animate-spin' : ''}`}>progress_activity</span>
             </button>
           </div>
         ) : (
           <button 
-            className="w-full mt-4 bg-primary text-on-primary py-2.5 rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:scale-100 flex justify-center items-center gap-2"
+            className="w-full mt-4 bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-container/80 dark:hover:bg-primary-dim transition-all active:scale-[0.98] disabled:opacity-50 disabled:scale-100 flex justify-center items-center gap-2"
             disabled={!customAIPrompt.trim() || refiningSlot === 'custom_ai'}
             onClick={() => onGenerateCustomAI(customAIPrompt)}
           >
-            {refiningSlot === 'custom_ai' ? <><span className="material-symbols-outlined text-[16px] animate-spin">autorenew</span> Generating...</> : "Generate with AI"}
+            {refiningSlot === 'custom_ai' ? <><span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> Generating...</> : "Generate with AI"}
           </button>
         )}
       </div>
@@ -133,29 +147,29 @@ export function ScriptSidebar({
            return (
              <div key={slot.id} className="flex flex-col gap-2">
                <div 
-                 className={`group cursor-pointer p-4 rounded-2xl transition-all duration-300 relative overflow-hidden flex flex-col ${isActive && !isGenerating && !isRefining ? `${slot.bgActive} shadow-lg scale-[1.02]` : `bg-surface-container-lowest ${slot.bgHover} border border-outline-variant/10 shadow-[0_4px_12px_rgba(0,0,0,0.02)]`} ${isGenerating || isRefining ? 'opacity-70 scale-[0.98] pointer-events-none' : ''}`}
+                 className={`group cursor-pointer p-4 rounded-2xl transition-all duration-300 relative overflow-hidden flex flex-col ${isActive && !isGenerating && !isRefining ? `${slot.bgActive} shadow-sm border border-transparent` : `bg-surface-container-lowest ${slot.bgHover} border border-outline-variant/10 shadow-[0_4px_12px_rgba(0,0,0,0.02)]`} ${isGenerating || isRefining ? 'opacity-70 scale-[0.98] pointer-events-none' : ''}`}
                  onClick={() => {
                    if (blocks) onSelectScript(slot.id, blocks);
                    else onGenerateScript(slot.id);
                  }}
                >
                  <div className="flex justify-between items-start mb-2 relative z-10">
-                   <span className={`material-symbols-outlined transition-colors ${isActive ? (slot.id === 'aesthetic' ? 'text-on-primary' : slot.id === 'funny' ? 'text-on-secondary' : 'text-on-tertiary') : slot.color} ${slot.textHover}`} style={{ fontVariationSettings: "'FILL' 1" }}>
-                     {isGenerating || isRefining ? 'autorenew' : slot.icon}
+                   <span className={`material-symbols-outlined transition-colors ${isActive ? slot.color : slot.color} ${slot.textHover} ${isGenerating || isRefining ? 'animate-spin' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+                     {isGenerating || isRefining ? 'progress_activity' : slot.icon}
                    </span>
                    {isGenerating || isRefining ? null : blocks ? (
                       isActive ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white flex items-center gap-1"><span className="w-1 h-1 bg-white rounded-full animate-pulse" /> Active</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${slot.color === 'text-primary' ? 'bg-primary/20 text-primary' : slot.color === 'text-secondary' ? 'bg-secondary/20 text-secondary' : 'bg-tertiary/20 text-tertiary'} flex items-center gap-1`}><span className="w-1 h-1 bg-current rounded-full animate-pulse" /> Active</span>
                       ) : (
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-container text-on-surface group-hover:bg-white/20 ${slot.textHover}`}>Drafted</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant group-hover:bg-surface-container-high transition-colors`}>Drafted</span>
                       )
                    ) : (
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-container text-on-surface group-hover:bg-white/20 ${slot.textHover}`}>Generate</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant group-hover:bg-surface-container-high transition-colors`}>Generate</span>
                    )}
                  </div>
-                 <h3 className={`text-sm font-bold transition-colors relative z-10 ${isActive ? (slot.id === 'aesthetic' ? 'text-on-primary' : slot.id === 'funny' ? 'text-on-secondary' : 'text-on-tertiary') : 'text-on-surface'} ${slot.textHover}`}>{slot.title}</h3>
-                 <p className={`text-xs transition-colors mt-1 relative z-10 ${isActive ? (slot.id === 'aesthetic' ? 'text-on-primary/80' : slot.id === 'funny' ? 'text-on-secondary/80' : 'text-on-tertiary/80') : 'text-on-surface-variant'} ${slot.subTextHover}`}>{slot.desc}</p>
-                 <div className={`absolute top-0 right-0 w-32 h-32 blur-3xl opacity-20 -mr-4 -mt-4 transition-transform group-hover:scale-150 ${slot.bgActive}`} />
+                 <h3 className={`text-sm font-bold transition-colors relative z-10 ${isActive ? slot.color : 'text-on-surface'} ${slot.textHover}`}>{slot.title}</h3>
+                 <p className={`text-xs transition-colors mt-1 relative z-10 text-on-surface-variant ${slot.subTextHover}`}>{slot.desc}</p>
+                 <div className={`absolute top-0 right-0 w-32 h-32 blur-3xl opacity-[0.03] dark:opacity-10 pointer-events-none -mr-4 -mt-4 transition-transform group-hover:scale-150 ${slot.color.replace('text-', 'bg-')}`} />
                </div>
 
                {blocks && (

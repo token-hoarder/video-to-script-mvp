@@ -359,11 +359,17 @@ export default function Home() {
           
           <div className="mt-auto p-4 bg-surface-container-low rounded-2xl flex items-center gap-3 border border-outline-variant/10">
              <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold shadow-inner">
-                {user ? user.email?.substring(0,2).toUpperCase() : 'G'}
+                {user ? (isGuest ? 'G' : user.email?.substring(0,2).toUpperCase()) : 'G'}
              </div>
              <div>
-                <p className="text-xs font-bold text-on-surface truncate max-w-[120px]">{user ? user.email : 'Guest Creator'}</p>
-                <p className="text-[10px] text-primary font-bold uppercase tracking-widest">{isGuest ? 'Preview Mode' : 'Pro Member'}</p>
+                {(!user || isGuest) ? (
+                  <p className="text-sm font-bold text-on-surface">Guest Mode</p>
+                ) : (
+                  <>
+                    <p className="text-xs font-bold text-on-surface truncate max-w-[120px]">{user.email}</p>
+                    <p className="text-[10px] text-primary font-bold uppercase tracking-widest">Pro Member</p>
+                  </>
+                )}
              </div>
           </div>
         </aside>
@@ -394,16 +400,20 @@ export default function Home() {
                         <span className="material-symbols-outlined text-5xl">cloud_upload</span>
                       </div>
                       <h2 className="text-2xl font-bold text-on-surface mb-2">Drop your video here</h2>
-                      <p className="text-on-surface-variant text-sm font-medium">Supports MP4, MOV up to 500MB</p>
+                      <p className="text-on-surface-variant text-sm mb-12">Supports MP4, MOV up to 500MB</p>
+                      
+                      <div className="bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary hover:bg-primary-container/80 dark:hover:bg-primary-dim px-10 py-4 rounded-full font-bold text-lg tracking-tight shadow-[0_24px_48px_rgba(0,83,221,0.1)] transition-all flex items-center gap-3">
+                        Browse Files
+                      </div>
                    </label>
                 </div>
             </section>
           </div>
         ) : (
           /* Active Workspace (Center + Right) */
-          <div className="flex flex-col lg:flex-row flex-1 overflow-hidden relative">
+          <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden relative custom-scrollbar">
             {/* Center Panel: Video Preview */}
-            <section className="flex-1 flex flex-col overflow-hidden bg-background relative z-10 p-4 md:p-6 lg:p-8">
+            <section className="flex-none lg:flex-1 flex flex-col lg:overflow-hidden bg-background relative z-10 p-4 md:p-6 lg:p-8 shrink-0">
                <div className="flex justify-between items-end mb-4 shrink-0">
                   <div>
                      <h1 className="text-xl md:text-2xl font-bold tracking-tight text-on-surface truncate max-w-sm">{file?.name || "Target Video"}</h1>
@@ -484,35 +494,42 @@ export default function Home() {
             </section>
 
             {/* Right Panel: PRO STUDIO Tools */}
-            <aside className="hidden lg:flex w-80 md:w-96 shrink-0 bg-surface-container-high border-l border-outline-variant/10 p-6 flex-col gap-6 overflow-y-auto z-20 shadow-xl relative custom-scrollbar">
-               {/* Decorative glow */}
-               <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 blur-[80px] rounded-full pointer-events-none" />
-               <ScriptSidebar 
-                 scripts={scripts}
-                 analyzingSlot={analyzingSlot}
-                 onGenerateScript={handleGenerateScript}
-                 onSelectScript={handleSelectScript}
-                 activeScriptId={activeScriptId}
-                 customScriptBlocks={customBlocks}
-                 onRefineScript={handleRefineScript}
-                 onGenerateCustomAI={handleGenerateCustomAI}
-                 refiningSlot={refiningSlot}
-               />
+            <aside className="hidden lg:flex w-80 md:w-[400px] shrink-0 p-6 flex-col overflow-y-auto relative z-20 custom-scrollbar bg-background text-on-surface">
+               <div className="bg-surface-container-lowest p-8 rounded-[2rem] border border-outline-variant/10 shadow-[0_20px_40px_rgba(0,83,221,0.03)] flex flex-col gap-6 relative overflow-hidden h-max min-h-full">
+                  {/* Decorative glow */}
+                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 blur-[80px] rounded-full pointer-events-none" />
+                  <ScriptSidebar 
+                    scripts={scripts}
+                    analyzingSlot={analyzingSlot}
+                    onGenerateScript={handleGenerateScript}
+                    onSelectScript={handleSelectScript}
+                    activeScriptId={activeScriptId}
+                    customScriptBlocks={customBlocks}
+                    onRefineScript={handleRefineScript}
+                    onGenerateCustomAI={handleGenerateCustomAI}
+                    refiningSlot={refiningSlot}
+                    onClearScripts={() => { setScripts(null); setActiveScriptId(null); setActiveScriptBlocks([]); setUserScript(''); }}
+                  />
+               </div>
             </aside>
             
             {/* Mobile Script Sidebar (visible below video on small screens) */}
-            <div className="lg:hidden p-4 bg-surface-container-high border-t border-outline-variant/10 overflow-y-auto shrink-0 max-h-[50vh]">
-               <ScriptSidebar 
-                 scripts={scripts}
-                 analyzingSlot={analyzingSlot}
-                 onGenerateScript={handleGenerateScript}
-                 onSelectScript={handleSelectScript}
-                 activeScriptId={activeScriptId}
-                 customScriptBlocks={customBlocks}
-                 onRefineScript={handleRefineScript}
-                 onGenerateCustomAI={handleGenerateCustomAI}
-                 refiningSlot={refiningSlot}
-               />
+            <div className="lg:hidden px-4 pb-8 md:px-8 bg-background flex-none max-w-full">
+               <div className="bg-surface-container-lowest p-6 rounded-[2rem] border border-outline-variant/10 shadow-[0_20px_40px_rgba(0,83,221,0.03)] flex flex-col gap-6 relative overflow-hidden max-w-full">
+                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 blur-[80px] rounded-full pointer-events-none" />
+                  <ScriptSidebar 
+                    scripts={scripts}
+                    analyzingSlot={analyzingSlot}
+                    onGenerateScript={handleGenerateScript}
+                    onSelectScript={handleSelectScript}
+                    activeScriptId={activeScriptId}
+                    customScriptBlocks={customBlocks}
+                    onRefineScript={handleRefineScript}
+                    onGenerateCustomAI={handleGenerateCustomAI}
+                    refiningSlot={refiningSlot}
+                    onClearScripts={() => { setScripts(null); setActiveScriptId(null); setActiveScriptBlocks([]); setUserScript(''); }}
+                  />
+               </div>
             </div>
           </div>
         )}
