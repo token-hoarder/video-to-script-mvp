@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Film, Hash, LogOut, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CreditBadge } from "@/components/usage-guard";
-import { SubmitButton } from "@/components/submit-button";
 import { logout } from "@/app/login/actions";
 import { useGuestAuth } from "@/hooks/useGuestAuth";
+import { SubmitButton } from "@/components/submit-button";
 
 export function AppHeader() {
   const router = useRouter();
@@ -18,62 +16,66 @@ export function AppHeader() {
   const handleUpgrade = async () => router.push('/login');
 
   return (
-    <header className="relative z-10 flex h-16 items-center justify-between border-b border-border px-6 shrink-0 bg-background/80 backdrop-blur-xl">
-      <div className="flex items-center gap-6">
-        <Link href="/" className="flex items-center gap-3 font-semibold text-xl tracking-tight hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-            <Film className="w-5 h-5 text-primary" />
+    <nav className="fixed top-0 w-full z-50 bg-[#f6fafe]/60 dark:bg-[#0b141a]/60 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,83,221,0.08)]">
+      <div className="flex justify-between items-center px-4 md:px-8 h-16 w-full gap-2">
+        <div className="flex items-center gap-4 md:gap-8 flex-1">
+          <Link href="/" className="text-xl font-bold tracking-tighter text-primary dark:text-[#ffffff] hover:opacity-80 transition-opacity">
+            ViralScript
+          </Link>
+          
+          <div className="flex items-center gap-2 md:gap-6 shrink-0">
+            <Link
+              href="/studio"
+              className={`font-medium text-xs sm:text-sm tracking-tight px-2 sm:px-0 transition-colors duration-300 ${pathname?.startsWith('/studio') ? 'text-primary dark:text-[#ffffff] border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`}
+            >
+              Studio
+            </Link>
+            <Link
+              href="/hashtags"
+              className={`font-medium text-xs sm:text-sm tracking-tight px-2 sm:px-0 transition-colors duration-300 ${pathname?.startsWith('/hashtags') ? 'text-primary dark:text-[#ffffff] border-b-2 border-primary pb-1' : 'text-on-surface-variant hover:text-primary'}`}
+            >
+              Hashtags
+            </Link>
           </div>
-          <span className="text-foreground hidden sm:inline-block">ViralScript</span>
-        </Link>
-        
-        <nav className="flex items-center gap-1">
-          <Link
-            href="/studio"
-            className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors px-3 py-1.5 rounded-md hover:bg-muted ${pathname?.startsWith('/studio') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            Studio
-          </Link>
-          <Link
-            href="/hashtags"
-            className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors px-3 py-1.5 rounded-md hover:bg-muted ${pathname?.startsWith('/hashtags') ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            <Hash className="w-4 h-4" />
-            Hashtags
-          </Link>
-        </nav>
-      </div>
+        </div>
 
-      <div className="flex items-center gap-2">
-        <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={handleUpgrade} />
-        {!isGuest ? (
-          <form action={logout}>
-            <SubmitButton variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground rounded-full transition-colors" pendingText="Logging out...">
-              <LogOut className="w-4 h-4 mr-2" />
-              Log out
-            </SubmitButton>
-          </form>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleUpgrade}
-            disabled={isUpgrading}
-            id="header-upgrade-btn"
-            className="text-amber-400 hover:text-amber-300 hover:bg-amber-950/40 rounded-full transition-colors text-xs font-medium"
-          >
-            {isUpgrading ? (
-               <>
-                 <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-                 Saving...
-               </>
-            ) : (
-               'Save my work →'
-            )}
-          </Button>
-        )}
-        <ThemeToggle />
+        <div className="flex items-center justify-end gap-2 md:gap-4 flex-1">
+          <CreditBadge credits={credits} isGuest={isGuest} onUpgrade={handleUpgrade} />
+          
+          {!isGuest ? (
+            <form action={logout}>
+              <SubmitButton 
+                className="bg-transparent shadow-none text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors text-xs font-semibold px-3 py-1.5 rounded-full"
+                pendingText="Logging out..."
+              >
+                <span className="material-symbols-outlined text-[18px] mr-1">logout</span>
+                <span className="hidden sm:inline">Log out</span>
+              </SubmitButton>
+            </form>
+          ) : (
+            <button
+              onClick={handleUpgrade}
+              disabled={isUpgrading}
+              id="header-upgrade-btn"
+              className="bg-primary text-on-primary px-3 sm:px-6 py-1.5 sm:py-2 rounded-full font-semibold text-xs sm:text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95 flex items-center justify-center shrink-0"
+            >
+              {isUpgrading ? (
+                 <>
+                   <span className="material-symbols-outlined text-[16px] animate-spin sm:mr-1.5">autorenew</span>
+                   <span className="hidden sm:inline">Saving...</span>
+                 </>
+              ) : (
+                 <>
+                   <span className="hidden sm:inline">Save my work</span>
+                   <span className="sm:hidden">Save</span>
+                 </>
+              )}
+            </button>
+          )}
+          
+          <ThemeToggle />
+        </div>
       </div>
-    </header>
+    </nav>
   );
 }

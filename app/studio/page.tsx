@@ -3,28 +3,24 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
-import { UploadZone } from "@/components/upload-zone";
 import { ScriptSidebar, ScriptsPayload } from "@/components/script-sidebar";
 import { StoryboardDetails } from "@/components/storyboard-details";
 import { CaptionOverlay } from "@/components/caption-overlay";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { LogOut, Film, Loader2, Hash } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { needsOptimization, optimizeVideoForAI } from "@/utils/video-compressor";
 import { toast } from "sonner";
 import { useGuestAuth } from "@/hooks/useGuestAuth";
-import { CreditBadge } from "@/components/usage-guard";
 import { createClient } from "@/utils/supabase/client";
 import { logout } from "@/app/login/actions";
-import { SubmitButton } from "@/components/submit-button";
 import { useStudio } from "@/contexts/studio-context";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [userScript, setUserScript] = useState("");
-  // videoPreviewUrl lives in shared context so /hashtags can show the same video
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoDuration, setVideoDuration] = useState(15);
@@ -40,7 +36,7 @@ export default function Home() {
   const [compressionProgress, setCompressionProgress] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
-  // Shared persistent state from StudioContext (survives navigation to /hashtags and back)
+  // Shared persistent state from StudioContext
   const { uploadedVideoUrl, setUploadedVideoUrl, videoPreviewUrl, setVideoPreviewUrl, scripts, setScripts } = useStudio();
 
   const [supabase] = useState(() => createClient());
@@ -49,20 +45,17 @@ export default function Home() {
 
   const handleUpgrade = async () => router.push('/login');
 
-  // Load saved script from storage
   useEffect(() => {
     const savedScript = localStorage.getItem("video-to-script-custom");
     if (savedScript) setUserScript(savedScript);
   }, []);
 
-  // Sync script to storage natively
   useEffect(() => {
     localStorage.setItem("video-to-script-custom", userScript);
   }, [userScript]);
 
   const chunkScriptLocal = (text: string, duration: number) => {
     if (!text || text.trim() === '') return [];
-    // Match sentences including their punctuation
     const sentences = text.match(/[^.!?]+(?:[.!?]+|$)/g) || [text];
     const totalChars = text.length;
     let currentStartTime = 0;
@@ -104,8 +97,6 @@ export default function Home() {
     setActiveScriptId(id);
     setActiveScriptBlocks(blocks);
     setPendingEdits({});
-    
-    // Auto-play and reset timeline when pressing Preview
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
       videoRef.current.play();
@@ -122,7 +113,6 @@ export default function Home() {
         const fullText = newBlocks.filter(b => b.text !== '[Visual Break]').map(b => b.text).join(' ');
         setUserScript(fullText);
      }
-
      const newPending = { ...pendingEdits };
      delete newPending[idx];
      setPendingEdits(newPending);
@@ -146,7 +136,6 @@ export default function Home() {
         const fullText = newBlocks.filter(b => b.text !== '[Visual Break]').map(b => b.text).join(' ');
         setUserScript(fullText);
      }
-
      setPendingEdits({});
      toast.success('All changes committed successfully');
   };
@@ -163,31 +152,24 @@ export default function Home() {
   };
 
   const handleFileSelect = (selectedFile: File) => {
+    const MAX_SIZE = 500 * 1024 * 1024; // 500MB
+    if (selectedFile.size > MAX_SIZE) {
+      toast.error('File is too large. Please select a video under 500MB.');
+      return;
+    }
     setFile(selectedFile);
     if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
-    const newPreviewUrl = URL.createObjectURL(selectedFile);
-    setVideoPreviewUrl(newPreviewUrl);
+    setVideoPreviewUrl(URL.createObjectURL(selectedFile));
     setActiveScriptId(null);
     setActiveScriptBlocks([]);
     setScripts(null);
     setUploadedVideoUrl(null);
   };
 
-  const handleLogout = async () => {
-    console.log('DEBUG_AUTH: handleLogout() triggered — calling server action to destroy cookie');
-    await logout();
-  };
-
   const uploadVideoIfNeeded = async (): Promise<string | null> => {
     if (uploadedVideoUrl) return uploadedVideoUrl;
-    if (!file) {
-      toast.error('Please select a video first');
-      return null;
-    }
-    if (!user) {
-      toast.error('Session not ready. Please refresh.');
-      return null;
-    }
+    if (!file) { toast.error('Please select a video first'); return null; }
+    if (!user) { toast.error('Session not ready. Please refresh.'); return null; }
 
     let fileToUpload = file;
     if (needsOptimization(file)) {
@@ -198,9 +180,7 @@ export default function Home() {
           setCompressionProgress(progress);
         });
       } catch (compressionErr: any) {
-        toast.error('Video optimization failed. Uploading original file instead.', {
-          description: compressionErr?.message,
-        });
+        toast.error('Video optimization failed', { description: compressionErr?.message });
         fileToUpload = file;
       } finally {
         setCompressionProgress(null);
@@ -210,27 +190,16 @@ export default function Home() {
     const fileExt = 'mp4';
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     const filePath = `${user.id}/${fileName}`;
-
     toast.info('Uploading to secure storage...');
-    console.log('DEBUG: Fetching /api/upload-url...');
 
     const uploadUrlRes = await fetch('/api/upload-url', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ filePath })
     });
-
-    console.log('DEBUG: Got response from /api/upload-url', uploadUrlRes.status);
     const uploadUrlData = await uploadUrlRes.json();
-    console.log('DEBUG: uploadUrlData parsed', uploadUrlData);
-    
-    if (!uploadUrlRes.ok) {
-      throw new Error(uploadUrlData.error || 'Failed to generate secure upload link');
-    }
+    if (!uploadUrlRes.ok) throw new Error(uploadUrlData.error);
 
-    console.log('DEBUG: Starting direct XMLHttpRequest PUT upload...');
-    
-    // Using XMLHttpRequest instead of fetch to enable upload progress tracking
     const publicUrl = await new Promise<string>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('PUT', uploadUrlData.signedUrl);
@@ -239,8 +208,7 @@ export default function Home() {
 
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
-          const percentComplete = (event.loaded / event.total) * 100;
-          setUploadProgress(percentComplete);
+          setUploadProgress((event.loaded / event.total) * 100);
         }
       };
 
@@ -248,19 +216,12 @@ export default function Home() {
         if (xhr.status >= 200 && xhr.status < 300) {
           const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(filePath);
           resolve(publicUrl);
-        } else {
-          reject(new Error(`Upload failed (Status ${xhr.status}): ${xhr.responseText}`));
-        }
+        } else reject(new Error(`Upload failed`));
       };
-
-      xhr.onerror = () => {
-        setUploadProgress(null);
-        reject(new Error('Network error during upload'));
-      };
+      xhr.onerror = () => { setUploadProgress(null); reject(new Error('Network error')); };
       xhr.send(fileToUpload);
     });
 
-    console.log('DEBUG: Direct upload finished. publicUrl:', publicUrl);
     setUploadProgress(null);
     setUploadedVideoUrl(publicUrl);
     return publicUrl;
@@ -268,38 +229,24 @@ export default function Home() {
 
   const handleGenerateScript = async (slotId: string) => {
     if (!file && !uploadedVideoUrl) return;
-
     try {
       setAnalyzingSlot(slotId);
-      
       const targetVideoUrl = await uploadVideoIfNeeded();
-      if (!targetVideoUrl) {
-         setAnalyzingSlot(null);
-         return;
-      }
+      if (!targetVideoUrl) { setAnalyzingSlot(null); return; }
 
       toast.info(`Drafting Script...`);
-
-      // 3. Call backend API to process via Gemini
       const response = await fetch('/api/generate-script', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileUrl: targetVideoUrl, generateMode: slotId }),
       });
 
       const result = await response.json();
-
       if (!response.ok) {
         if (response.status === 402) {
-          // Credits exhausted — surface upgrade prompt
           toast.error(result.error, {
             description: 'Sign in with Google to unlock 50 credits.',
-            action: {
-              label: 'Unlock 50 Credits →',
-              onClick: handleUpgrade,
-            },
+            action: { label: 'Unlock 50 Credits →', onClick: handleUpgrade },
             duration: 8000,
           });
           return;
@@ -308,20 +255,14 @@ export default function Home() {
       }
 
       if (result.data) {
-        console.log('Scripts Received:', result.data);
         setScripts(result.data);
-        
         if (result.data[slotId] && result.data[slotId].length > 0) {
            handleSelectScript(slotId, result.data[slotId]);
         }
-
         toast.success('Script generated successfully!');
-        // Refresh credit display after successful generation
         refreshCredits();
       }
-
     } catch (err: any) {
-      console.error('Processing error:', err);
       toast.error(err.message || 'Something went wrong');
     } finally {
       setAnalyzingSlot(null);
@@ -330,39 +271,26 @@ export default function Home() {
 
   const handleRefineScript = async (slotId: string, instruction: string) => {
     if (!uploadedVideoUrl || !scripts || !scripts[slotId]) return;
-
     try {
       setRefiningSlot(slotId);
-      
       const response = await fetch('/api/generate-script', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
            fileUrl: uploadedVideoUrl, 
-           refineRequest: {
-              slotId,
-              currentBlocks: scripts[slotId],
-              instruction
-           }
+           refineRequest: { slotId, currentBlocks: scripts[slotId], instruction }
         }),
       });
 
       const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to refine script');
-      }
+      if (!response.ok) throw new Error(result.error);
 
       if (result.data) {
         setScripts(result.data);
         handleSelectScript(slotId, result.data[slotId]);
         toast.success(`Successfully remixed the script!`);
       }
-
     } catch (err: any) {
-      console.error('Refinement error:', err);
       toast.error(err.message || 'Failed to refine the script.');
     } finally {
       setRefiningSlot(null);
@@ -371,43 +299,26 @@ export default function Home() {
 
   const handleGenerateCustomAI = async (prompt: string) => {
     if (!file && !uploadedVideoUrl) return;
-
     try {
-      setRefiningSlot('custom_ai'); // reuse refiningSlot for localized loading tracking
-      
+      setRefiningSlot('custom_ai');
       const targetVideoUrl = await uploadVideoIfNeeded();
-      if (!targetVideoUrl) {
-         setRefiningSlot(null);
-         return;
-      }
+      if (!targetVideoUrl) { setRefiningSlot(null); return; }
 
       const response = await fetch('/api/generate-script', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-           fileUrl: targetVideoUrl, 
-           customPrompt: prompt
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileUrl: targetVideoUrl, customPrompt: prompt }),
       });
 
       const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to generate custom script');
-      }
+      if (!response.ok) throw new Error(result.error);
 
       if (result.data) {
         setScripts(result.data);
-        if (result.data.custom_ai) {
-           handleSelectScript('custom_ai', result.data.custom_ai);
-        }
+        if (result.data.custom_ai) handleSelectScript('custom_ai', result.data.custom_ai);
         toast.success(`Generated custom AI script!`);
       }
-
     } catch (err: any) {
-      console.error('Custom Generation error:', err);
       toast.error(err.message || 'Failed to generate custom script.');
     } finally {
       setRefiningSlot(null);
@@ -415,71 +326,98 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 flex flex-col relative overflow-hidden font-sans">
-      {/* Subtle modern gradient background */}
-      <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-primary/5 via-background to-background pointer-events-none" />
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
-
+    <div className="bg-background text-on-surface h-screen flex flex-col font-sans overflow-hidden transition-colors duration-300">
       <AppHeader />
 
-      {/* Main Content */}
-      <main className="relative z-10 flex-1 overflow-auto p-4 md:p-8 flex flex-col gap-6 max-w-7xl mx-auto w-full">
-        {!videoPreviewUrl ? (
-          <div className="flex-1 flex flex-col items-center justify-center max-w-2xl mx-auto w-full relative z-10 py-12">
-             <div className="flex flex-col items-center mb-10">
-               {/* Eyebrow badge */}
-               <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-5">
-                 <span className="relative flex h-1.5 w-1.5">
-                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
-                 </span>
-                 AI-powered · No editing skills needed
-               </div>
-
-               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-center mb-5 text-balance leading-tight">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-foreground to-foreground/60">Script</span> your video.
-               </h1>
-               <p className="text-muted-foreground text-center max-w-xl text-lg sm:text-xl text-balance mb-8">
-                 Drop your TikTok or Reels footage — our AI watches it, then writes a time-synced viral script matched perfectly to your visual cuts.
-               </p>
-
-               {/* Feature pills */}
-               <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-                 <div className="flex items-center gap-2 rounded-full bg-muted px-3.5 py-1.5 text-sm text-foreground border border-border">
-                   <svg className="w-4 h-4 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.882V15.118a1 1 0 01-1.447.91L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /></svg>
-                   AI reads your video
-                 </div>
-                 <div className="flex items-center gap-2 rounded-full bg-muted px-3.5 py-1.5 text-sm text-foreground border border-border">
-                   <svg className="w-4 h-4 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                   Captions sync to cuts
-                 </div>
-                 <div className="flex items-center gap-2 rounded-full bg-muted px-3.5 py-1.5 text-sm text-foreground border border-border">
-                   <svg className="w-4 h-4 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" /></svg>
-                   4 style modes + custom
-                 </div>
-               </div>
-
-               {/* Trust line */}
-               <p className="text-xs text-muted-foreground/60 text-center">
-                 Try free — no account needed · 3 analyses included
-               </p>
+      {/* 3-Column Studio Layout */}
+      <main className="flex-1 flex pt-[72px] overflow-hidden">
+        
+        {/* Left Sidebar (App Shell Mock) */}
+        <aside className="hidden md:flex w-64 h-full flex-col gap-2 p-4 border-r border-outline-variant/10 bg-surface-container-lowest/50 shadow-sm shrink-0">
+          <div className="px-4 py-2 mb-4">
+            <h2 className="text-lg font-bold text-primary">Project Studio</h2>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-outline-variant/80">Pro Editing Workspace</p>
+          </div>
+          <nav className="space-y-1">
+             <div className="flex items-center gap-3 p-3 bg-primary/10 text-primary rounded-xl font-bold transition-transform translate-x-1 cursor-default">
+               <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+               <span className="text-sm">AI Scripts</span>
              </div>
-             <div className="w-full p-1 rounded-2xl bg-gradient-to-b from-white/5 to-transparent relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-                <UploadZone 
-                  onFileSelect={handleFileSelect} 
-                  disabled={analyzingSlot !== null || uploadProgress !== null} 
-                  progress={uploadProgress ?? (compressionProgress !== null ? compressionProgress * 100 : null)}
-                />
+             <Link href="/hashtags" className="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface rounded-xl transition-all font-semibold">
+               <span className="material-symbols-outlined text-[20px]">tag</span>
+               <span className="text-sm">Hashtag Generator</span>
+             </Link>
+             <div className="flex items-center gap-3 p-3 text-on-surface-variant/40 rounded-xl cursor-not-allowed font-semibold">
+               <span className="material-symbols-outlined text-[20px]">video_library</span>
+               <span className="text-sm">Media Library</span>
+             </div>
+             <div className="flex items-center gap-3 p-3 text-on-surface-variant/40 rounded-xl cursor-not-allowed font-semibold">
+               <span className="material-symbols-outlined text-[20px]">animation</span>
+               <span className="text-sm">VFX / Transitions</span>
+             </div>
+          </nav>
+          
+          <div className="mt-auto p-4 bg-surface-container-low rounded-2xl flex items-center gap-3 border border-outline-variant/10">
+             <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold shadow-inner">
+                {user ? user.email?.substring(0,2).toUpperCase() : 'G'}
+             </div>
+             <div>
+                <p className="text-xs font-bold text-on-surface truncate max-w-[120px]">{user ? user.email : 'Guest Creator'}</p>
+                <p className="text-[10px] text-primary font-bold uppercase tracking-widest">{isGuest ? 'Preview Mode' : 'Pro Member'}</p>
              </div>
           </div>
+        </aside>
 
+        {!videoPreviewUrl ? (
+          /* Empty State (Center Panel) */
+          <section className="flex-1 overflow-y-auto p-4 md:p-8 flex items-center justify-center relative">
+              <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-primary/5 via-background to-background pointer-events-none" />
+              <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
+              
+              <div className="max-w-2xl w-full flex flex-col items-center text-center relative z-10 px-4">
+                 <span className="text-[10px] sm:text-[11px] font-bold text-primary uppercase tracking-[0.2em] block mb-4">ViralScript</span>
+                 <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] font-bold tracking-tight text-on-surface leading-tight mb-5">
+                   Script your video.
+                 </h1>
+                 <p className="text-on-surface-variant text-base sm:text-lg max-w-xl mx-auto font-light mb-10">
+                   Drop your footage — our AI watches it, then writes a time-synced viral script matched perfectly to your visual cuts.
+                 </p>
+                 
+                 <label 
+                   onDragOver={(e) => e.preventDefault()}
+                   onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files?.[0]) handleFileSelect(e.dataTransfer.files[0]); }}
+                   className="relative block w-full bg-surface-container-lowest rounded-[2rem] border-2 border-dashed border-primary-container hover:border-primary transition-colors flex flex-col items-center justify-center p-12 overflow-hidden group cursor-pointer shadow-sm hover:shadow-xl hover:shadow-primary/5"
+                 >
+                    <input type="file" ref={fileInputRef} className="hidden" accept="video/mp4,video/quicktime" onChange={(e) => { if(e.target.files?.[0]) handleFileSelect(e.target.files[0]); }} />
+                    <div className="w-24 h-24 bg-primary-container/30 rounded-full flex items-center justify-center mb-6 shadow-[0_20px_40px_rgba(0,83,221,0.12)] text-primary group-hover:scale-110 transition-transform">
+                      <span className="material-symbols-outlined text-5xl">cloud_upload</span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-on-surface mb-2">Drop your video here</h2>
+                    <p className="text-on-surface-variant text-sm font-medium">Supports MP4, MOV up to 500MB</p>
+                 </label>
+              </div>
+          </section>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
-             {/* Left/Center Column: Studio Player */}
-             <div className="lg:col-span-2 flex flex-col gap-6">
-                <div className="rounded-xl overflow-hidden border border-border bg-black shadow-2xl relative w-full aspect-[9/16] sm:aspect-video flex items-center justify-center max-h-[60vh] ring-1 ring-border/50 mx-auto group">
-                   <video 
+          /* Active Workspace (Center + Right) */
+          <>
+            {/* Center Panel: Video Preview */}
+            <section className="flex-1 flex flex-col overflow-hidden bg-background relative z-10 p-4 md:p-6 lg:p-8">
+               <div className="flex justify-between items-end mb-4 shrink-0">
+                  <div>
+                     <h1 className="text-xl md:text-2xl font-bold tracking-tight text-on-surface truncate max-w-sm">{file?.name || "Target Video"}</h1>
+                     <p className="text-xs text-on-surface-variant flex items-center gap-1 font-medium mt-1">
+                        <span className="material-symbols-outlined text-[14px]">play_circle</span> Analyzed Ready
+                     </p>
+                  </div>
+                  <button onClick={() => fileInputRef.current?.click()} className="text-xs font-bold uppercase tracking-widest text-outline hover:text-primary transition-colors cursor-pointer bg-surface-container-low px-3 py-1.5 rounded-full hover:bg-primary/10 border border-outline-variant/20">
+                     Change
+                  </button>
+                  <input type="file" ref={fileInputRef} className="hidden" accept="video/mp4,video/quicktime" onChange={(e) => { if(e.target.files?.[0]) handleFileSelect(e.target.files[0]); }} />
+               </div>
+
+               {/* Video Player Surface */}
+               <div className="relative flex-1 bg-inverse-surface rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-hidden group border border-outline-variant/10 flex items-center justify-center min-h-[40vh] md:min-h-0">
+                  <video 
                      ref={videoRef}
                      src={videoPreviewUrl} 
                      controls 
@@ -487,95 +425,94 @@ export default function Home() {
                      playsInline
                      preload="metadata"
                      disablePictureInPicture
-                     crossOrigin="anonymous"
-                     className="w-full h-full object-contain"
+                     className="w-full h-full object-contain bg-black/50"
                      onTimeUpdate={handleTimeUpdate}
                      onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration)}
-                   />
-                   <CaptionOverlay 
+                  />
+                  <CaptionOverlay 
                      currentTime={currentTime} 
                      blocks={activeScriptBlocks.map((b, idx) => ({ ...b, text: pendingEdits[idx] !== undefined ? pendingEdits[idx] : b.text }))} 
                      position={captionPosition}
                      onPositionChange={setCaptionPosition}
                      videoRef={videoRef}
-                   />
-                   {/* Compression progress overlay */}
-                   {/* Progress overlay (Optimization or Upload) */}
-                   {(compressionProgress !== null || uploadProgress !== null) && (
-                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-20">
-                       <div className="text-center">
-                         <p className="text-white font-semibold text-lg mb-1">
-                           {uploadProgress !== null ? 'Uploading to Secure Storage' : 'Optimizing for AI Analysis'}
-                         </p>
-                         <p className="text-zinc-300 text-sm">
-                           {uploadProgress !== null ? 'Almost there! Sending to storage...' : 'Preparing your video for the best results...'}
-                         </p>
-                       </div>
-                       <div className="w-64">
-                         <div className="flex justify-between text-xs text-zinc-300 mb-2 font-mono">
-                           <span>{uploadProgress !== null ? 'UPLOADING' : 'PROCESSING'}</span>
-                           <span>{Math.round(uploadProgress ?? (compressionProgress! * 100))}%</span>
-                         </div>
-                         <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
-                           <div 
-                             className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(var(--primary),0.5)]"
-                             style={{ width: `${Math.round(uploadProgress ?? (compressionProgress! * 100))}%` }}
-                           />
-                         </div>
-                       </div>
-                       <Loader2 className="w-5 h-5 text-primary animate-spin mt-1" />
-                     </div>
-                   )}
-                </div>
+                  />
 
-                {/* Real-time Custom Script Edit Box */}
-                <div className="flex flex-col gap-3">
-                   <Label htmlFor="script" className="text-sm font-medium tracking-wide text-foreground ml-1">
-                     Your Custom Script
-                   </Label>
-                   <div className="relative group">
-                     <textarea
-                       id="script"
-                       placeholder="E.g. Paste a script here. It will automatically space out perfectly along your video timeline..." 
-                       className="w-full min-h-[140px] resize-y bg-background border border-border text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 text-base leading-relaxed p-4 rounded-xl shadow-inner transition-all duration-300 group-hover:border-primary/30 custom-scrollbar"
-                       value={userScript}
-                       onChange={(e) => handleLocalCustomEdit(e.target.value)}
-                     />
-                     <div className="absolute top-4 right-4 opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        <span className="text-xs font-mono font-medium text-muted-foreground bg-muted px-2 py-1 rounded-md border border-border">{userScript.length} chars</span>
-                     </div>
-                   </div>
-                   
-                   
-                   
-                   <StoryboardDetails 
-                     activeScriptId={activeScriptId} 
-                     blocks={activeScriptBlocks} 
-                     pendingEdits={pendingEdits}
-                     onPendingEditChange={handlePendingEditChange}
-                     onSaveSegment={handleSaveSegment}
-                     onUndoSegment={handleUndoSegment}
-                     onSaveAll={handleSaveAll}
-                     onScrubVideo={handleScrubVideo}
-                   />
-                </div>
-             </div>
+                  {/* Progress overlay */}
+                  {(compressionProgress !== null || uploadProgress !== null) && (
+                    <div className="absolute inset-0 bg-inverse-surface/80 backdrop-blur-md flex flex-col items-center justify-center gap-6 z-20">
+                      <div className="text-center">
+                        <p className="text-on-primary font-bold text-xl mb-2">
+                          {uploadProgress !== null ? 'Uploading to Platform' : 'Optimizing Media'}
+                        </p>
+                        <p className="text-on-primary/70 text-sm font-medium">
+                          {uploadProgress !== null ? 'Secure transfer in progress...' : 'Preparing high-speed proxy...'}
+                        </p>
+                      </div>
+                      <div className="w-72">
+                        <div className="flex justify-between text-[11px] uppercase tracking-widest font-bold text-primary-fixed mb-3">
+                          <span>{uploadProgress !== null ? 'UPLOADING' : 'PROCESSING'}</span>
+                          <span>{Math.round(uploadProgress ?? (compressionProgress! * 100))}%</span>
+                        </div>
+                        <div className="h-2 bg-on-primary/10 rounded-full overflow-hidden border border-white/5">
+                          <div 
+                            className="h-full bg-primary relative rounded-full transition-all duration-300"
+                            style={{ width: `${Math.round(uploadProgress ?? (compressionProgress! * 100))}%` }}
+                          >
+                             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg border-2 border-primary mr-[-2px]"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+               </div>
 
-             {/* Right Column: Script Switcher */}
-             <div className="lg:col-span-1 border border-border rounded-2xl bg-card/80 backdrop-blur-sm p-6 shadow-xl h-fit sticky top-6">
-                <ScriptSidebar 
-                  scripts={scripts}
-                  analyzingSlot={analyzingSlot}
-                  onGenerateScript={handleGenerateScript}
-                  onSelectScript={handleSelectScript}
-                  activeScriptId={activeScriptId}
-                  customScriptBlocks={customBlocks}
-                  onRefineScript={handleRefineScript}
-                  onGenerateCustomAI={handleGenerateCustomAI}
-                  refiningSlot={refiningSlot}
-                />
-             </div>
-          </div>
+               {/* Storyboard Panel */}
+               <div className="h-[30vh] shrink-0 overflow-y-auto mt-6 custom-scrollbar pr-2">
+                  <StoryboardDetails 
+                    activeScriptId={activeScriptId} 
+                    blocks={activeScriptBlocks} 
+                    pendingEdits={pendingEdits}
+                    onPendingEditChange={handlePendingEditChange}
+                    onSaveSegment={handleSaveSegment}
+                    onUndoSegment={handleUndoSegment}
+                    onSaveAll={handleSaveAll}
+                    onScrubVideo={handleScrubVideo}
+                  />
+               </div>
+            </section>
+
+            {/* Right Panel: PRO STUDIO Tools */}
+            <aside className="hidden lg:flex w-80 md:w-96 shrink-0 bg-surface-container-high border-l border-outline-variant/10 p-6 flex-col gap-6 overflow-y-auto z-20 shadow-xl relative custom-scrollbar">
+               {/* Decorative glow */}
+               <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 blur-[80px] rounded-full pointer-events-none" />
+               <ScriptSidebar 
+                 scripts={scripts}
+                 analyzingSlot={analyzingSlot}
+                 onGenerateScript={handleGenerateScript}
+                 onSelectScript={handleSelectScript}
+                 activeScriptId={activeScriptId}
+                 customScriptBlocks={customBlocks}
+                 onRefineScript={handleRefineScript}
+                 onGenerateCustomAI={handleGenerateCustomAI}
+                 refiningSlot={refiningSlot}
+               />
+            </aside>
+            
+            {/* Mobile Script Sidebar (visible below video on small screens) */}
+            <div className="lg:hidden p-4 bg-surface-container-high border-t border-outline-variant/10 overflow-y-auto shrink-0 max-h-[50vh]">
+               <ScriptSidebar 
+                 scripts={scripts}
+                 analyzingSlot={analyzingSlot}
+                 onGenerateScript={handleGenerateScript}
+                 onSelectScript={handleSelectScript}
+                 activeScriptId={activeScriptId}
+                 customScriptBlocks={customBlocks}
+                 onRefineScript={handleRefineScript}
+                 onGenerateCustomAI={handleGenerateCustomAI}
+                 refiningSlot={refiningSlot}
+               />
+            </div>
+          </>
         )}
       </main>
     </div>

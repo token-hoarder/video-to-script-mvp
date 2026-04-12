@@ -1,24 +1,38 @@
 "use client"
 
 import * as React from "react"
-import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 
-import { Button } from "@/components/ui/button"
-
 export function ThemeToggle() {
+  const [mounted, setMounted] = React.useState(false)
   const { theme, setTheme } = useTheme()
 
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <button
+        className="p-2 text-on-surface-variant hover:text-primary transition-all active:scale-95 flex items-center justify-center rounded-full hover:bg-surface-container"
+        aria-label="Toggle theme"
+      >
+        <span className="material-symbols-outlined text-[20px]">
+          dark_mode
+        </span>
+      </button>
+    )
+  }
+
   return (
-    <Button
-      variant="ghost"
-      size="icon"
+    <button
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-full"
+      className="p-2 text-on-surface-variant hover:text-primary transition-all active:scale-95 flex items-center justify-center rounded-full hover:bg-surface-container"
+      aria-label="Toggle theme"
     >
-      <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-      <span className="sr-only">Toggle theme</span>
-    </Button>
+      <span className="material-symbols-outlined text-[20px]">
+        {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+      </span>
+    </button>
   )
 }

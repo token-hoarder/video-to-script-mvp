@@ -1,6 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, Tv, CheckCircle2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -65,6 +64,7 @@ export function StoryboardDetails({
        case 'aesthetic': return 'Aesthetic Mode Storyboard';
        case 'funny': return 'Funny / Meme Mode Storyboard';
        case 'educational': return 'Educational Mode Storyboard';
+       case 'custom_ai': return 'Custom Mix Storyboard';
        default: return 'Storyboard Details';
     }
   };
@@ -75,7 +75,7 @@ export function StoryboardDetails({
     <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex justify-between items-center mb-3 px-1">
         <h3 className="text-sm font-semibold tracking-wide text-foreground flex items-center gap-2">
-           <Tv className="w-4 h-4 text-primary" /> {getTitle()}
+           <span className="material-symbols-outlined text-primary text-[18px]">movie</span> {getTitle()}
         </h3>
         <div className="flex items-center gap-2">
           {hasPendingEdits && (
@@ -91,17 +91,17 @@ export function StoryboardDetails({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 text-[11px] font-medium px-3 text-muted-foreground hover:text-foreground border border-transparent hover:border-border transition-all rounded-md"
+            className="h-8 text-[11px] font-medium px-3 text-muted-foreground hover:text-foreground border border-transparent hover:bg-surface-container-high transition-all rounded-md"
             onClick={handleCopy}
           >
-            {copied ? <Check className="w-3 h-3 mr-1.5 text-green-500" /> : <Copy className="w-3 h-3 mr-1.5" />}
+            {copied ? <span className="material-symbols-outlined text-[16px] mr-1.5 text-green-500">check</span> : <span className="material-symbols-outlined text-[16px] mr-1.5">content_copy</span>}
             {copied ? 'Copied' : 'Copy Text'}
           </Button>
 
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 text-[11px] font-medium px-3 text-muted-foreground hover:text-foreground border border-transparent hover:border-border transition-all rounded-md ml-1"
+            className="h-8 text-[11px] font-medium px-3 text-muted-foreground hover:text-foreground border border-transparent hover:bg-surface-container-high transition-all rounded-md ml-1"
             onClick={() => {
               const text = blocks.map((segment, idx) => {
                 const { start, end } = getTimestamps(segment);
@@ -120,31 +120,29 @@ export function StoryboardDetails({
               toast.success('Script downloaded!');
             }}
           >
-            <svg className="w-3 h-3 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
+            <span className="material-symbols-outlined text-[16px] mr-1.5">download</span>
             Download .txt
           </Button>
         </div>
       </div>
-      <Card className="border-border bg-card backdrop-blur-md relative overflow-hidden group transition-all duration-300">
+      <Card className="border-border/50 bg-surface-container-lowest backdrop-blur-md relative overflow-hidden group transition-all duration-300 shadow-sm">
         <CardContent className="p-0">
-          <div className="flex flex-col divide-y divide-border w-full overflow-hidden">
+          <div className="flex flex-col divide-y divide-border/50 w-full overflow-hidden">
             {blocks.map((segment, idx) => {
               const { start, end } = getTimestamps(segment);
               const isDirty = pendingEdits[idx] !== undefined;
               const currentText = isDirty ? pendingEdits[idx] : segment.text;
 
               return (
-                <div key={idx} className={`flex flex-col gap-1.5 p-4 transition-all relative group/row ${isDirty ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-muted/40 border-l-2 border-l-transparent'}`}>
+                <div key={idx} className={`flex flex-col gap-1.5 p-4 transition-all relative group/row ${isDirty ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-surface-container-low border-l-2 border-l-transparent'}`}>
                   <div className="flex items-start justify-between">
                     <button 
                        onClick={() => onScrubVideo(start)}
-                       className="text-[11px] font-mono font-semibold text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 px-1.5 py-0.5 rounded transition-colors whitespace-nowrap tracking-wider uppercase flex items-center shrink-0 cursor-pointer"
+                       className="text-[11px] font-mono font-semibold text-primary hover:text-primary-dim hover:bg-primary/10 px-1.5 py-0.5 rounded transition-colors whitespace-nowrap tracking-wider uppercase flex items-center shrink-0 cursor-pointer"
                        title="Jump to this frame in video"
                     >
                       {start.toFixed(1)}s - {end.toFixed(1)}s
-                      {isDirty && <span className="ml-2 inline-block w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.8)]" title="Unsaved changes" />}
+                      {isDirty && <span className="ml-2 inline-block w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_5px_rgba(var(--primary),0.8)]" title="Unsaved changes" />}
                     </button>
                     
                     <div className="flex items-center gap-1 opacity-60 group-hover/row:opacity-100 transition-opacity">
@@ -153,34 +151,34 @@ export function StoryboardDetails({
                           <Button 
                              variant="ghost" 
                              size="sm" 
-                             className="h-6 w-6 p-0 text-green-500 hover:text-green-400 hover:bg-green-500/10 rounded-full"
+                             className="h-6 w-6 p-0 text-green-600 hover:text-green-700 hover:bg-green-500/10 rounded-full flex items-center justify-center"
                              onClick={() => onSaveSegment(idx)}
                              title="Save Segment (Commit)"
                           >
-                            <CheckCircle2 className="w-4 h-4" />
+                            <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                           </Button>
                           <Button 
                              variant="ghost" 
                              size="sm" 
-                             className="h-6 w-6 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-full"
+                             className="h-6 w-6 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-full flex items-center justify-center"
                              onClick={() => onUndoSegment(idx)}
                              title="Undo Draft"
                           >
-                            <X className="w-4 h-4" />
+                            <span className="material-symbols-outlined text-[16px]">close</span>
                           </Button>
                         </div>
                       )}
                       <Button 
                          variant="ghost" 
                          size="sm" 
-                         className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full"
+                         className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-border/50 rounded-full flex items-center justify-center"
                          onClick={() => {
                            navigator.clipboard.writeText(currentText);
                            toast.success('Segment copied!');
                          }}
                          title="Copy this segment"
                       >
-                        <Copy className="w-3.5 h-3.5" />
+                         <span className="material-symbols-outlined text-[14px]">content_copy</span>
                       </Button>
                     </div>
                   </div>
