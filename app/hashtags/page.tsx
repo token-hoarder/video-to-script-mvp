@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Link from 'next/link';
 import { AppHeader } from '@/components/app-header';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -176,20 +177,64 @@ export default function HashtagsPage() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const hasVideo = Boolean(uploadedVideoUrl || file);
+  const hasVideo = Boolean(uploadedVideoUrl || file || videoPreviewUrl);
 
   return (
-    <div className="min-h-screen bg-background text-on-surface flex flex-col font-sans">
+    <div className="bg-background text-on-surface h-screen flex flex-col font-sans overflow-hidden transition-colors duration-300">
       <AppHeader />
       
-      <main className="flex-1 pt-24 px-6 md:px-8 pb-12">
-        <div className="max-w-7xl mx-auto">
+      <main className="flex-1 flex pt-[72px] overflow-hidden">
+        
+        {/* Left Sidebar (App Shell Mock) */}
+        <aside className="hidden md:flex w-64 h-full flex-col gap-2 p-4 border-r border-outline-variant/10 bg-surface-container-lowest/50 shadow-sm shrink-0">
+          <div className="px-4 py-2 mb-4">
+            <h2 className="text-lg font-bold text-primary">Project Studio</h2>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-outline-variant/80">Pro Editing Workspace</p>
+          </div>
+          <nav className="space-y-1">
+             <Link href="/studio" className="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface rounded-xl transition-all font-semibold">
+               <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
+               <span className="text-sm">AI Scripts</span>
+             </Link>
+              <div className="flex items-center gap-3 p-3 bg-primary/10 text-primary rounded-xl font-bold transition-transform translate-x-1 cursor-default">
+                <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>tag</span>
+                <span className="text-sm">Hashtag Generator</span>
+              </div>
+             <div className="flex items-center gap-3 p-3 text-on-surface-variant/40 rounded-xl cursor-not-allowed font-semibold">
+               <span className="material-symbols-outlined text-[20px]">video_library</span>
+               <span className="text-sm">Media Library</span>
+             </div>
+             <div className="flex items-center gap-3 p-3 text-on-surface-variant/40 rounded-xl cursor-not-allowed font-semibold">
+               <span className="material-symbols-outlined text-[20px]">animation</span>
+               <span className="text-sm">VFX / Transitions</span>
+             </div>
+          </nav>
+          
+          <div className="mt-auto p-4 bg-surface-container-low rounded-2xl flex items-center gap-3 border border-outline-variant/10">
+             <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold shadow-inner">
+                {user ? (isGuest ? 'G' : user.email?.substring(0,2).toUpperCase()) : 'G'}
+             </div>
+             <div>
+                {(!user || isGuest) ? (
+                  <p className="text-sm font-bold text-on-surface">Guest Mode</p>
+                ) : (
+                  <>
+                    <p className="text-xs font-bold text-on-surface truncate max-w-[120px]">{user.email}</p>
+                    <p className="text-[10px] text-primary font-bold uppercase tracking-widest">Pro Member</p>
+                  </>
+                )}
+             </div>
+          </div>
+        </aside>
+
+        <section className="flex-1 overflow-y-auto px-6 md:px-8 pb-12 pt-12 relative custom-scrollbar">
+          <div className="max-w-7xl mx-auto">
           
           <div className="mb-12 text-center md:text-left">
-            <span className="text-[10px] sm:text-[11px] font-bold text-primary uppercase tracking-[0.2em] block mb-3">Algorithm Accelerator</span>
+            <span className="text-[10px] sm:text-[11px] font-bold text-primary uppercase tracking-[0.2em] block mb-3">Optimize Discovery</span>
             <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold tracking-tight text-on-surface leading-tight mb-4">Hashtag Studio</h1>
             <p className="text-on-surface-variant text-base sm:text-lg max-w-2xl font-light mx-auto md:mx-0">
-              Elevate your reach with precision metadata. Upload your content and let ViralScript identify the high-converting tags for your niche.
+              Generate optimized hashtags for your video to improve reach and engagement.
             </p>
           </div>
 
@@ -208,7 +253,6 @@ export default function HashtagsPage() {
                     className="w-full h-28 bg-surface-container-low border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-outline-variant resize-none text-on-surface" 
                     placeholder="Describe your video niche (e.g. tech unboxing, aesthetic vlog)..."
                   />
-                  <span className="absolute bottom-3 right-3 material-symbols-outlined text-outline-variant/60 text-lg group-focus-within:text-primary transition-colors">smart_toy</span>
                 </div>
               </div>
 
@@ -291,18 +335,21 @@ export default function HashtagsPage() {
                         <button 
                           onClick={(e) => { e.preventDefault(); runAnalysis(); }}
                           disabled={isAnalyzing}
-                          className="bg-primary hover:bg-primary-dim text-on-primary px-10 py-4 rounded-full font-bold text-lg tracking-tight shadow-[0_24px_48px_rgba(0,83,221,0.3)] active:scale-95 transition-all flex items-center gap-3 disabled:opacity-70 disabled:scale-100 relative z-20"
+                          className="bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary hover:bg-primary-container/80 dark:hover:bg-primary-dim px-10 py-4 rounded-full font-bold text-lg tracking-tight shadow-[0_24px_48px_rgba(0,83,221,0.1)] active:scale-95 transition-all flex items-center gap-3 disabled:opacity-70 disabled:scale-100 relative z-20"
                         >
                           {isAnalyzing ? "Analyzing..." : "Analyze Hashtags"}
-                          <span className={`material-symbols-outlined text-2xl ${isAnalyzing ? "animate-spin" : ""}`} style={{ fontVariationSettings: "'FILL' 1" }}>{isAnalyzing ? "autorenew" : "auto_awesome"}</span>
+                          <span className={`material-symbols-outlined text-2xl ${isAnalyzing ? "animate-spin" : ""}`} style={{ fontVariationSettings: "'FILL' 1" }}>{isAnalyzing ? "progress_activity" : "auto_awesome"}</span>
                         </button>
                       ) : (
-                        <div className="bg-primary hover:bg-primary-dim text-on-primary px-10 py-4 rounded-full font-bold text-lg tracking-tight shadow-[0_24px_48px_rgba(0,83,221,0.3)] transition-all flex items-center gap-3">
+                        <div className="bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary hover:bg-primary-container/80 dark:hover:bg-primary-dim px-10 py-4 rounded-full font-bold text-lg tracking-tight shadow-[0_24px_48px_rgba(0,83,221,0.1)] transition-all flex items-center gap-3">
                           Browse Files
                         </div>
                       )}
                       {hasVideo && !isAnalyzing && (
-                         <div className="text-[11px] font-bold text-outline-variant uppercase tracking-widest hover:text-primary transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}>Change video</div>
+                        <div className="flex items-center gap-4 mt-2">
+                           <div className="text-[11px] font-bold text-outline-variant uppercase tracking-widest hover:text-primary transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}>Change video</div>
+                           <div className="text-[11px] font-bold text-outline-variant uppercase tracking-widest hover:text-error transition-colors cursor-pointer" onClick={(e) => { e.preventDefault(); setFile(null); setUploadedVideoUrl(null); setVideoPreviewUrl(null); setUserHint(''); }}>Remove video</div>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -320,7 +367,7 @@ export default function HashtagsPage() {
                       disabled={isAnalyzing}
                       className="bg-surface-container-highest hover:bg-primary/10 text-primary-dim px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors disabled:opacity-50"
                     >
-                      <span className={`material-symbols-outlined text-[16px] ${isAnalyzing ? "animate-spin" : ""}`}>refresh</span> {isAnalyzing ? "Regenerating" : "More"}
+                      <span className={`material-symbols-outlined text-[16px] ${isAnalyzing ? "animate-spin" : ""}`}>progress_activity</span> {isAnalyzing ? "Regenerating" : "More"}
                     </button>
                   </div>
 
@@ -356,10 +403,10 @@ export default function HashtagsPage() {
                     </div>
                   )}
 
-                  {/* Clear Search & Upload */}
+                  {/* Reset Results */}
                   <div className="mt-4 flex justify-end">
-                     <button onClick={() => { setHashtags(null); setFile(null); setUploadedVideoUrl(null); setVideoPreviewUrl(null); }} className="text-xs font-semibold text-outline-variant hover:text-error transition-colors flex items-center gap-1">
-                       <span className="material-symbols-outlined text-[16px]">device_reset</span> Re-upload
+                     <button onClick={() => { setHashtags(null); setUserHint(''); }} className="text-[10px] font-bold uppercase tracking-widest text-outline-variant hover:text-error transition-colors flex items-center gap-1">
+                       <span className="material-symbols-outlined text-[14px]">delete</span> Reset Results
                      </button>
                   </div>
                 </div>
@@ -367,11 +414,12 @@ export default function HashtagsPage() {
             </div>
 
           </div>
-        </div>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-12 border-t border-outline-variant/15 bg-surface-bright dark:bg-background mt-auto">
+      <footer className="w-full py-12 border-t border-outline-variant/15 bg-surface-bright dark:bg-background mt-auto hidden">
         <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-variant">
             © 2024 ViralScript AI. All rights reserved.

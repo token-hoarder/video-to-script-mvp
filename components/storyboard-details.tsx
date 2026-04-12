@@ -82,7 +82,7 @@ export function StoryboardDetails({
             <Button
               variant="default"
               size="sm"
-              className="h-8 text-[11px] font-semibold px-3 bg-primary text-primary-foreground hover:bg-primary/90 transition-all rounded-md shadow-[0_0_10px_rgba(var(--primary),0.3)]"
+              className="h-8 text-[11px] font-semibold px-3 bg-primary-container text-on-primary-container dark:bg-primary dark:text-primary-foreground hover:bg-primary-container/80 dark:hover:bg-primary/90 transition-all rounded-md shadow-sm"
               onClick={onSaveAll}
             >
               Commit All Changes

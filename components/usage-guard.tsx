@@ -13,6 +13,7 @@
  */
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Lock, Zap } from 'lucide-react';
 
@@ -39,7 +40,19 @@ export function CreditBadge({
   isGuest,
   onUpgrade,
 }: Pick<UsageGuardProps, 'credits' | 'isGuest' | 'onUpgrade'>) {
-  if (!isGuest || credits === null) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted || !isGuest) return null;
+
+  if (credits === null) {
+    return (
+      <div className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[#fff4de] dark:bg-[#3d2700] px-3 py-1.5 sm:py-1 text-[10px] sm:text-xs font-semibold text-[#8b5a00] dark:text-[#ffca68] backdrop-blur-sm animate-pulse shadow-[0_4px_12px_rgba(234,179,8,0.1)] whitespace-nowrap shrink-0">
+        <span className="material-symbols-outlined text-[14px]">flare</span>
+        <span>✦ 3 left</span>
+      </div>
+    );
+  }
 
   return (
     <motion.button
@@ -48,7 +61,7 @@ export function CreditBadge({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.04 }}
       whileTap={{ scale: 0.97 }}
-      className="inline-flex items-center gap-1.5 rounded-full bg-[#fff4de] dark:bg-[#3d2700] px-3 py-1 text-xs font-semibold text-[#8b5a00] dark:text-[#ffca68] backdrop-blur-sm transition-all hover:bg-[#ffeac2] dark:hover:bg-[#523400] shadow-[0_4px_12px_rgba(234,179,8,0.1)]"
+      className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[#fff4de] dark:bg-[#3d2700] px-3 py-1.5 sm:py-1 text-[10px] sm:text-xs font-semibold text-[#8b5a00] dark:text-[#ffca68] backdrop-blur-sm transition-all hover:bg-[#ffeac2] dark:hover:bg-[#523400] shadow-[0_4px_12px_rgba(234,179,8,0.1)] whitespace-nowrap shrink-0"
       aria-label={`${credits} analyses remaining — click to unlock more`}
       id="credit-badge"
     >
@@ -99,7 +112,7 @@ export function UnlockCTA({ onUpgrade }: { onUpgrade: () => Promise<void> }) {
       <button
         onClick={onUpgrade}
         id="unlock-google-btn"
-        className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background shadow-sm transition-all hover:bg-foreground/90 active:scale-95"
+        className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-lg bg-primary-container dark:bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary-container dark:text-on-primary shadow-sm transition-all hover:bg-primary-container/80 dark:hover:bg-primary-dim active:scale-95"
       >
         {/* Google G icon (inline SVG — no external dep) */}
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
