@@ -2,72 +2,77 @@
 
 ```mermaid
 graph LR
+    %% Subgraphs for Bounded Contexts
     subgraph "Client / Browser"
-        User["User"]
-        BrowserUI["Frontend UI / Pages"]
-        ClientAuthActions["Client Auth Actions"]
-        FileUploadUI["Video Upload Interface"]
+        User["User Interaction"]
+        FrontendUI["Frontend UI (Pages & Components)"]
     end
 
     subgraph "Next.js Application"
-        NextJSFrontend["Next.js Frontend (Server & Client Components)"]
-        AuthMiddleware["Auth Middleware (Supabase Integration)"]
-        ServerActions["Server Actions (e.g., Login/Signup)"]
-        APIRoutes["Next.js API Routes"]
-        SupabaseIntegrationServer["Supabase Client (Server-side)"]
+        NextJSApp["Next.js Server (Pages/Layouts)"]
+        AuthMiddleware["Auth Middleware (utils/supabase/middleware)"]
+        ServerActions["Server Actions (login/actions.ts)"]
+        APIRoutes["Next.js API Routes (app/api/...)"]
+        VideoProcessingUtility["Video Processing Utility (utils/video-compressor.ts)"]
     end
 
     subgraph "Supabase Cloud"
-        SupabaseAuth["Supabase Auth Service"]
-        SupabaseDatabase["Supabase Database"]
+        SupabaseAuth["Supabase Authentication"]
+        SupabaseDB["Supabase Database"]
         SupabaseStorage["Supabase Storage"]
     end
 
     subgraph "External Services"
-        ExternalAI["External AI Service (LLMs, Video Analysis)"]
-        ExternalVideoProcessing["External Video Processing"]
+        AIMLService["External AI/ML Service"]
     end
 
-    User --> BrowserUI["Navigates, Interacts"];
+    %% Flow Diagram
+    User --> FrontendUI["Renders UI & Interacts"]
 
-    BrowserUI --> NextJSFrontend["Request Page / Data"];
-    NextJSFrontend --> AuthMiddleware["Check Session / Route Protection"];
-    AuthMiddleware --> SupabaseAuth["Verify Session / Token"];
-    SupabaseAuth --> AuthMiddleware["Session Status"];
-    AuthMiddleware --> NextJSFrontend["Allow / Redirect"];
+    %% 1. Initial Load & Authentication Flow
+    FrontendUI -- "Request Page Load" --> NextJSApp["Render Server Component / Page"]
+    NextJSApp --> AuthMiddleware["Check Session & Permissions"]
+    AuthMiddleware -- "Auth Status" --> SupabaseAuth["Verify/Refresh Session"]
+    SupabaseAuth --> AuthMiddleware
+    AuthMiddleware --> NextJSApp["Serve Content / Redirect"]
+    NextJSApp --> FrontendUI
 
-    ClientAuthActions --> ServerActions["Submit Login / Signup"];
-    ServerActions --> SupabaseIntegrationServer["Perform Auth Operation"];
-    SupabaseIntegrationServer --> SupabaseAuth["Authenticate User / Create Account"];
-    SupabaseAuth --> SupabaseIntegrationServer["Auth Result"];
-    SupabaseIntegrationServer --> ServerActions["Return Auth Status"];
-    ServerActions --> BrowserUI["Update UI / Redirect"];
+    FrontendUI -- "Login/Logout Action" --> ServerActions["Handle Auth Request"]
+    ServerActions --> SupabaseAuth["Authenticate User"]
+    SupabaseAuth --> ServerActions
+    ServerActions --> FrontendUI
 
-    FileUploadUI --> APIRoutes["Call Upload API (upload-url)"];
-    APIRoutes --> SupabaseIntegrationServer["Handle Video Upload / Metadata"];
-    SupabaseIntegrationServer --> SupabaseStorage["Upload Video File"];
-    SupabaseStorage --> ExternalVideoProcessing["Trigger Processing (Webhook/Queue)"];
-    ExternalVideoProcessing --> SupabaseStorage["Store Processed Output"];
-    SupabaseStorage --> SupabaseIntegrationServer["Notify Processing Complete"];
-    SupabaseIntegrationServer --> SupabaseDatabase["Update Video Status / Details"];
-    SupabaseDatabase --> SupabaseIntegrationServer["Status Saved"];
-    SupabaseIntegrationServer --> APIRoutes["Return Status"];
-    APIRoutes --> BrowserUI["Update Upload UI"];
+    %% 2. Video Upload Flow
+    FrontendUI -- "Upload Video File" --> APIRoutes["/api/upload-url (Generate Signed URL)"]
+    APIRoutes --> SupabaseStorage["Provision Upload URL"]
+    SupabaseStorage --> APIRoutes
+    APIRoutes --> SupabaseDB["Store Video Metadata"]
+    SupabaseDB --> APIRoutes
+    APIRoutes --> FrontendUI["Confirm Upload & Display Status"]
 
-    BrowserUI --> APIRoutes["Call AI APIs (generate-script, generate-hashtags)"];
-    APIRoutes --> ExternalAI["Send Context / Prompt"];
-    ExternalAI --> APIRoutes["Return AI Generated Content"];
-    APIRoutes --> SupabaseIntegrationServer["Save Generated Content"];
-    SupabaseIntegrationServer --> SupabaseDatabase["Store Script / Hashtags"];
-    SupabaseDatabase --> SupabaseIntegrationServer["Content Saved"];
-    SupabaseIntegrationServer --> APIRoutes["Confirm Save"];
-    APIRoutes --> BrowserUI["Display Generated Content"];
+    %% (Optional) Video Processing after upload or async
+    APIRoutes -- "Trigger Processing" --> VideoProcessingUtility["Compress/Process Video"]
+    VideoProcessingUtility --> SupabaseStorage["Store Processed Video"]
 
-    NextJSFrontend --> SupabaseIntegrationServer["Fetch/Mutate Data (SSR/API)"];
-    SupabaseIntegrationServer --> SupabaseDatabase["Query Database"];
-    SupabaseDatabase --> SupabaseIntegrationServer["Query Result"];
-    SupabaseIntegrationServer --> NextJSFrontend["Provide Data"];
-    NextJSFrontend --> BrowserUI["Render Data"];
+    %% 3. Script Generation Flow
+    FrontendUI -- "Request Script Generation" --> APIRoutes["/api/generate-script"]
+    APIRoutes --> AIMLService["Request Script (LLM Interaction)"]
+    AIMLService -- "Generated Script" --> APIRoutes
+    APIRoutes --> SupabaseDB["Save Generated Script"]
+    SupabaseDB --> APIRoutes
+    APIRoutes --> FrontendUI["Display Script"]
+
+    %% 4. Hashtag Generation Flow
+    FrontendUI -- "Request Hashtag Generation" --> APIRoutes["/api/generate-hashtags"]
+    APIRoutes --> AIMLService["Request Hashtags (LLM Interaction)"]
+    AIMLService -- "Generated Hashtags" --> APIRoutes
+    APIRoutes --> SupabaseDB["Save Generated Hashtags"]
+    SupabaseDB --> APIRoutes
+    APIRoutes --> FrontendUI["Display Hashtags"]
+
+    %% 5. Data Retrieval for UI
+    NextJSApp -- "Fetch Data for Server Components" --> SupabaseDB["Retrieve Data (e.g., scripts, hashtags)"]
+    SupabaseDB --> NextJSApp
 ```
 
 *Last updated automatically by Gemini.*
