@@ -1,3 +1,9 @@
+## [2026-04-12] - Auto-Generated Update
+
+Enhanced the landing page with a clearer value proposition, feature highlights, and trust indicators to better describe the application.
+
+---
+
 ## [2026-04-11] - Auto-Generated Update
 
 Implemented a 100MB file size limit for video uploads and enhanced MIME type handling for improved video processing.

@@ -3,75 +3,71 @@
 ```mermaid
 graph LR
     subgraph "Client / Browser"
-        USR["User"]
-        FE_UI["Frontend UI (Next.js Pages & Components)"]
+        User["User"]
+        BrowserUI["Frontend UI / Pages"]
+        ClientAuthActions["Client Auth Actions"]
+        FileUploadUI["Video Upload Interface"]
     end
 
     subgraph "Next.js Application"
-        AUTH_MW["Auth Middleware"]
-        SERVER_ACTIONS["Server Actions (Auth, Data Submit)"]
-        API_UPLOAD["API Route: Upload Video"]
-        API_SCRIPT["API Route: Generate Script"]
-        API_HASHTAGS["API Route: Generate Hashtags"]
-        SB_CLIENT_SERVER_UTILS["Supabase Client/Server Integrations"]
-        VIDEO_PROC_UTIL["Video Processing Utility"]
+        NextJSFrontend["Next.js Frontend (Server & Client Components)"]
+        AuthMiddleware["Auth Middleware (Supabase Integration)"]
+        ServerActions["Server Actions (e.g., Login/Signup)"]
+        APIRoutes["Next.js API Routes"]
+        SupabaseIntegrationServer["Supabase Client (Server-side)"]
     end
 
     subgraph "Supabase Cloud"
-        SB_AUTH["Supabase Authentication"]
-        SB_DB["Supabase Database"]
-        SB_STORAGE["Supabase Storage"]
+        SupabaseAuth["Supabase Auth Service"]
+        SupabaseDatabase["Supabase Database"]
+        SupabaseStorage["Supabase Storage"]
     end
 
     subgraph "External Services"
-        AI_SCRIPT_GEN["AI Service: Script Generation"]
-        AI_HASHTAG_GEN["AI Service: Hashtag Generation"]
+        ExternalAI["External AI Service (LLMs, Video Analysis)"]
+        ExternalVideoProcessing["External Video Processing"]
     end
 
-    %% Flow 1: User Interaction & Authentication
-    USR -- "1. Access App / Login" --> FE_UI
-    FE_UI -- "2. Authenticate Request" --> AUTH_MW
-    AUTH_MW -- "3. Verify/Refresh Session" --> SB_AUTH
-    SB_AUTH -- "4. Session Token/Status" --> AUTH_MW
-    AUTH_MW -- "5. Grant Access / Redirect" --> FE_UI
+    User --> BrowserUI["Navigates, Interacts"];
 
-    FE_UI -- "6. Login/Signup Submit" --> SERVER_ACTIONS
-    SERVER_ACTIONS -- "7. Auth with Credentials" --> SB_AUTH
-    SB_AUTH -- "8. Return Auth Result" --> SERVER_ACTIONS
-    SERVER_ACTIONS -- "9. Update UI / Set Session" --> FE_UI
+    BrowserUI --> NextJSFrontend["Request Page / Data"];
+    NextJSFrontend --> AuthMiddleware["Check Session / Route Protection"];
+    AuthMiddleware --> SupabaseAuth["Verify Session / Token"];
+    SupabaseAuth --> AuthMiddleware["Session Status"];
+    AuthMiddleware --> NextJSFrontend["Allow / Redirect"];
 
-    %% Flow 2: Video Upload & Processing
-    FE_UI -- "10. Upload Video URL" --> API_UPLOAD
-    API_UPLOAD -- "11. Store Video" --> SB_STORAGE
-    SB_STORAGE -- "12. Video URL/Metadata" --> API_UPLOAD
-    API_UPLOAD -- "13. Process Video (Compress/Extract Metadata)" --> VIDEO_PROC_UTIL
-    VIDEO_PROC_UTIL -- "14. Save Processed Video Details" --> SB_DB
-    SB_DB -- "15. Confirmation" --> API_UPLOAD
-    API_UPLOAD -- "16. Return Status/Video ID" --> FE_UI
+    ClientAuthActions --> ServerActions["Submit Login / Signup"];
+    ServerActions --> SupabaseIntegrationServer["Perform Auth Operation"];
+    SupabaseIntegrationServer --> SupabaseAuth["Authenticate User / Create Account"];
+    SupabaseAuth --> SupabaseIntegrationServer["Auth Result"];
+    SupabaseIntegrationServer --> ServerActions["Return Auth Status"];
+    ServerActions --> BrowserUI["Update UI / Redirect"];
 
-    %% Flow 3: Script Generation
-    FE_UI -- "17. Request Script Generation" --> API_SCRIPT
-    API_SCRIPT -- "18. Fetch Video Metadata/Context" --> SB_DB
-    API_SCRIPT -- "19. Send Prompt to AI" --> AI_SCRIPT_GEN
-    AI_SCRIPT_GEN -- "20. Return Generated Script" --> API_SCRIPT
-    API_SCRIPT -- "21. Store Script" --> SB_DB
-    SB_DB -- "22. Confirmation" --> API_SCRIPT
-    API_SCRIPT -- "23. Return Script to UI" --> FE_UI
+    FileUploadUI --> APIRoutes["Call Upload API (upload-url)"];
+    APIRoutes --> SupabaseIntegrationServer["Handle Video Upload / Metadata"];
+    SupabaseIntegrationServer --> SupabaseStorage["Upload Video File"];
+    SupabaseStorage --> ExternalVideoProcessing["Trigger Processing (Webhook/Queue)"];
+    ExternalVideoProcessing --> SupabaseStorage["Store Processed Output"];
+    SupabaseStorage --> SupabaseIntegrationServer["Notify Processing Complete"];
+    SupabaseIntegrationServer --> SupabaseDatabase["Update Video Status / Details"];
+    SupabaseDatabase --> SupabaseIntegrationServer["Status Saved"];
+    SupabaseIntegrationServer --> APIRoutes["Return Status"];
+    APIRoutes --> BrowserUI["Update Upload UI"];
 
-    %% Flow 4: Hashtag Generation
-    FE_UI -- "24. Request Hashtag Generation" --> API_HASHTAGS
-    API_HASHTAGS -- "25. Fetch Script/Context" --> SB_DB
-    API_HASHTAGS -- "26. Send Prompt to AI" --> AI_HASHTAG_GEN
-    AI_HASHTAG_GEN -- "27. Return Generated Hashtags" --> API_HASHTAGS
-    API_HASHTAGS -- "28. Store Hashtags" --> SB_DB
-    SB_DB -- "29. Confirmation" --> API_HASHTAGS
-    API_HASHTAGS -- "30. Return Hashtags to UI" --> FE_UI
+    BrowserUI --> APIRoutes["Call AI APIs (generate-script, generate-hashtags)"];
+    APIRoutes --> ExternalAI["Send Context / Prompt"];
+    ExternalAI --> APIRoutes["Return AI Generated Content"];
+    APIRoutes --> SupabaseIntegrationServer["Save Generated Content"];
+    SupabaseIntegrationServer --> SupabaseDatabase["Store Script / Hashtags"];
+    SupabaseDatabase --> SupabaseIntegrationServer["Content Saved"];
+    SupabaseIntegrationServer --> APIRoutes["Confirm Save"];
+    APIRoutes --> BrowserUI["Display Generated Content"];
 
-    %% Flow 5: Data Retrieval & Display
-    FE_UI -- "31. Request Data for Display (e.g., scripts, hashtags)" --> SB_CLIENT_SERVER_UTILS
-    SB_CLIENT_SERVER_UTILS -- "32. Query Database" --> SB_DB
-    SB_DB -- "33. Return Data" --> SB_CLIENT_SERVER_UTILS
-    SB_CLIENT_SERVER_UTILS -- "34. Render Data" --> FE_UI
+    NextJSFrontend --> SupabaseIntegrationServer["Fetch/Mutate Data (SSR/API)"];
+    SupabaseIntegrationServer --> SupabaseDatabase["Query Database"];
+    SupabaseDatabase --> SupabaseIntegrationServer["Query Result"];
+    SupabaseIntegrationServer --> NextJSFrontend["Provide Data"];
+    NextJSFrontend --> BrowserUI["Render Data"];
 ```
 
 *Last updated automatically by Gemini.*
