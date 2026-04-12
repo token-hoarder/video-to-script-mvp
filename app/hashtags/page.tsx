@@ -333,11 +333,36 @@ export default function HashtagsPage() {
                   <span className="text-xs font-normal text-muted-foreground">({hashtags.kept.length})</span>
                 ) : null}
               </h2>
-              {hashtags?.kept.length ? (
-                <Button variant="ghost" size="sm" onClick={copyKept} className="h-6 text-xs gap-1 px-2">
-                  {isCopied ? <><Check className="w-3 h-3" />Copied!</> : <><Copy className="w-3 h-3" />Copy all</>}
-                </Button>
-              ) : null}
+              <div className="flex items-center gap-1">
+                {hashtags?.kept.length ? (
+                  <>
+                    <Button variant="ghost" size="sm" onClick={copyKept} className="h-6 text-xs gap-1 px-2 text-muted-foreground hover:text-foreground">
+                      {isCopied ? <><Check className="w-3 h-3" />Copied!</> : <><Copy className="w-3 h-3" />Copy all</>}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        const text = hashtags.kept.join(' ');
+                        const blob = new Blob([text], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `hashtags-${Date.now()}.txt`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        toast.success('Hashtags downloaded!');
+                      }} 
+                      className="h-6 text-xs gap-1 px-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Download
+                    </Button>
+                  </>
+                ) : null}
+              </div>
             </div>
 
             <AnimatePresence mode="sync">

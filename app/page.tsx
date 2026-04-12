@@ -37,6 +37,7 @@ export default function Home() {
 
   const [analyzingSlot, setAnalyzingSlot] = useState<string | null>(null);
   const [compressionProgress, setCompressionProgress] = useState<number | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   // Shared persistent state from StudioContext (survives navigation to /hashtags and back)
   const { uploadedVideoUrl, setUploadedVideoUrl, videoPreviewUrl, setVideoPreviewUrl, scripts, setScripts } = useStudio();
@@ -226,28 +227,40 @@ export default function Home() {
       throw new Error(uploadUrlData.error || 'Failed to generate secure upload link');
     }
 
-    console.log('DEBUG: Starting direct fetch PUT upload...');
+    console.log('DEBUG: Starting direct XMLHttpRequest PUT upload...');
     
-    // We bypass supabase.storage.uploadToSignedUrl because it is silently hanging/swallowing the true error.
-    // Native fetch gives us the exact network layer behavior.
-    const directUploadRes = await fetch(uploadUrlData.signedUrl, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${uploadUrlData.token}`,
-        'Content-Type': fileToUpload.type || 'video/mp4',
-      },
-      body: fileToUpload
+    // Using XMLHttpRequest instead of fetch to enable upload progress tracking
+    const publicUrl = await new Promise<string>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrlData.signedUrl);
+      xhr.setRequestHeader('Authorization', `Bearer ${uploadUrlData.token}`);
+      xhr.setRequestHeader('Content-Type', fileToUpload.type || 'video/mp4');
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          setUploadProgress(percentComplete);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(filePath);
+          resolve(publicUrl);
+        } else {
+          reject(new Error(`Upload failed (Status ${xhr.status}): ${xhr.responseText}`));
+        }
+      };
+
+      xhr.onerror = () => {
+        setUploadProgress(null);
+        reject(new Error('Network error during upload'));
+      };
+      xhr.send(fileToUpload);
     });
 
-    console.log('DEBUG: Direct upload finished. Status:', directUploadRes.status);
-
-    if (!directUploadRes.ok) {
-      const errText = await directUploadRes.text();
-      throw new Error(`Upload failed (Status ${directUploadRes.status}): ${errText}`);
-    }
-
-    const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(filePath);
-    console.log('DEBUG: Final publicUrl generated:', publicUrl);
+    console.log('DEBUG: Direct upload finished. publicUrl:', publicUrl);
+    setUploadProgress(null);
     setUploadedVideoUrl(publicUrl);
     return publicUrl;
   };
@@ -499,7 +512,11 @@ export default function Home() {
              </div>
              <div className="w-full p-1 rounded-2xl bg-gradient-to-b from-white/5 to-transparent relative group">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-                <UploadZone onFileSelect={handleFileSelect} disabled={analyzingSlot !== null} />
+                <UploadZone 
+                  onFileSelect={handleFileSelect} 
+                  disabled={analyzingSlot !== null || uploadProgress !== null} 
+                  progress={uploadProgress ?? (compressionProgress !== null ? compressionProgress * 100 : null)}
+                />
              </div>
           </div>
 
@@ -529,21 +546,26 @@ export default function Home() {
                      videoRef={videoRef}
                    />
                    {/* Compression progress overlay */}
-                   {compressionProgress !== null && (
+                   {/* Progress overlay (Optimization or Upload) */}
+                   {(compressionProgress !== null || uploadProgress !== null) && (
                      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-20">
                        <div className="text-center">
-                         <p className="text-white font-semibold text-lg mb-1">Optimizing for AI Analysis</p>
-                         <p className="text-zinc-300 text-sm">Preparing your video for the best results...</p>
+                         <p className="text-white font-semibold text-lg mb-1">
+                           {uploadProgress !== null ? 'Uploading to Secure Storage' : 'Optimizing for AI Analysis'}
+                         </p>
+                         <p className="text-zinc-300 text-sm">
+                           {uploadProgress !== null ? 'Almost there! Sending to storage...' : 'Preparing your video for the best results...'}
+                         </p>
                        </div>
                        <div className="w-64">
-                         <div className="flex justify-between text-xs text-zinc-300 mb-2">
-                           <span>Processing</span>
-                           <span>{Math.round(compressionProgress * 100)}%</span>
+                         <div className="flex justify-between text-xs text-zinc-300 mb-2 font-mono">
+                           <span>{uploadProgress !== null ? 'UPLOADING' : 'PROCESSING'}</span>
+                           <span>{Math.round(uploadProgress ?? (compressionProgress! * 100))}%</span>
                          </div>
-                         <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                         <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
                            <div 
-                             className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full transition-all duration-300"
-                             style={{ width: `${Math.round(compressionProgress * 100)}%` }}
+                             className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(var(--primary),0.5)]"
+                             style={{ width: `${Math.round(uploadProgress ?? (compressionProgress! * 100))}%` }}
                            />
                          </div>
                        </div>
