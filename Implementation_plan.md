@@ -61,9 +61,9 @@
 - [x] **Landing Page Hero** — Add a concise "above the fold" description of what the app does (1 headline + 2–3 bullet points) before the upload zone. Target: a new visitor understands the value prop in < 5 seconds without reading docs.
 - [x] **Icon-first Layout Compression** — Compress the sidebar script slot cards to use icons + tooltips instead of large labeled containers. Reduces vertical scroll on 13" laptops and makes the studio feel less cluttered.
 - [x] **Light Mode Contrast Audit** — Systematic audit of all text/background color pairs for WCAG AA compliance in light mode. Known failures: `zinc-500` on white backgrounds, `muted-foreground` on card backgrounds. Swap to higher-contrast token values or add a dedicated light-mode override layer.
-- [ ] **Upload Progress Bar** — Show a real percentage progress bar during the Supabase PUT upload (use `XMLHttpRequest` instead of `fetch` for progress events).
-- [ ] **Script Export** — "Export as .srt" or "Copy as plain text" for the active script slot.
-- [ ] **Hashtag Studio Export** — Provide a download (.txt) for the kept hashtags.
+- [x] **Upload Progress Bar** — Show a real percentage progress bar during the Supabase PUT upload (use `XMLHttpRequest` instead of `fetch` for progress events).
+- [x] **Script Export** — "Export as .srt" or "Copy as plain text" for the active script slot.
+- [x] **Hashtag Studio Export** — Provide a download (.txt) for the kept hashtags.
 - [ ] **Hashtag Set Naming** — Allow users to name saved hashtag sets (e.g. "Dubai Rooftop Set").
 
 > **ℹ️ Re: "AI scanning the video to generate captions"** — This is **already live**. The app uploads the video to the Google Gemini File API, which watches the full video and returns time-aligned `ScriptBlock` segments with `startTime`/`endTime` markers. These blocks are overlaid on the video player as real captions. The PM friend likely missed this working because of the transient Gemini `503 Service Unavailable` errors during the session — worth demoing again with a short clip on a good connection.
