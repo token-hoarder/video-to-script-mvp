@@ -48,7 +48,7 @@ export function CreditBadge({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.04 }}
       whileTap={{ scale: 0.97 }}
-      className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-950/40 px-3 py-1 text-xs font-medium text-amber-300 backdrop-blur-sm transition-colors hover:border-amber-400/50 hover:bg-amber-900/50"
+      className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 dark:bg-amber-950/40 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 backdrop-blur-sm transition-colors hover:border-amber-500/40 hover:bg-amber-500/20 dark:hover:bg-amber-900/50"
       aria-label={`${credits} analyses remaining — click to unlock more`}
       id="credit-badge"
     >
@@ -59,7 +59,7 @@ export function CreditBadge({
           {credits === 1 ? 'analysis' : 'analyses'} left
         </span>
       ) : (
-        <span className="text-rose-300">No analyses left</span>
+        <span className="text-destructive dark:text-rose-300">No analyses left</span>
       )}
     </motion.button>
   );
@@ -77,7 +77,7 @@ export function UnlockCTA({ onUpgrade }: { onUpgrade: () => Promise<void> }) {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.97 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="flex flex-col items-center gap-3 rounded-xl border border-amber-500/20 bg-gradient-to-b from-amber-950/60 to-zinc-900/80 p-5 text-center shadow-lg backdrop-blur-sm"
+      className="flex flex-col items-center gap-3 rounded-xl border border-amber-500/20 bg-gradient-to-b from-amber-50 to-background dark:from-amber-950/60 dark:to-zinc-900/80 p-5 text-center shadow-lg backdrop-blur-sm"
       id="unlock-cta"
       role="region"
       aria-label="Upgrade to unlock more analyses"
@@ -98,7 +98,7 @@ export function UnlockCTA({ onUpgrade }: { onUpgrade: () => Promise<void> }) {
       <button
         onClick={onUpgrade}
         id="unlock-google-btn"
-        className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-zinc-900 shadow-sm transition-all hover:bg-zinc-100 active:scale-95"
+        className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background shadow-sm transition-all hover:bg-foreground/90 active:scale-95"
       >
         {/* Google G icon (inline SVG — no external dep) */}
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
