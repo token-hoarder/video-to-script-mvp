@@ -1,5 +1,14 @@
 ## [2026-04-12] - Auto-Generated Update
 
+### Feat: Antigravity UI Design System & Video Upload Enhancements
+
+*   **Features:** Integrated the new "Antigravity" UI design system, establishing a comprehensive color palette and theme variables for both light and dark modes. Updated UI elements, notably hashtag chips, to align with the new design and incorporate Material Symbols for iconography.
+*   **Improvements:** Enhanced video upload capabilities by increasing the maximum file size to 500MB and refining user feedback during processing. Introduced new CSS utility classes for glassmorphism effects and animations.
+
+---
+
+## [2026-04-12] - Auto-Generated Update
+
 *   **User Interface & Navigation:** Redesigned the home page to serve as a central hub for core features and enhanced login page navigation with improved access options.
 *   **Platform Stability:** Improved AI model integration to prevent API errors and refined shared header components for consistency.
 

@@ -3,76 +3,63 @@
 ```mermaid
 graph LR
     subgraph "Client / Browser"
-        A["User"]
-        B["Frontend UI"]
+        U["User"]
+        FE["Frontend UI"]
     end
 
     subgraph "Next.js Application"
-        NA["Auth Middleware"]
-        NAL["Login Actions"]
-        NJP["Next.js Pages & Components (SSR/CSR)"]
-        NAVU["Video Upload API"]
-        NAGS["Script Generation API"]
-        NAGH["Hashtag Generation API"]
-        NADAL["Data Access Layer"]
+        AM["Auth Middleware"]
+        ASA["Auth Server Actions"]
+        subgraph "API Routes"
+            UAPI["Upload Video API"]
+            GSAPI["Generate Script API"]
+            GHAPI["Generate Hashtags API"]
+        end
     end
 
     subgraph "Supabase Cloud"
         SA["Supabase Auth"]
+        SD["Supabase Database"]
         SS["Supabase Storage"]
-        SDB["Supabase Database"]
     end
 
     subgraph "External Services"
-        EGS["External AI (Script Generation)"]
-        EGH["External AI (Hashtag Generation)"]
-        EVP["External Video Processing (Optional)"]
+        EAI["External AI Service"]
     end
 
-    %% User Request Flow
-    A -- "Navigates to URL" --> B
-    B -- "Initial Request / Page Load" --> NA
-    NA -- "Check Session / Auth Status" --> SA
-    SA -- "Auth Status / Session" --> NA
-    NA -- "Redirect if Unauthorized" --> B
-    B -- "Display Login Page" --> NJP
-    B -- "Login Form Submit" --> NAL
-    NAL -- "Authenticate User" --> SA
-    SA -- "Auth Token / Session Cookie" --> B
+    %% User Interaction and Auth Flow
+    U -- "Interacts" --> FE
+    FE -- "Login Request (Client/Server Actions)" --> ASA
+    ASA -- "Authenticate User" --> SA
+    SA -- "Session/Token" --> ASA
+    ASA -- "Set Cookie / Redirect" --> FE
+    AM -- "Verify Session" --> SA
+    SA -- "Session Valid" --> AM
+    AM -- "Allow Access to Page" --> FE
 
-    %% Core Application Features (Authenticated Flow)
-    B -- "User Action: Studio Page" --> NJP
-    NJP -- "Fetch Page Data (SSR)" --> NADAL
-    NADAL -- "Query Database" --> SDB
-    SDB -- "Data" --> NADAL
-    NADAL -- "Return Data" --> NJP
-    NJP -- "Render Page" --> B
+    %% Content Upload Flow
+    FE -- "Video Upload Request" --> UAPI
+    UAPI -- "Get Signed URL / Upload File" --> SS
+    SS -- "Upload Acknowledge / URL" --> UAPI
+    UAPI -- "Store Video Metadata" --> SD
+    SD -- "Metadata Stored" --> UAPI
+    UAPI -- "Success Response" --> FE
 
-    B -- "User Action: Upload Video" --> NAVU
-    NAVU -- "Request Signed Upload URL" --> SS
-    SS -- "Signed URL" --> NAVU
-    NAVU -- "Save Video Metadata" --> SDB
-    NAVU -- "Return Upload URL" --> B
-    B -- "Upload Video File" --> SS
+    %% AI Generation Flow (Script)
+    FE -- "Request Script Generation" --> GSAPI
+    GSAPI -- "Invoke LLM for Script" --> EAI
+    EAI -- "Generated Script Content" --> GSAPI
+    GSAPI -- "Store Script Data" --> SD
+    SD -- "Script Data Stored" --> GSAPI
+    GSAPI -- "Return Script to UI" --> FE
 
-    B -- "User Action: Generate Script" --> NAGS
-    NAGS -- "Retrieve Video Context" --> SDB
-    NAGS -- "Call AI Model for Script" --> EGS
-    EGS -- "Generated Script" --> NAGS
-    NAGS -- "Save Script to DB" --> SDB
-    NAGS -- "Return Script" --> B
-
-    B -- "User Action: Generate Hashtags" --> NAGH
-    NAGH -- "Retrieve Script/Video Context" --> SDB
-    NAGH -- "Call AI Model for Hashtags" --> EGH
-    EGH -- "Generated Hashtags" --> NAGH
-    NAGH -- "Save Hashtags to DB" --> SDB
-    NAGH -- "Return Hashtags" --> B
-
-    %% Optional Video Processing
-    SS -- "New Video Upload Event (Webhook/Trigger)" --> EVP
-    EVP -- "Process Video / Transcode" --> SS
-    EVP -- "Update Video Status/Metadata" --> SDB
+    %% AI Generation Flow (Hashtags)
+    FE -- "Request Hashtag Generation" --> GHAPI
+    GHAPI -- "Invoke LLM for Hashtags" --> EAI
+    EAI -- "Generated Hashtags List" --> GHAPI
+    GHAPI -- "Store Hashtags Data" --> SD
+    SD -- "Hashtags Data Stored" --> GHAPI
+    GHAPI -- "Return Hashtags to UI" --> FE
 ```
 
 *Last updated automatically by Gemini.*
