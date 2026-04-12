@@ -74,7 +74,7 @@ export function StoryboardDetails({
   return (
     <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex justify-between items-center mb-3 px-1">
-        <h3 className="text-sm font-semibold tracking-wide text-zinc-300 flex items-center gap-2">
+        <h3 className="text-sm font-semibold tracking-wide text-foreground flex items-center gap-2">
            <Tv className="w-4 h-4 text-primary" /> {getTitle()}
         </h3>
         <div className="flex items-center gap-2">
@@ -91,24 +91,52 @@ export function StoryboardDetails({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 text-[11px] font-medium px-3 text-zinc-400 hover:text-white border border-transparent hover:border-zinc-800 transition-all rounded-md"
+            className="h-8 text-[11px] font-medium px-3 text-muted-foreground hover:text-foreground border border-transparent hover:border-border transition-all rounded-md"
             onClick={handleCopy}
           >
             {copied ? <Check className="w-3 h-3 mr-1.5 text-green-500" /> : <Copy className="w-3 h-3 mr-1.5" />}
             {copied ? 'Copied' : 'Copy Text'}
           </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 text-[11px] font-medium px-3 text-muted-foreground hover:text-foreground border border-transparent hover:border-border transition-all rounded-md ml-1"
+            onClick={() => {
+              const text = blocks.map((segment, idx) => {
+                const { start, end } = getTimestamps(segment);
+                const textToUse = pendingEdits[idx] !== undefined ? pendingEdits[idx] : segment.text;
+                if (textToUse === '[Visual Break]') return `[${start.toFixed(1)}s] (Visual Break)`;
+                return `[${start.toFixed(1)}s - ${end.toFixed(1)}s] ${textToUse}`;
+              }).join('\n');
+              
+              const blob = new Blob([text], { type: 'text/plain' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `script-${activeScriptId}-${Date.now()}.txt`;
+              a.click();
+              URL.revokeObjectURL(url);
+              toast.success('Script downloaded!');
+            }}
+          >
+            <svg className="w-3 h-3 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download .txt
+          </Button>
         </div>
       </div>
-      <Card className="border-zinc-800 bg-zinc-950/30 backdrop-blur-md relative overflow-hidden group transition-all duration-300">
+      <Card className="border-border bg-card backdrop-blur-md relative overflow-hidden group transition-all duration-300">
         <CardContent className="p-0">
-          <div className="flex flex-col divide-y divide-zinc-800/40 w-full overflow-hidden">
+          <div className="flex flex-col divide-y divide-border w-full overflow-hidden">
             {blocks.map((segment, idx) => {
               const { start, end } = getTimestamps(segment);
               const isDirty = pendingEdits[idx] !== undefined;
               const currentText = isDirty ? pendingEdits[idx] : segment.text;
 
               return (
-                <div key={idx} className={`flex flex-col gap-1.5 p-4 transition-all relative group/row ${isDirty ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-zinc-900/40 border-l-2 border-l-transparent'}`}>
+                <div key={idx} className={`flex flex-col gap-1.5 p-4 transition-all relative group/row ${isDirty ? 'bg-primary/5 border-l-2 border-l-primary' : 'hover:bg-muted/40 border-l-2 border-l-transparent'}`}>
                   <div className="flex items-start justify-between">
                     <button 
                        onClick={() => onScrubVideo(start)}
@@ -134,7 +162,7 @@ export function StoryboardDetails({
                           <Button 
                              variant="ghost" 
                              size="sm" 
-                             className="h-6 w-6 p-0 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-full"
+                             className="h-6 w-6 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-full"
                              onClick={() => onUndoSegment(idx)}
                              title="Undo Draft"
                           >
@@ -145,7 +173,7 @@ export function StoryboardDetails({
                       <Button 
                          variant="ghost" 
                          size="sm" 
-                         className="h-6 w-6 p-0 text-zinc-400 hover:text-white hover:bg-white/10 rounded-full"
+                         className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full"
                          onClick={() => {
                            navigator.clipboard.writeText(currentText);
                            toast.success('Segment copied!');
@@ -169,8 +197,8 @@ export function StoryboardDetails({
                        e.target.style.height = e.target.scrollHeight + 'px';
                     }}
                     className={`w-full text-sm leading-relaxed tracking-wide resize-none bg-transparent outline-none transition-all duration-200 rounded-md p-1.5 min-h-[30px] overflow-hidden -ml-1.5
-                      ${isDirty ? 'text-white' : 'text-zinc-300'}
-                      ${segment.text === '[Visual Break]' && !isDirty ? 'italic text-zinc-500' : ''}`}
+                      ${isDirty ? 'text-foreground' : 'text-foreground/80'}
+                      ${segment.text === '[Visual Break]' && !isDirty ? 'italic text-muted-foreground' : ''}`}
                     placeholder="Enter segment text..."
                     rows={1}
                   />
