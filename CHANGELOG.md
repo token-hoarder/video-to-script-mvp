@@ -1,5 +1,13 @@
 ## [2026-05-27] - Auto-Generated Update
 
+```
+feat: Scaffolded multi-agent skill infrastructure, introducing new capabilities for communication (`caveman`), disciplined debugging (`diagnose`), comprehensive design review (`grill-me`, `grill-with-docs`), codebase improvement, implementation, and documentation. Established documentation standards for Architectural Decision Records (ADRs), domain context, and glossaries. Removed deprecated boilerplate proxy, testing, and welcome skills.
+```
+
+---
+
+## [2026-05-27] - Auto-Generated Update
+
 ### Features
 
 *   Implemented automated generation and caching of semantic graph documentation to provide insights into project architecture and assets, streamlining previous manual documentation efforts.
