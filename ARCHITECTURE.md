@@ -3,65 +3,79 @@
 ```mermaid
 graph LR
     subgraph "Client / Browser"
-        U["User"]
-        FUI["Frontend UI (Pages, Forms)"]
+        A["User"]
+        B["Browser Frontend UI"]
     end
 
     subgraph "Next.js Application"
-        AM["Auth Middleware"]
-        SAA["Supabase Auth Server Actions"]
-        VUA["Video Upload API"]
-        CGA["Content Generation API"]
-        DF["Data Fetching / Server Components"]
+        C["Next.js Router"]
+        D["Auth Middleware"]
+        E["Login/Auth Actions"]
+        F["Page Renderer (SSR/CSR)"]
+        G["Upload API Route (/api/upload-url)"]
+        H["Script Generation API Route (/api/generate-script)"]
+        I["Hashtag Generation API Route (/api/generate-hashtags)"]
+        J["Video Processing Logic"]
     end
 
     subgraph "Supabase Cloud"
-        SA["Supabase Authentication"]
-        SDB["Supabase Database"]
-        SS["Supabase Storage"]
+        K["Supabase Authentication"]
+        L["Supabase Database"]
+        M["Supabase Storage"]
     end
 
     subgraph "External Services"
-        AIML["AI/ML Language Model"]
+        N["External AI Model"]
     end
 
-    %% Flow 1: Initial Page Load & Auth Check
-    U --> FUI
-    FUI -- "Page Request" --> AM
-    AM -- "Validate Session" --> SA
-    SA -- "Session Status" --> AM
-    AM -- "Render Page" --> DF
-    DF -- "Fetch Initial Data" --> SDB
-    SDB -- "Data" --> DF
-    DF --> FUI
+    % Initial Request Flow & Authentication
+    A --> B: "Initiates Request"
+    B --> C: "Sends HTTP Request"
+    C -- "Intercepts Request" --> D
+    D -- "Checks Session" --> K
+    K --> D: "Session Status"
+    D -- "Authenticated" --> F: "Proceed to Page"
+    D -- "Unauthenticated" --> E: "Redirect to Login"
 
-    %% Flow 2: User Login / Authentication
-    FUI -- "Login / SignUp Request" --> SAA
-    SAA -- "Authenticate User" --> SA
-    SA -- "User Session" --> SAA
-    SAA -- "Set Auth Cookies" --> FUI
+    % Login Flow
+    B -- "Submits Login Form" --> E
+    E --> K: "Authenticates User"
+    K --> L: "Manages User Profiles"
+    K --> E: "Returns Session Token"
+    E --> F: "Sets Session Cookie"
+    F --> B: "Renders Authenticated UI"
 
-    %% Flow 3: Video Upload Process
-    FUI -- "Request Signed Upload URL" --> VUA
-    VUA -- "Generate Signed URL" --> SS
-    SS -- "Signed URL" --> VUA
-    VUA -- "Return Signed URL" --> FUI
-    FUI -- "Direct Video Upload" --> SS
-    SS -- "Upload Confirmation / Metadata" --> SDB
+    % General Page Render & Data Fetching
+    F -- "Fetches Data (e.g., Server Component)" --> L
+    F -- "Retrieves Assets (e.g., Signed URLs)" --> M
+    L --> F: "Returns Data"
+    M --> F: "Returns Asset URLs"
+    F --> B: "Displays Dynamic Content"
 
-    %% Flow 4: Content Generation (Script / Hashtags)
-    FUI -- "Generate Content Request" --> CGA
-    CGA -- "Retrieve Context Data" --> SDB
-    SDB -- "Context Data" --> CGA
-    CGA -- "Query AI/ML Model" --> AIML
-    AIML -- "Generated Content" --> CGA
-    CGA -- "Store Results" --> SDB
-    SDB -- "Results Saved" --> CGA
-    CGA -- "Return Results" --> FUI
+    % Video Upload Flow
+    B -- "Uploads Video File" --> G
+    G --> M: "Uploads to Storage"
+    G --> L: "Records Video Metadata"
+    G --> J: "Triggers Background Processing"
+    J --> M: "Stores Processed Assets"
+    J --> L: "Updates Video Status"
+    G --> B: "Confirms Upload/Processing Status"
 
-    %% General Data Display / Updates
-    FUI -- "Display Data" --> U
-    SAA -- "Redirect/Update UI" --> FUI
+    % Script Generation Flow
+    B -- "Requests Script Generation" --> H
+    H --> L: "Retrieves Video/Context Data"
+    H --> N: "Sends Prompt"
+    N --> H: "Returns Generated Script"
+    H --> L: "Stores Generated Script"
+    H --> B: "Displays Generated Script"
+
+    % Hashtag Generation Flow
+    B -- "Requests Hashtag Generation" --> I
+    I --> L: "Retrieves Script/Context Data"
+    I --> N: "Sends Prompt"
+    N --> I: "Returns Generated Hashtags"
+    I --> L: "Stores Generated Hashtags"
+    I --> B: "Displays Generated Hashtags"
 ```
 
 *Last updated automatically by Gemini.*

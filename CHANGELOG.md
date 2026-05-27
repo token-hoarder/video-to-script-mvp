@@ -1,3 +1,11 @@
+## [2026-05-27] - Auto-Generated Update
+
+### Features
+
+*   Implemented automated generation and caching of semantic graph documentation to provide insights into project architecture and assets, streamlining previous manual documentation efforts.
+
+---
+
 ## [2026-04-12] - Auto-Generated Update
 
 *   **Introduced a unified app shell experience**, featuring a new left-hand navigation sidebar on the Hashtag Studio page.
