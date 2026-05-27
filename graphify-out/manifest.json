@@ -1,0 +1,357 @@
+{
+  "/Users/azamk/video-to-script-mvp/vercel.json": {
+    "mtime": 1775061743.4862804,
+    "ast_hash": "d1bebe13be8dfe6f4d6021f426897eb5",
+    "semantic_hash": "d1bebe13be8dfe6f4d6021f426897eb5"
+  },
+  "/Users/azamk/video-to-script-mvp/postcss.config.mjs": {
+    "mtime": 1774817968.0204823,
+    "ast_hash": "239f3ebf717465dc636818a1a619398d",
+    "semantic_hash": "239f3ebf717465dc636818a1a619398d"
+  },
+  "/Users/azamk/video-to-script-mvp/package.json": {
+    "mtime": 1775947550.5262167,
+    "ast_hash": "9c60e2bfe06f4de338376b2a3bf6dfe0",
+    "semantic_hash": "9c60e2bfe06f4de338376b2a3bf6dfe0"
+  },
+  "/Users/azamk/video-to-script-mvp/proxy.ts": {
+    "mtime": 1774983652.543818,
+    "ast_hash": "55dbee885b175a721ae3c32cff2b9eab",
+    "semantic_hash": "55dbee885b175a721ae3c32cff2b9eab"
+  },
+  "/Users/azamk/video-to-script-mvp/components.json": {
+    "mtime": 1774982416.0898795,
+    "ast_hash": "63b2c4fcf776fec9dbc76e94ea0d70c6",
+    "semantic_hash": "63b2c4fcf776fec9dbc76e94ea0d70c6"
+  },
+  "/Users/azamk/video-to-script-mvp/tsconfig.json": {
+    "mtime": 1774817968.0223267,
+    "ast_hash": "02fc19ad21338c2ab820a70136310db4",
+    "semantic_hash": "02fc19ad21338c2ab820a70136310db4"
+  },
+  "/Users/azamk/video-to-script-mvp/playwright.config.ts": {
+    "mtime": 1775947550.52631,
+    "ast_hash": "d4214d0ed41476d1014bc21ae4aafe42",
+    "semantic_hash": "d4214d0ed41476d1014bc21ae4aafe42"
+  },
+  "/Users/azamk/video-to-script-mvp/vitest.config.ts": {
+    "mtime": 1775947550.526906,
+    "ast_hash": "4f02ca156d2f9a23031e855b011c4ff6",
+    "semantic_hash": "4f02ca156d2f9a23031e855b011c4ff6"
+  },
+  "/Users/azamk/video-to-script-mvp/eslint.config.mjs": {
+    "mtime": 1774817968.0201674,
+    "ast_hash": "dfa1f5f6a7037bf39dc510f30b180002",
+    "semantic_hash": "dfa1f5f6a7037bf39dc510f30b180002"
+  },
+  "/Users/azamk/video-to-script-mvp/next.config.ts": {
+    "mtime": 1775249379.8115234,
+    "ast_hash": "41b496b4bc5642dc8bbdfaf72179328d",
+    "semantic_hash": "41b496b4bc5642dc8bbdfaf72179328d"
+  },
+  "/Users/azamk/video-to-script-mvp/contexts/studio-context.tsx": {
+    "mtime": 1775947550.5213327,
+    "ast_hash": "c42463c289c8d12e81d8bfd3bb673068",
+    "semantic_hash": "c42463c289c8d12e81d8bfd3bb673068"
+  },
+  "/Users/azamk/video-to-script-mvp/app/layout.tsx": {
+    "mtime": 1777141566.839972,
+    "ast_hash": "41535622004a9ea9496545b4d49203df",
+    "semantic_hash": "41535622004a9ea9496545b4d49203df"
+  },
+  "/Users/azamk/video-to-script-mvp/app/page.tsx": {
+    "mtime": 1777141566.840772,
+    "ast_hash": "ac7f44ceb7995f3c9e5a9905be3c426b",
+    "semantic_hash": "ac7f44ceb7995f3c9e5a9905be3c426b"
+  },
+  "/Users/azamk/video-to-script-mvp/app/studio/page.tsx": {
+    "mtime": 1777141566.8411295,
+    "ast_hash": "1c30d0ca40666f6ebc5cdb08626532f7",
+    "semantic_hash": "1c30d0ca40666f6ebc5cdb08626532f7"
+  },
+  "/Users/azamk/video-to-script-mvp/app/api/generate-hashtags/route.ts": {
+    "mtime": 1777141566.8387275,
+    "ast_hash": "6497223a701af8513b3c7cadc74bf5fa",
+    "semantic_hash": "6497223a701af8513b3c7cadc74bf5fa"
+  },
+  "/Users/azamk/video-to-script-mvp/app/api/generate-script/route.ts": {
+    "mtime": 1775947550.5196087,
+    "ast_hash": "522f878c34961c859256a082faec32c1",
+    "semantic_hash": "522f878c34961c859256a082faec32c1"
+  },
+  "/Users/azamk/video-to-script-mvp/app/api/upload-url/route.ts": {
+    "mtime": 1775947550.5197577,
+    "ast_hash": "d67d4bbaad7496996684e7f59844ef06",
+    "semantic_hash": "d67d4bbaad7496996684e7f59844ef06"
+  },
+  "/Users/azamk/video-to-script-mvp/app/hashtags/page.tsx": {
+    "mtime": 1777141566.8395805,
+    "ast_hash": "f4cc66660696bc1bb46571ecb5b3697c",
+    "semantic_hash": "f4cc66660696bc1bb46571ecb5b3697c"
+  },
+  "/Users/azamk/video-to-script-mvp/app/login/actions.ts": {
+    "mtime": 1775947550.520178,
+    "ast_hash": "091050f966c2fe0e57ab69dd64248f32",
+    "semantic_hash": "091050f966c2fe0e57ab69dd64248f32"
+  },
+  "/Users/azamk/video-to-script-mvp/app/login/page.tsx": {
+    "mtime": 1777141566.8402526,
+    "ast_hash": "57264ba303e2f8c1d26d1e57ba51d4e6",
+    "semantic_hash": "57264ba303e2f8c1d26d1e57ba51d4e6"
+  },
+  "/Users/azamk/video-to-script-mvp/tests/guest-auth.test.ts": {
+    "mtime": 1775947550.5265377,
+    "ast_hash": "0fcad21e88c96cfe4e38099388538894",
+    "semantic_hash": "0fcad21e88c96cfe4e38099388538894"
+  },
+  "/Users/azamk/video-to-script-mvp/tests/anon-logout.test.ts": {
+    "mtime": 1775947550.52644,
+    "ast_hash": "515bb37a8bc9a85bdff93e94cc552df6",
+    "semantic_hash": "515bb37a8bc9a85bdff93e94cc552df6"
+  },
+  "/Users/azamk/video-to-script-mvp/utils/video-compressor.ts": {
+    "mtime": 1775947550.5268145,
+    "ast_hash": "b0baea0b096bcc4b14cdcc58c4f87e44",
+    "semantic_hash": "b0baea0b096bcc4b14cdcc58c4f87e44"
+  },
+  "/Users/azamk/video-to-script-mvp/utils/supabase/middleware.ts": {
+    "mtime": 1777141566.844618,
+    "ast_hash": "6195736d8886022b79da362284110d1b",
+    "semantic_hash": "6195736d8886022b79da362284110d1b"
+  },
+  "/Users/azamk/video-to-script-mvp/utils/supabase/client.ts": {
+    "mtime": 1774982473.36616,
+    "ast_hash": "4cb5739c1e33353d8f9d66c1737df2d1",
+    "semantic_hash": "4cb5739c1e33353d8f9d66c1737df2d1"
+  },
+  "/Users/azamk/video-to-script-mvp/utils/supabase/server.ts": {
+    "mtime": 1774982460.248757,
+    "ast_hash": "991a76df212915f5338dfb82c343cdda",
+    "semantic_hash": "991a76df212915f5338dfb82c343cdda"
+  },
+  "/Users/azamk/video-to-script-mvp/components/theme-provider.tsx": {
+    "mtime": 1777141566.8430226,
+    "ast_hash": "b2ab8f2dfc703d8daddf4ee2f76b6d9f",
+    "semantic_hash": "b2ab8f2dfc703d8daddf4ee2f76b6d9f"
+  },
+  "/Users/azamk/video-to-script-mvp/components/usage-guard.tsx": {
+    "mtime": 1777141566.8442369,
+    "ast_hash": "82fedf4a83715d9d6a402536d85a7830",
+    "semantic_hash": "82fedf4a83715d9d6a402536d85a7830"
+  },
+  "/Users/azamk/video-to-script-mvp/components/upload-zone.tsx": {
+    "mtime": 1777141566.8436124,
+    "ast_hash": "2bbf8c01d9963f6a04f790dd3a0baf6b",
+    "semantic_hash": "2bbf8c01d9963f6a04f790dd3a0baf6b"
+  },
+  "/Users/azamk/video-to-script-mvp/components/auth-buttons.tsx": {
+    "mtime": 1777141566.8419967,
+    "ast_hash": "7bffff9dbe9417cc455d83365c017956",
+    "semantic_hash": "7bffff9dbe9417cc455d83365c017956"
+  },
+  "/Users/azamk/video-to-script-mvp/components/storyboard-details.tsx": {
+    "mtime": 1777141566.8426938,
+    "ast_hash": "58c4ba4f7c40838506162222c2c320d2",
+    "semantic_hash": "58c4ba4f7c40838506162222c2c320d2"
+  },
+  "/Users/azamk/video-to-script-mvp/components/caption-overlay.tsx": {
+    "mtime": 1775076786.631311,
+    "ast_hash": "6d76b0b98f0a107571cf390564806456",
+    "semantic_hash": "6d76b0b98f0a107571cf390564806456"
+  },
+  "/Users/azamk/video-to-script-mvp/components/app-header.tsx": {
+    "mtime": 1777141566.841649,
+    "ast_hash": "d920cd7e41fdc5353fa790cc35ccac7c",
+    "semantic_hash": "d920cd7e41fdc5353fa790cc35ccac7c"
+  },
+  "/Users/azamk/video-to-script-mvp/components/submit-button.tsx": {
+    "mtime": 1775947550.5208364,
+    "ast_hash": "95a187d417397ae622212714ce638168",
+    "semantic_hash": "95a187d417397ae622212714ce638168"
+  },
+  "/Users/azamk/video-to-script-mvp/components/theme-toggle.tsx": {
+    "mtime": 1777141566.8433595,
+    "ast_hash": "fcd5a09ea0fdcae8f17ae9fb841f8662",
+    "semantic_hash": "fcd5a09ea0fdcae8f17ae9fb841f8662"
+  },
+  "/Users/azamk/video-to-script-mvp/components/script-sidebar.tsx": {
+    "mtime": 1777141566.8423467,
+    "ast_hash": "bdf43a348dec6ac5af32fd9991836aa5",
+    "semantic_hash": "bdf43a348dec6ac5af32fd9991836aa5"
+  },
+  "/Users/azamk/video-to-script-mvp/components/ui/card.tsx": {
+    "mtime": 1774982459.9931946,
+    "ast_hash": "77a10bd948ca424972a28e704a3df604",
+    "semantic_hash": "77a10bd948ca424972a28e704a3df604"
+  },
+  "/Users/azamk/video-to-script-mvp/components/ui/label.tsx": {
+    "mtime": 1774982460.1064725,
+    "ast_hash": "a70440da86bfc6a07f15197cca48cb08",
+    "semantic_hash": "a70440da86bfc6a07f15197cca48cb08"
+  },
+  "/Users/azamk/video-to-script-mvp/components/ui/sonner.tsx": {
+    "mtime": 1774982460.051656,
+    "ast_hash": "f46214bc2a6a5153a6e04fad523d5587",
+    "semantic_hash": "f46214bc2a6a5153a6e04fad523d5587"
+  },
+  "/Users/azamk/video-to-script-mvp/components/ui/button.tsx": {
+    "mtime": 1774982423.1552494,
+    "ast_hash": "6da9f5347182198ef2cdf3d361ff5b4c",
+    "semantic_hash": "6da9f5347182198ef2cdf3d361ff5b4c"
+  },
+  "/Users/azamk/video-to-script-mvp/components/ui/input.tsx": {
+    "mtime": 1774982460.0813468,
+    "ast_hash": "0607b02d99a2e92f9509223f36ccc6ec",
+    "semantic_hash": "0607b02d99a2e92f9509223f36ccc6ec"
+  },
+  "/Users/azamk/video-to-script-mvp/hooks/useGuestAuth.ts": {
+    "mtime": 1775947550.5253108,
+    "ast_hash": "61839ecf4710470145fe63351b92394b",
+    "semantic_hash": "61839ecf4710470145fe63351b92394b"
+  },
+  "/Users/azamk/video-to-script-mvp/.github/scripts/review-logic.js": {
+    "mtime": 1777141566.8352258,
+    "ast_hash": "5bb0597ef4faae469d89f55efb4d5b67",
+    "semantic_hash": "5bb0597ef4faae469d89f55efb4d5b67"
+  },
+  "/Users/azamk/video-to-script-mvp/lib/utils.ts": {
+    "mtime": 1774982423.187304,
+    "ast_hash": "5a6fd53fdcf2be529e9cc0b718fde352",
+    "semantic_hash": "5a6fd53fdcf2be529e9cc0b718fde352"
+  },
+  "/Users/azamk/video-to-script-mvp/e2e/example.spec.ts": {
+    "mtime": 1775947550.5226839,
+    "ast_hash": "68aa5c260169df5934d9ad593ece881e",
+    "semantic_hash": "68aa5c260169df5934d9ad593ece881e"
+  },
+  "/Users/azamk/video-to-script-mvp/e2e/guest-tier.spec.ts": {
+    "mtime": 1775947550.5251765,
+    "ast_hash": "4dfe651588c0a3d2ce727d140bc72629",
+    "semantic_hash": "4dfe651588c0a3d2ce727d140bc72629"
+  },
+  "/Users/azamk/video-to-script-mvp/e2e/auth.spec.ts": {
+    "mtime": 1775947550.5225918,
+    "ast_hash": "b18b5d77fc2eb080554cd9b8e747b115",
+    "semantic_hash": "b18b5d77fc2eb080554cd9b8e747b115"
+  },
+  "/Users/azamk/video-to-script-mvp/ARCHITECTURE.md": {
+    "mtime": 1777141566.8373094,
+    "ast_hash": "a592b74bd6cc5fbd96096a8682b45005",
+    "semantic_hash": "a592b74bd6cc5fbd96096a8682b45005"
+  },
+  "/Users/azamk/video-to-script-mvp/CHANGELOG.md": {
+    "mtime": 1777141566.8378415,
+    "ast_hash": "478257a0f945a7be91deb1b61ccf3355",
+    "semantic_hash": "478257a0f945a7be91deb1b61ccf3355"
+  },
+  "/Users/azamk/video-to-script-mvp/README.md": {
+    "mtime": 1774817968.0197775,
+    "ast_hash": "f15aaa42d5d299d091b1171097ea56ad",
+    "semantic_hash": "f15aaa42d5d299d091b1171097ea56ad"
+  },
+  "/Users/azamk/video-to-script-mvp/ROADMAP.md": {
+    "mtime": 1775947550.5192401,
+    "ast_hash": "3497cc48e679eb8cd383ed7c5ae028f3",
+    "semantic_hash": "3497cc48e679eb8cd383ed7c5ae028f3"
+  },
+  "/Users/azamk/video-to-script-mvp/spec.md": {
+    "mtime": 1774979098.5615366,
+    "ast_hash": "4204e0a37ffe316d3df153135df78686",
+    "semantic_hash": "4204e0a37ffe316d3df153135df78686"
+  },
+  "/Users/azamk/video-to-script-mvp/Implementation_plan.md": {
+    "mtime": 1777141566.838387,
+    "ast_hash": "61dd1183d07305f3a6750162c00fce02",
+    "semantic_hash": "61dd1183d07305f3a6750162c00fce02"
+  },
+  "/Users/azamk/video-to-script-mvp/docs/ARCHITECTURE.md": {
+    "mtime": 1775947550.5214937,
+    "ast_hash": "56b20608ed6ba84017481aa574316877",
+    "semantic_hash": "56b20608ed6ba84017481aa574316877"
+  },
+  "/Users/azamk/video-to-script-mvp/docs/CHANGELOG.md": {
+    "mtime": 1775947550.5215802,
+    "ast_hash": "3a635d0905532b55a9ffe820edbc4b3c",
+    "semantic_hash": "3a635d0905532b55a9ffe820edbc4b3c"
+  },
+  "/Users/azamk/video-to-script-mvp/docs/TECH_DEBT.md": {
+    "mtime": 1775947550.5218794,
+    "ast_hash": "3ee49b84503da7ad23ce15dff8a3a5f0",
+    "semantic_hash": "3ee49b84503da7ad23ce15dff8a3a5f0"
+  },
+  "/Users/azamk/video-to-script-mvp/docs/AGENTS.md": {
+    "mtime": 1775947550.5214155,
+    "ast_hash": "9e09241799026ac05be315a2f0b50055",
+    "semantic_hash": "9e09241799026ac05be315a2f0b50055"
+  },
+  "/Users/azamk/video-to-script-mvp/docs/context/SECURITY_POLICY.md": {
+    "mtime": 1775947550.5223775,
+    "ast_hash": "9077a8109c3f38143d1ca87bcd3764f4",
+    "semantic_hash": "9077a8109c3f38143d1ca87bcd3764f4"
+  },
+  "/Users/azamk/video-to-script-mvp/docs/context/SYSTEM_STATE.md": {
+    "mtime": 1775947550.5224705,
+    "ast_hash": "373b8b46a2eab0a68ab509bac758d769",
+    "semantic_hash": "373b8b46a2eab0a68ab509bac758d769"
+  },
+  "/Users/azamk/video-to-script-mvp/docs/context/CORE_INTERFACES.md": {
+    "mtime": 1775947550.5222867,
+    "ast_hash": "4a1e6ba7a3a4ad285d87ae59aa91650a",
+    "semantic_hash": "4a1e6ba7a3a4ad285d87ae59aa91650a"
+  },
+  "/Users/azamk/video-to-script-mvp/docs/context/AUTH_FLOW.md": {
+    "mtime": 1775947550.5221717,
+    "ast_hash": "d0a5472aee4199193c5cafbd6013da0a",
+    "semantic_hash": "d0a5472aee4199193c5cafbd6013da0a"
+  },
+  "/Users/azamk/video-to-script-mvp/docs/archive/CHANGELOG.md": {
+    "mtime": 1775947550.5220268,
+    "ast_hash": "b5aa2ed247bad6bfe7080508f43f71eb",
+    "semantic_hash": "b5aa2ed247bad6bfe7080508f43f71eb"
+  },
+  "/Users/azamk/video-to-script-mvp/.github/workflows/pr-reviewer.yml": {
+    "mtime": 1777141566.8355987,
+    "ast_hash": "4fa5e22cf59da33ee1cbc4c6b881e32c",
+    "semantic_hash": "4fa5e22cf59da33ee1cbc4c6b881e32c"
+  },
+  "/Users/azamk/video-to-script-mvp/.github/workflows/ai-pipeline.yml": {
+    "mtime": 1774991628.8978598,
+    "ast_hash": "cb4bb59290bd69add49b87603ed27af9",
+    "semantic_hash": "cb4bb59290bd69add49b87603ed27af9"
+  },
+  "/Users/azamk/video-to-script-mvp/.agent/workflows/qa-tester.md": {
+    "mtime": 1775947550.5178635,
+    "ast_hash": "3c64f8e5a9fa104664cdf28cf05b4171",
+    "semantic_hash": "3c64f8e5a9fa104664cdf28cf05b4171"
+  },
+  "/Users/azamk/video-to-script-mvp/public/file.svg": {
+    "mtime": 1774817968.0197747,
+    "ast_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71",
+    "semantic_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71"
+  },
+  "/Users/azamk/video-to-script-mvp/public/vercel.svg": {
+    "mtime": 1774817968.0210266,
+    "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
+    "semantic_hash": "c0af2f507b369b085b35ef4bbe3bcf1e"
+  },
+  "/Users/azamk/video-to-script-mvp/public/next.svg": {
+    "mtime": 1774817968.020891,
+    "ast_hash": "8e061864f388b47f33a1c3780831193e",
+    "semantic_hash": "8e061864f388b47f33a1c3780831193e"
+  },
+  "/Users/azamk/video-to-script-mvp/public/globe.svg": {
+    "mtime": 1774817968.0207858,
+    "ast_hash": "2aaafa6a49b6563925fe440891e32717",
+    "semantic_hash": "2aaafa6a49b6563925fe440891e32717"
+  },
+  "/Users/azamk/video-to-script-mvp/public/window.svg": {
+    "mtime": 1774817968.0210922,
+    "ast_hash": "a2760511c65806022ad20adf74370ff3",
+    "semantic_hash": "a2760511c65806022ad20adf74370ff3"
+  },
+  "/Users/azamk/video-to-script-mvp/e2e/fixtures/dummy.mp4": {
+    "mtime": 1775947550.525041,
+    "ast_hash": "198918f40ecc7cab0fc4231adaf67c96",
+    "semantic_hash": "198918f40ecc7cab0fc4231adaf67c96"
+  }
+}

@@ -1,0 +1,2 @@
+  warning: could not transcribe /Users/azamk/video-to-script-mvp/e2e/fixtures/dummy.mp4: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+[]
