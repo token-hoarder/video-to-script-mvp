@@ -2,67 +2,66 @@
 
 ```mermaid
 graph LR
-    subgraph "Client / Browser"
-        User["User"]
-        BrowserUI["Browser UI"]
+    %% Bounded Contexts
+    subgraph Client / Browser
+        A["User / Client App"]
     end
 
-    subgraph "Next.js Application"
-        direction LR
-        AuthPages["Auth Pages"]
-        AuthServerActions["Auth Server Actions"]
-        AuthMiddleware["Auth Middleware"]
-        AppRouterPages["App Router Pages"]
-        VideoUploadAPI["/api/upload-url (Video Processing API)"]
-        ScriptGenerationAPI["/api/generate-script (AI Script API)"]
-        HashtagGenerationAPI["/api/generate-hashtags (AI Hashtag API)"]
+    subgraph Next.js Application
+        B["Frontend UI (Pages/Components)"]
+        C["Next.js Server Components / API Routes"]
+        D["Auth Middleware (Next.js Edge Runtime)"]
     end
 
-    subgraph "Supabase Cloud"
-        SupabaseAuth["Supabase Auth"]
-        SupabaseDB["Supabase Database"]
-        SupabaseStorage["Supabase Storage"]
+    subgraph Supabase Cloud
+        E["Supabase Auth"]
+        F["Supabase Database (Postgres)"]
+        G["Supabase Storage (Video Files)"]
     end
 
-    subgraph "External Services"
-        ExternalVideoProcessing["External Video Processing Service"]
-        ExternalAILLM["External AI / LLM Model"]
+    subgraph External Services
+        H["External AI Service (e.g., Script, Hashtags)"]
+        I["External Video Processing / Export Service"]
     end
 
-    %% Authentication Flow
-    User --> BrowserUI["Browser UI: Initial Request"]
-    BrowserUI --> AuthPages["Auth Pages: Sign-in/Sign-up"]
-    AuthPages --> AuthServerActions["Auth Server Actions: Credential Submission"]
-    AuthServerActions --> SupabaseAuth["Supabase Auth: Verify Credentials"]
-    SupabaseAuth --> AuthServerActions["Auth Server Actions: Session Token"]
-    AuthServerActions --> AuthMiddleware["Auth Middleware: Set Session Cookie"]
-    AuthMiddleware --> AppRouterPages["App Router Pages: Redirect to App"]
+    %% Flow: User Request Lifecycle
+    A -- "1. Initial Page Load / Auth Request" --> D
+    D -- "2. Authenticate User / Session Check" --> E
+    E -- "3. Auth Token / Session Data" --> D
+    D -- "4. Redirect / Render Page (Server)" --> B
 
-    %% Main Application Flow - Video Upload & Processing
-    AppRouterPages --> VideoUploadAPI["Video Upload API: Trigger Upload/Processing"]
-    VideoUploadAPI --> SupabaseDB["Supabase Database: Store Video Metadata"]
-    VideoUploadAPI --> SupabaseStorage["Supabase Storage: Upload Raw Video/URL"]
-    VideoUploadAPI --> ExternalVideoProcessing["External Video Processing: Initiate Transcoding/Compression"]
-    ExternalVideoProcessing --"Status Update/Processed URL"--> SupabaseDB["Supabase Database: Update Video Status"]
-    SupabaseDB --> AppRouterPages["App Router Pages: Display Processed Video"]
+    B -- "5. User Action (e.g., Upload Video)" --> C
+    C -- "6. Authenticate Request" --> E
+    E -- "7. Authorization Check" --> C
+    C -- "8. Prepare Upload (e.g., Signed URL)" --> G
+    G -- "9. Signed URL / Upload Path" --> C
+    C -- "10. Respond with Upload Details" --> B
+    B -- "11. Upload File Directly" --> G
+    G -- "12. Upload Confirmation / Path" --> C
+    C -- "13. Store Video Metadata / Trigger Processing" --> F
+    F -- "14. Save Metadata / Job Queue" --> C
+    C -- "15. Trigger Async Video Processing" --> I
+    I -- "16. Process Video / Analyze" --> F
+    F -- "17. Update Video Status / Analysis Results" --> C
+    C -- "18. Notify Frontend (e.g., Polling/Webhook)" --> B
 
-    %% Main Application Flow - AI Content Generation
-    AppRouterPages --> ScriptGenerationAPI["AI Script API: Request Script"]
-    ScriptGenerationAPI --> SupabaseDB["Supabase Database: Fetch Video Context"]
-    ScriptGenerationAPI --> ExternalAILLM["External AI / LLM Model: Generate Script"]
-    ExternalAILLM --> ScriptGenerationAPI["AI Script API: Return Generated Script"]
-    ScriptGenerationAPI --> SupabaseDB["Supabase Database: Store Generated Script"]
-    ScriptGenerationAPI --> AppRouterPages["App Router Pages: Display Script"]
+    B -- "19. User Action (e.g., Generate Script/Hashtags)" --> C
+    C -- "20. Call External AI Service" --> H
+    H -- "21. AI Generated Content" --> C
+    C -- "22. Store Generated Content" --> F
+    F -- "23. Save Confirmation" --> C
+    C -- "24. Display Content in UI" --> B
 
-    AppRouterPages --> HashtagGenerationAPI["AI Hashtag API: Request Hashtags"]
-    HashtagGenerationAPI --> SupabaseDB["Supabase Database: Fetch Video Context"]
-    HashtagGenerationAPI --> ExternalAILLM["External AI / LLM Model: Generate Hashtags"]
-    ExternalAILLM --> HashtagGenerationAPI["AI Hashtag API: Return Generated Hashtags"]
-    HashtagGenerationAPI --> SupabaseDB["Supabase Database: Store Generated Hashtags"]
-    HashtagGenerationAPI --> AppRouterPages["App Router Pages: Display Hashtags"]
+    B -- "25. User Action (e.g., Save Reel State)" --> C
+    C -- "26. Persist Reel Configuration" --> F
+    F -- "27. Reel State Confirmation" --> C
+    C -- "28. Display Confirmation" --> B
 
-    %% Data Flow for AI
-    AppRouterPages <--> SupabaseDB["Supabase Database: Read/Write User Data, Content"]
+    B -- "29. User Action (e.g., Export Final Reel)" --> C
+    C -- "30. Trigger Export Job" --> I
+    I -- "31. Exported Reel URL / Status Update" --> F
+    F -- "32. Export Status & URL" --> C
+    C -- "33. Notify User / Provide Download Link" --> B
 ```
 
 *Last updated automatically by Gemini.*

@@ -1,3 +1,15 @@
+## [2026-10-11] - Auto-Generated Update
+
+**New Feature:**
+*   Introduced mobile timed-text reels, featuring private analysis and MP4 export.
+
+**Improvements:**
+*   Streamlined video analysis and script generation APIs, consolidating backend logic for authentication, credit management, and file processing.
+*   Implemented `REEL_PROCESSING_SECRET` for secure server-side operations, supporting atomic credit reservations and anonymized rate limiting.
+*   Optimized build processes with updated `.vercelignore` rules.
+
+---
+
 ## [2026-05-27] - Auto-Generated Update
 
 ```
