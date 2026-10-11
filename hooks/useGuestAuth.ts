@@ -1,155 +1,62 @@
-/**
- * useGuestAuth — Tiered Auth Hook
- *
- * Handles:
- *   1. Auto sign-in anonymously on first visit (Tier 1)
- *   2. Reads credit balance from the `profiles` table
- *   3. Upgrade path via linkIdentity() — NOT signInWithOAuth() — preserves UUID
- *
- * UX rules (AUTH_FLOW.md):
- *   - Never show the word "guest" — use "Preview Mode" or "Exploring for free"
- *   - Credit counter shown as "✦ N analyses left"
- *   - At 0 credits: replace Generate button with "Unlock 50 Credits →"
- */
 'use client';
-
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
-
-export interface GuestAuthState {
-  user: User | null;
-  credits: number | null;
-  isLoading: boolean;
-  isGuest: boolean;
-  isUpgrading: boolean;
-  upgradeToGoogle: () => Promise<void>;
-  refreshCredits: () => Promise<void>;
+let initialization: Promise<User | null> | null = null;
+export function publishCredits(credits: number) {
+  window.dispatchEvent(new CustomEvent('reel-credits',{detail:credits}));
 }
-
-export function useGuestAuth(): GuestAuthState {
-  const [user, setUser] = useState<User | null>(null);
-  const [credits, setCredits] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUpgrading, setIsUpgrading] = useState(false);
-
+export function useGuestAuth() {
   const [supabase] = useState(() => createClient());
-
-  const fetchCredits = useCallback(
-    async (userId: string) => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('credits')
-        .eq('id', userId)
-        .single();
-
-      if (!error && data) {
-        setCredits(data.credits);
-      }
-    },
-    [supabase]
-  );
-
-  const refreshCredits = useCallback(async () => {
-    if (user) await fetchCredits(user.id);
-  }, [user, fetchCredits]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function initAuth() {
-      setIsLoading(true);
-      console.log('DEBUG_AUTH: initAuth() — checking for existing session');
-
-      // 1. Check if a session already exists
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        console.log('DEBUG_AUTH: existing session found — uid:', session.user.id, '| is_anonymous:', session.user.is_anonymous);
-        if (mounted) {
-          setUser(session.user);
-          await fetchCredits(session.user.id);
-        }
-      } else {
-        // 2. No session — sign in anonymously (Tier 1)
-        console.log('DEBUG_AUTH: no session found — calling signInAnonymously()');
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) {
-          console.error('DEBUG_AUTH: signInAnonymously() FAILED —', error.message, '| code:', error.status);
-        } else if (data.user && mounted) {
-          console.log('DEBUG_AUTH: signInAnonymously() OK — new uid:', data.user.id);
-          setUser(data.user);
-          // Profile row created by DB trigger; poll briefly for it
-          await new Promise((r) => setTimeout(r, 500));
-          await fetchCredits(data.user.id);
-        }
-      }
-
-      if (mounted) setIsLoading(false);
-      console.log('DEBUG_AUTH: initAuth() complete — isLoading → false');
-    }
-
-    initAuth();
-
-    // 3. Keep UI in sync when auth state changes (tab switches, OAuth callbacks)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mounted) return;
-      console.log('DEBUG_AUTH: onAuthStateChange fired — event:', _event, '| uid:', session?.user?.id ?? 'none', '| is_anonymous:', session?.user?.is_anonymous ?? 'n/a');
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchCredits(session.user.id);
-      } else {
-        console.log('DEBUG_AUTH: onAuthStateChange — no user in session, clearing credits');
-        setCredits(null);
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
+  const [user,setUser] = useState<User|null>(null);
+  const [credits,setCredits] = useState<number|null>(null);
+  const [isLoading,setIsLoading] = useState(true);
+  const [isUpgrading,setIsUpgrading] = useState(false);
+  const [authError,setAuthError] = useState('');
+  const fetchCredits = useCallback(async () => {
+    const {data,error}=await supabase.rpc('recover_reel_balance');
+    if(error) throw new Error('Your balance is unavailable. Refresh to reconnect.');
+    if(typeof data==='number') {setCredits(data); publishCredits(data);}
+  },[supabase]);
+  const refreshCredits=useCallback(async()=>{if(user) await fetchCredits();},[user,fetchCredits]);
+  useEffect(()=>{
+    let mounted=true; const timers=new Set<ReturnType<typeof setTimeout>>();
+    const refreshLater=()=>{
+      // Supabase holds the auth lock during this callback. Run DB calls after it returns.
+      const timer=setTimeout(()=>{timers.delete(timer); if(mounted) void fetchCredits().catch(()=>{});},0);
+      timers.add(timer);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /**
-   * Upgrade path: linkIdentity() preserves the anonymous UUID.
-   * CRITICAL: Do NOT use signInWithOAuth() — that creates a new user
-   * and orphans all scripts.
-   */
-  const upgradeToGoogle = useCallback(async () => {
-    setIsUpgrading(true);
-    console.log('DEBUG_AUTH: upgradeToGoogle() called — calling linkIdentity({ provider: google })');
-    
-    // Pass explicit redirectTo for production / Vercel to work reliably
-    const redirectTo = `${window.location.origin}/auth/callback?next=/`;
-    
-    try {
-      const { error } = await supabase.auth.linkIdentity({ 
-        provider: 'google',
-        options: {
-          redirectTo
-        }
-      });
-      
-      if (error) {
-        console.error('DEBUG_AUTH: linkIdentity() FAILED —', error.message);
-        toast.error('Failed to connect to Google: ' + error.message);
-        setIsUpgrading(false);
-      } else {
-        console.log('DEBUG_AUTH: linkIdentity() initiated — awaiting OAuth redirect');
-        // Do not reset isUpgrading, let the page redirect away
-      }
-    } catch (e: any) {
-        toast.error('An unexpected error occurred.');
-        setIsUpgrading(false);
+    const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{
+      if(!mounted) return;
+      setUser(session?.user??null);
+      if(session?.user) refreshLater(); else setCredits(null);
+    });
+    if(!initialization) {
+      initialization=(async()=>{
+        const {data:{session},error}=await supabase.auth.getSession();
+        if(error) throw error;
+        if(session?.user) return session.user;
+        const result=await supabase.auth.signInAnonymously();
+        if(result.error) throw result.error;
+        return result.data.user;
+      })().finally(()=>{initialization=null;});
     }
-  }, [supabase]);
-
-  const isGuest = user?.is_anonymous ?? true;
-
-  return { user, credits, isLoading, isUpgrading, isGuest, upgradeToGoogle, refreshCredits };
+    void initialization.then(async current=>{
+      if(!mounted) return;
+      setUser(current);
+      if(current) await fetchCredits();
+    }).catch(()=>{if(mounted) setAuthError('Could not connect. Refresh the page to try again.');}).finally(()=>{if(mounted) setIsLoading(false);});
+    const receive=(event:Event)=>{if(mounted) setCredits((event as CustomEvent<number>).detail);};
+    window.addEventListener('reel-credits',receive);
+    return()=>{mounted=false; subscription.unsubscribe(); timers.forEach(clearTimeout); window.removeEventListener('reel-credits',receive);};
+  },[supabase,fetchCredits]);
+  const upgradeToGoogle=useCallback(async()=>{
+    setIsUpgrading(true);
+    try {
+      const {error}=await supabase.auth.linkIdentity({provider:'google',options:{redirectTo:`${window.location.origin}/auth/callback?next=/studio`}});
+      if(error) throw error;
+    } catch {toast.error('Could not connect to Google. Please try again.'); setIsUpgrading(false);}
+  },[supabase]);
+  return {user,credits,isLoading,isGuest:user?.is_anonymous??true,isUpgrading,authError,upgradeToGoogle,refreshCredits};
 }

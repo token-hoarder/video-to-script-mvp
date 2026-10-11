@@ -6,7 +6,7 @@ import { AppHeader } from '@/components/app-header';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useStudio } from '@/contexts/studio-context';
-import { useGuestAuth } from '@/hooks/useGuestAuth';
+import { useGuestAuth, publishCredits } from '@/hooks/useGuestAuth';
 import { needsOptimization, optimizeVideoForAI } from '@/utils/video-compressor';
 import { useRouter } from 'next/navigation';
 
@@ -42,7 +42,7 @@ function HashtagChip({
 export default function HashtagsPage() {
   const router = useRouter();
   const { uploadedVideoUrl, setUploadedVideoUrl, videoPreviewUrl, setVideoPreviewUrl, hashtags, setHashtags } = useStudio();
-  const { user, isGuest } = useGuestAuth();
+  const { user, isGuest, refreshCredits } = useGuestAuth();
 
   const [file, setFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -53,9 +53,9 @@ export default function HashtagsPage() {
   const handleUpgrade = async () => router.push('/login');
 
   const handleFileSelect = (selectedFile: File) => {
-    const MAX_SIZE = 500 * 1024 * 1024; // 500MB
+    const MAX_SIZE = 30 * 1024 * 1024; // Match the private bucket limit
     if (selectedFile.size > MAX_SIZE) {
-      toast.error('File is too large. Please select a video under 500MB.');
+      toast.error('File is too large. Please select a video under 30MB.');
       return;
     }
     setFile(selectedFile);
@@ -79,7 +79,7 @@ export default function HashtagsPage() {
       }
     }
 
-    const fileExt = 'mp4';
+    const fileExt = fileToUpload.name.toLowerCase().endsWith('.mov') ? 'mov' : 'mp4';
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     const filePath = `${user.id}/${fileName}`;
 
@@ -112,7 +112,7 @@ export default function HashtagsPage() {
       return null;
     }
 
-    const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/videos/${filePath}`;
+    const publicUrl = filePath;
     setUploadedVideoUrl(publicUrl);
     return publicUrl;
   };
@@ -145,10 +145,11 @@ export default function HashtagsPage() {
         throw new Error(result.error || 'Failed to generate hashtags');
       }
 
+      publishCredits(result.creditsRemaining);
       setHashtags({
-        core: result.data.core,
-        trending: result.data.trending,
-        cultural: result.data.cultural ?? [],
+        core: result.data.core.map((tag: string) => tag.replace(/^#/, '')),
+        trending: result.data.trending.map((tag: string) => tag.replace(/^#/, '')),
+        cultural: (result.data.cultural ?? []).map((tag: string) => tag.replace(/^#/, '')),
         kept: keptSoFar,
       });
 
@@ -157,6 +158,7 @@ export default function HashtagsPage() {
       toast.error(err.message || 'An error occurred.');
     } finally {
       setIsAnalyzing(false);
+      void refreshCredits().catch(() => {});
     }
   };
 

@@ -1,539 +1,99 @@
 'use client';
-
-import { useState, useRef, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { AppHeader } from "@/components/app-header";
-import { ScriptSidebar, ScriptsPayload } from "@/components/script-sidebar";
-import { StoryboardDetails } from "@/components/storyboard-details";
-import { CaptionOverlay } from "@/components/caption-overlay";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { needsOptimization, optimizeVideoForAI } from "@/utils/video-compressor";
-import { toast } from "sonner";
-import { useGuestAuth } from "@/hooks/useGuestAuth";
-import { createClient } from "@/utils/supabase/client";
-import { logout } from "@/app/login/actions";
-import { useStudio } from "@/contexts/studio-context";
-import Link from "next/link";
-import { motion } from "framer-motion";
-
-export default function Home() {
-  const [file, setFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [userScript, setUserScript] = useState("");
-  
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoDuration, setVideoDuration] = useState(15);
-  const [captionPosition, setCaptionPosition] = useState({ x: 0, y: 0 });
-
-  const [currentTime, setCurrentTime] = useState(0);
-  const [activeScriptId, setActiveScriptId] = useState<string | null>(null);
-  const [activeScriptBlocks, setActiveScriptBlocks] = useState<any[]>([]);
-  const [pendingEdits, setPendingEdits] = useState<Record<number, string>>({});
-  const [refiningSlot, setRefiningSlot] = useState<string | null>(null);
-
-  const [analyzingSlot, setAnalyzingSlot] = useState<string | null>(null);
-  const [compressionProgress, setCompressionProgress] = useState<number | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-
-  // Shared persistent state from StudioContext
-  const { uploadedVideoUrl, setUploadedVideoUrl, videoPreviewUrl, setVideoPreviewUrl, scripts, setScripts } = useStudio();
-
-  const [supabase] = useState(() => createClient());
-  const router = useRouter();
-  const { user, credits, isGuest, isLoading: authLoading, isUpgrading, refreshCredits } = useGuestAuth();
-
-  const handleUpgrade = async () => router.push('/login');
-
-  useEffect(() => {
-    const savedScript = localStorage.getItem("video-to-script-custom");
-    if (savedScript) setUserScript(savedScript);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("video-to-script-custom", userScript);
-  }, [userScript]);
-
-  const chunkScriptLocal = (text: string, duration: number) => {
-    if (!text || text.trim() === '') return [];
-    const sentences = text.match(/[^.!?]+(?:[.!?]+|$)/g) || [text];
-    const totalChars = text.length;
-    let currentStartTime = 0;
-    
-    return sentences.map(sentence => {
-       const sentenceStr = sentence.trim();
-       if (!sentenceStr) return null;
-       const proportion = sentence.length / totalChars; 
-       const blockDuration = duration * proportion;
-       
-       const block = {
-         startTime: currentStartTime,
-         endTime: currentStartTime + blockDuration,
-         text: sentenceStr,
-         visualContext: 'Custom manual timing'
-       };
-       currentStartTime += blockDuration;
-       return block;
-    }).filter(Boolean);
+import { useEffect,useRef,useState } from 'react';
+import { AppHeader } from '@/components/app-header';
+import { useGuestAuth,publishCredits } from '@/hooks/useGuestAuth';
+import { createClient } from '@/utils/supabase/client';
+import { MAX_VIDEO_BYTES,MAX_VIDEO_SECONDS,validateBlocks,type TextBlock,type TextStyle,type TextPosition } from '@/lib/reel';
+import { textCardCanvas } from '@/lib/render-text';
+import { exportReel } from '@/lib/export-reel';
+const button='min-h-11 rounded-xl bg-primary px-5 py-3 font-semibold text-on-primary disabled:opacity-50';
+const field='w-full min-h-11 rounded-xl border border-outline-variant/30 bg-background px-3 py-2 text-base';
+function download(blob:Blob,name:string) {const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+export default function StudioPage() {
+  const {user,credits,isLoading,authError,refreshCredits,upgradeToGoogle}=useGuestAuth();
+  const [supabase]=useState(()=>createClient());
+  const [file,setFile]=useState<File|null>(null),[url,setUrl]=useState('');
+  const [message,setMessage]=useState(''),[language,setLanguage]=useState('English'),[tone,setTone]=useState('Warm');
+  const [blocks,setBlocks]=useState<TextBlock[]>([]),[duration,setDuration]=useState(0),[size,setSize]=useState({width:720,height:1280});
+  const [style,setStyle]=useState<TextStyle>('clean'),[position,setPosition]=useState<TextPosition>('bottom');
+  const [time,setTime]=useState(0),[busy,setBusy]=useState(false),[exporting,setExporting]=useState(false),[status,setStatus]=useState(''),[error,setError]=useState(''),[exported,setExported]=useState<Blob|null>(null);
+  const video=useRef<HTMLVideoElement>(null),input=useRef<HTMLInputElement>(null),overlay=useRef<HTMLCanvasElement>(null),abort=useRef<AbortController|null>(null);
+  const active=blocks.find(block=>time>=block.startTime&&time<block.endTime);
+  useEffect(()=>()=>{if(url)URL.revokeObjectURL(url);},[url]);
+  useEffect(()=>()=>abort.current?.abort(),[]);
+  useEffect(()=>{const target=overlay.current;if(!target)return; target.width=size.width;target.height=size.height;const ctx=target.getContext('2d');ctx?.clearRect(0,0,size.width,size.height);if(active)ctx?.drawImage(textCardCanvas(active.text,size.width,size.height,{style,position}),0,0);},[active,size,style,position]);
+  const select=(selected:File)=>{
+    setError('');
+    if(selected.size>MAX_VIDEO_BYTES||! /\.(mp4|mov)$/i.test(selected.name)){setError('Choose an MP4 or MOV under 30 MB.');return;}
+    setFile(selected);setUrl(URL.createObjectURL(selected));setDuration(0);setBlocks([]);setExported(null);setTime(0);setStatus('');
   };
-
-  const customBlocks = useMemo(() => {
-    return chunkScriptLocal(userScript, videoDuration);
-  }, [userScript, videoDuration]);
-
-  const handleLocalCustomEdit = (text: string) => {
-    setUserScript(text);
-    if (activeScriptId === 'custom') {
-       setActiveScriptBlocks(chunkScriptLocal(text, videoDuration));
-       setPendingEdits({});
-    }
-  };
-
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    setCurrentTime(e.currentTarget.currentTime);
-  };
-
-  const handleSelectScript = (id: string, blocks: any[]) => {
-    setActiveScriptId(id);
-    setActiveScriptBlocks(blocks);
-    setPendingEdits({});
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play();
-    }
-  };
-
-  const handleSaveSegment = (idx: number) => {
-     if (pendingEdits[idx] === undefined) return;
-     const newBlocks = [...activeScriptBlocks];
-     newBlocks[idx] = { ...newBlocks[idx], text: pendingEdits[idx] };
-     setActiveScriptBlocks(newBlocks);
-     
-     if (activeScriptId === 'custom') {
-        const fullText = newBlocks.filter(b => b.text !== '[Visual Break]').map(b => b.text).join(' ');
-        setUserScript(fullText);
-     }
-     const newPending = { ...pendingEdits };
-     delete newPending[idx];
-     setPendingEdits(newPending);
-  };
-
-  const handleUndoSegment = (idx: number) => {
-     const newPending = { ...pendingEdits };
-     delete newPending[idx];
-     setPendingEdits(newPending);
-  };
-
-  const handleSaveAll = () => {
-     const newBlocks = [...activeScriptBlocks];
-     Object.keys(pendingEdits).forEach(key => {
-        const idx = parseInt(key);
-        newBlocks[idx] = { ...newBlocks[idx], text: pendingEdits[idx] };
-     });
-     setActiveScriptBlocks(newBlocks);
-
-     if (activeScriptId === 'custom') {
-        const fullText = newBlocks.filter(b => b.text !== '[Visual Break]').map(b => b.text).join(' ');
-        setUserScript(fullText);
-     }
-     setPendingEdits({});
-     toast.success('All changes committed successfully');
-  };
-
-  const handlePendingEditChange = (idx: number, val: string) => {
-     setPendingEdits(prev => ({ ...prev, [idx]: val }));
-  };
-
-  const handleScrubVideo = (time: number) => {
-     if (videoRef.current) {
-        videoRef.current.currentTime = time;
-        videoRef.current.pause();
-     }
-  };
-
-  const handleFileSelect = (selectedFile: File) => {
-    const MAX_SIZE = 500 * 1024 * 1024; // 500MB
-    if (selectedFile.size > MAX_SIZE) {
-      toast.error('File is too large. Please select a video under 500MB.');
-      return;
-    }
-    setFile(selectedFile);
-    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
-    setVideoPreviewUrl(URL.createObjectURL(selectedFile));
-    setActiveScriptId(null);
-    setActiveScriptBlocks([]);
-    setScripts(null);
-    setUploadedVideoUrl(null);
-  };
-
-  const uploadVideoIfNeeded = async (): Promise<string | null> => {
-    if (uploadedVideoUrl) return uploadedVideoUrl;
-    if (!file) { toast.error('Please select a video first'); return null; }
-    if (!user) { toast.error('Session not ready. Please refresh.'); return null; }
-
-    let fileToUpload = file;
-    if (needsOptimization(file)) {
-      toast.info('Optimizing for AI Analysis...');
-      setCompressionProgress(0);
-      try {
-        fileToUpload = await optimizeVideoForAI(file, (progress) => {
-          setCompressionProgress(progress);
-        });
-      } catch (compressionErr: any) {
-        toast.error('Video optimization failed', { description: compressionErr?.message });
-        fileToUpload = file;
-      } finally {
-        setCompressionProgress(null);
-      }
-    }
-
-    const fileExt = 'mp4';
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const filePath = `${user.id}/${fileName}`;
-    toast.info('Uploading to secure storage...');
-
-    const uploadUrlRes = await fetch('/api/upload-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filePath })
-    });
-    const uploadUrlData = await uploadUrlRes.json();
-    if (!uploadUrlRes.ok) throw new Error(uploadUrlData.error);
-
-    const publicUrl = await new Promise<string>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('PUT', uploadUrlData.signedUrl);
-      xhr.setRequestHeader('Authorization', `Bearer ${uploadUrlData.token}`);
-      xhr.setRequestHeader('Content-Type', fileToUpload.type || 'video/mp4');
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          setUploadProgress((event.loaded / event.total) * 100);
-        }
-      };
-
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl(filePath);
-          resolve(publicUrl);
-        } else reject(new Error(`Upload failed`));
-      };
-      xhr.onerror = () => { setUploadProgress(null); reject(new Error('Network error')); };
-      xhr.send(fileToUpload);
-    });
-
-    setUploadProgress(null);
-    setUploadedVideoUrl(publicUrl);
-    return publicUrl;
-  };
-
-  const handleGenerateScript = async (slotId: string) => {
-    if (!file && !uploadedVideoUrl) return;
+  const generate=async()=>{
+    if(!file||!user)return;
+    setBusy(true);setError('');setExported(null);abort.current=new AbortController();
+    const timeout=setTimeout(()=>abort.current?.abort(),90000);let uploadPath:string|undefined;
     try {
-      setAnalyzingSlot(slotId);
-      const targetVideoUrl = await uploadVideoIfNeeded();
-      if (!targetVideoUrl) { setAnalyzingSlot(null); return; }
-
-      toast.info(`Drafting Script...`);
-      const response = await fetch('/api/generate-script', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileUrl: targetVideoUrl, generateMode: slotId }),
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        if (response.status === 402) {
-          toast.error(result.error, {
-            description: 'Sign in with Google to unlock 50 credits.',
-            action: { label: 'Unlock 50 Credits →', onClick: handleUpgrade },
-            duration: 8000,
-          });
-          return;
-        }
-        throw new Error(result.error || 'Failed to generate scripts');
-      }
-
-      if (result.data) {
-        setScripts(result.data);
-        if (result.data[slotId] && result.data[slotId].length > 0) {
-           handleSelectScript(slotId, result.data[slotId]);
-        }
-        toast.success('Script generated successfully!');
-        refreshCredits();
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Something went wrong');
-    } finally {
-      setAnalyzingSlot(null);
-    }
+      setStatus('Uploading privately…');
+      const ext=file.name.toLowerCase().endsWith('.mov')?'mov':'mp4';
+      uploadPath=`${user.id}/${crypto.randomUUID()}.${ext}`;
+      const signed=await fetch('/api/upload-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filePath:uploadPath}),signal:abort.current.signal});
+      const upload=await signed.json();if(!signed.ok)throw new Error(upload.error);
+      const uploaded=await fetch(upload.signedUrl,{method:'PUT',headers:{'Content-Type':ext==='mov'?'video/quicktime':'video/mp4','Authorization':`Bearer ${upload.token}`},body:file,signal:abort.current.signal});
+      if(!uploaded.ok)throw new Error('Upload failed. Check your connection and try again.');
+      setStatus('Watching your footage and writing text…');
+      const response=await fetch('/api/generate-script',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({videoPath:uploadPath,message,language,tone}),signal:abort.current.signal});
+      const result=await response.json();if(!response.ok)throw new Error(result.error);
+      setBlocks(validateBlocks(result.blocks,result.duration));publishCredits(result.creditsRemaining);
+      setTime(0);if(video.current){video.current.currentTime=0;video.current.pause();}
+      setStatus('Your text is ready. Review it, then download your reel.');
+    } catch(e) {setError((e as Error).name==='AbortError'?'Analysis cancelled or timed out. Refresh after three minutes to recover any unfinished reservation.':(e as Error).message);setStatus('');}
+    finally {clearTimeout(timeout);setBusy(false);if(uploadPath)await supabase.storage.from('videos').remove([uploadPath]);void refreshCredits().catch(()=>{});}
   };
-
-  const handleRefineScript = async (slotId: string, instruction: string) => {
-    if (!uploadedVideoUrl || !scripts || !scripts[slotId]) return;
-    try {
-      setRefiningSlot(slotId);
-      const response = await fetch('/api/generate-script', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-           fileUrl: uploadedVideoUrl, 
-           refineRequest: { slotId, currentBlocks: scripts[slotId], instruction }
-        }),
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error);
-
-      if (result.data) {
-        setScripts(result.data);
-        handleSelectScript(slotId, result.data[slotId]);
-        toast.success(`Successfully remixed the script!`);
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to refine the script.');
-    } finally {
-      setRefiningSlot(null);
-    }
+  const update=(index:number,key:'text'|'startTime'|'endTime',value:string)=>{setExported(null);setBlocks(current=>current.map((block,i)=>i===index?{...block,[key]:key==='text'?value:Number(value)}:block));};
+  const exportVideo=async()=>{
+    if(!file)return;setExporting(true);setError('');abort.current=new AbortController();
+    try {const blob=await exportReel(file,blocks,duration,size.width,size.height,{style,position},setStatus,abort.current.signal);setExported(blob);download(blob,'viralscript-reel.mp4');setStatus('Your MP4 is ready. Download it or share it below.');}
+    catch(e){setError(abort.current.signal.aborted?'Export cancelled.':(e as Error).message);setStatus('');}
+    finally{setExporting(false);}
   };
-
-  const handleGenerateCustomAI = async (prompt: string) => {
-    if (!file && !uploadedVideoUrl) return;
-    try {
-      setRefiningSlot('custom_ai');
-      const targetVideoUrl = await uploadVideoIfNeeded();
-      if (!targetVideoUrl) { setRefiningSlot(null); return; }
-
-      const response = await fetch('/api/generate-script', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileUrl: targetVideoUrl, customPrompt: prompt }),
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error);
-
-      if (result.data) {
-        setScripts(result.data);
-        if (result.data.custom_ai) handleSelectScript('custom_ai', result.data.custom_ai);
-        toast.success(`Generated custom AI script!`);
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to generate custom script.');
-    } finally {
-      setRefiningSlot(null);
-    }
+  const share=async()=>{
+    if(!exported)return;const reel=new File([exported],'viralscript-reel.mp4',{type:'video/mp4'});
+    if(navigator.canShare?.({files:[reel]})){try{await navigator.share({files:[reel]});}catch(e){if((e as Error).name!=='AbortError')setError('Sharing failed. Use Download MP4 instead.');}}
+    else download(exported,'viralscript-reel.mp4');
   };
-
-  return (
-    <div className="bg-background text-on-surface h-screen flex flex-col font-sans overflow-hidden transition-colors duration-300">
-      <AppHeader />
-
-      {/* 3-Column Studio Layout */}
-      <main className="flex-1 flex pt-[72px] overflow-hidden">
-        
-        {/* Left Sidebar (App Shell Mock) */}
-        <aside className="hidden md:flex w-64 h-full flex-col gap-2 p-4 border-r border-outline-variant/10 bg-surface-container-lowest/50 shadow-sm shrink-0">
-          <div className="px-4 py-2 mb-4">
-            <h2 className="text-lg font-bold text-primary">Project Studio</h2>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-outline-variant/80">Pro Editing Workspace</p>
-          </div>
-          <nav className="space-y-1">
-             <div className="flex items-center gap-3 p-3 bg-primary/10 text-primary rounded-xl font-bold transition-transform translate-x-1 cursor-default">
-               <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-               <span className="text-sm">AI Scripts</span>
-             </div>
-             <Link href="/hashtags" className="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface rounded-xl transition-all font-semibold">
-               <span className="material-symbols-outlined text-[20px]">tag</span>
-               <span className="text-sm">Hashtag Generator</span>
-             </Link>
-             <div className="flex items-center gap-3 p-3 text-on-surface-variant/40 rounded-xl cursor-not-allowed font-semibold">
-               <span className="material-symbols-outlined text-[20px]">video_library</span>
-               <span className="text-sm">Media Library</span>
-             </div>
-             <div className="flex items-center gap-3 p-3 text-on-surface-variant/40 rounded-xl cursor-not-allowed font-semibold">
-               <span className="material-symbols-outlined text-[20px]">animation</span>
-               <span className="text-sm">VFX / Transitions</span>
-             </div>
-          </nav>
-          
-          <div className="mt-auto p-4 bg-surface-container-low rounded-2xl flex items-center gap-3 border border-outline-variant/10">
-             <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold shadow-inner">
-                {user ? (isGuest ? 'G' : user.email?.substring(0,2).toUpperCase()) : 'G'}
-             </div>
-             <div>
-                {(!user || isGuest) ? (
-                  <p className="text-sm font-bold text-on-surface">Guest Mode</p>
-                ) : (
-                  <>
-                    <p className="text-xs font-bold text-on-surface truncate max-w-[120px]">{user.email}</p>
-                    <p className="text-[10px] text-primary font-bold uppercase tracking-widest">Pro Member</p>
-                  </>
-                )}
-             </div>
-          </div>
-        </aside>
-
-        {!videoPreviewUrl ? (
-          /* Empty State (Center Panel) */
-          <div className="flex-1 flex overflow-hidden relative">
-            <section className="flex-1 overflow-y-auto p-4 md:p-8 flex items-center justify-center relative">
-                <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-primary/5 via-background to-background pointer-events-none" />
-                <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
-                
-                <div className="max-w-2xl w-full flex flex-col items-center text-center relative z-10 px-4">
-                   <span className="text-[10px] sm:text-[11px] font-bold text-primary uppercase tracking-[0.2em] block mb-4">ViralScript</span>
-                   <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] font-bold tracking-tight text-on-surface leading-tight mb-5">
-                     Script your video.
-                   </h1>
-                   <p className="text-on-surface-variant text-base sm:text-lg max-w-xl mx-auto font-light mb-10">
-                     Drop your footage — our AI watches it, then writes a time-synced viral script matched perfectly to your visual cuts.
-                   </p>
-                   
-                   <label 
-                     onDragOver={(e) => e.preventDefault()}
-                     onDrop={(e) => { e.preventDefault(); if(e.dataTransfer.files?.[0]) handleFileSelect(e.dataTransfer.files[0]); }}
-                     className="relative block w-full bg-surface-container-lowest rounded-[2rem] border-2 border-dashed border-primary-container hover:border-primary transition-colors flex flex-col items-center justify-center p-12 overflow-hidden group cursor-pointer shadow-sm hover:shadow-xl hover:shadow-primary/5"
-                   >
-                      <input type="file" ref={fileInputRef} className="hidden" accept="video/mp4,video/quicktime" onChange={(e) => { if(e.target.files?.[0]) handleFileSelect(e.target.files[0]); }} />
-                      <div className="w-24 h-24 bg-primary-container/30 rounded-full flex items-center justify-center mb-6 shadow-[0_20px_40px_rgba(0,83,221,0.12)] text-primary group-hover:scale-110 transition-transform">
-                        <span className="material-symbols-outlined text-5xl">cloud_upload</span>
-                      </div>
-                      <h2 className="text-2xl font-bold text-on-surface mb-2">Drop your video here</h2>
-                      <p className="text-on-surface-variant text-sm mb-12">Supports MP4, MOV up to 500MB</p>
-                      
-                      <div className="bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary hover:bg-primary-container/80 dark:hover:bg-primary-dim px-10 py-4 rounded-full font-bold text-lg tracking-tight shadow-[0_24px_48px_rgba(0,83,221,0.1)] transition-all flex items-center gap-3">
-                        Browse Files
-                      </div>
-                   </label>
-                </div>
-            </section>
-          </div>
-        ) : (
-          /* Active Workspace (Center + Right) */
-          <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden relative custom-scrollbar">
-            {/* Center Panel: Video Preview */}
-            <section className="flex-none lg:flex-1 flex flex-col lg:overflow-hidden bg-background relative z-10 p-4 md:p-6 lg:p-8 shrink-0">
-               <div className="flex justify-between items-end mb-4 shrink-0">
-                  <div>
-                     <h1 className="text-xl md:text-2xl font-bold tracking-tight text-on-surface truncate max-w-sm">{file?.name || "Target Video"}</h1>
-                     <p className="text-xs text-on-surface-variant flex items-center gap-1 font-medium mt-1">
-                        <span className="material-symbols-outlined text-[14px]">play_circle</span> Analyzed Ready
-                     </p>
-                  </div>
-                  <button onClick={() => fileInputRef.current?.click()} className="text-xs font-bold uppercase tracking-widest text-outline hover:text-primary transition-colors cursor-pointer bg-surface-container-low px-3 py-1.5 rounded-full hover:bg-primary/10 border border-outline-variant/20">
-                     Change
-                  </button>
-                  <input type="file" ref={fileInputRef} className="hidden" accept="video/mp4,video/quicktime" onChange={(e) => { if(e.target.files?.[0]) handleFileSelect(e.target.files[0]); }} />
-               </div>
-
-               {/* Video Player Surface */}
-               <div className="relative flex-1 bg-[#0a0f12] dark:bg-[#000000] rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] overflow-hidden group border border-outline-variant/10 flex items-center justify-center min-h-[40vh] md:min-h-0">
-                  <video 
-                     ref={videoRef}
-                     src={videoPreviewUrl} 
-                     controls 
-                     controlsList="nodownload"
-                     playsInline
-                     preload="metadata"
-                     disablePictureInPicture
-                     className="w-full h-full object-contain"
-                     onTimeUpdate={handleTimeUpdate}
-                     onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration)}
-                  />
-                  <CaptionOverlay 
-                     currentTime={currentTime} 
-                     blocks={activeScriptBlocks.map((b, idx) => ({ ...b, text: pendingEdits[idx] !== undefined ? pendingEdits[idx] : b.text }))} 
-                     position={captionPosition}
-                     onPositionChange={setCaptionPosition}
-                     videoRef={videoRef}
-                  />
-
-                  {/* Progress overlay */}
-                  {(compressionProgress !== null || uploadProgress !== null) && (
-                    <div className="absolute inset-0 bg-inverse-surface/80 backdrop-blur-md flex flex-col items-center justify-center gap-6 z-20">
-                      <div className="text-center">
-                        <p className="text-on-primary font-bold text-xl mb-2">
-                          {uploadProgress !== null ? 'Uploading to Platform' : 'Optimizing Media'}
-                        </p>
-                        <p className="text-on-primary/70 text-sm font-medium">
-                          {uploadProgress !== null ? 'Secure transfer in progress...' : 'Preparing high-speed proxy...'}
-                        </p>
-                      </div>
-                      <div className="w-72">
-                        <div className="flex justify-between text-[11px] uppercase tracking-widest font-bold text-primary-fixed mb-3">
-                          <span>{uploadProgress !== null ? 'UPLOADING' : 'PROCESSING'}</span>
-                          <span>{Math.round(uploadProgress ?? (compressionProgress! * 100))}%</span>
-                        </div>
-                        <div className="h-2 bg-on-primary/10 rounded-full overflow-hidden border border-white/5">
-                          <div 
-                            className="h-full bg-primary relative rounded-full transition-all duration-300"
-                            style={{ width: `${Math.round(uploadProgress ?? (compressionProgress! * 100))}%` }}
-                          >
-                             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg border-2 border-primary mr-[-2px]"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-               </div>
-
-               {/* Storyboard Panel */}
-               <div className="h-[30vh] shrink-0 overflow-y-auto mt-6 custom-scrollbar pr-2">
-                  <StoryboardDetails 
-                    activeScriptId={activeScriptId} 
-                    blocks={activeScriptBlocks} 
-                    pendingEdits={pendingEdits}
-                    onPendingEditChange={handlePendingEditChange}
-                    onSaveSegment={handleSaveSegment}
-                    onUndoSegment={handleUndoSegment}
-                    onSaveAll={handleSaveAll}
-                    onScrubVideo={handleScrubVideo}
-                  />
-               </div>
-            </section>
-
-            {/* Right Panel: PRO STUDIO Tools */}
-            <aside className="hidden lg:flex w-80 md:w-[400px] shrink-0 p-6 flex-col overflow-y-auto relative z-20 custom-scrollbar bg-background text-on-surface">
-               <div className="bg-surface-container-lowest p-8 rounded-[2rem] border border-outline-variant/10 shadow-[0_20px_40px_rgba(0,83,221,0.03)] flex flex-col gap-6 relative overflow-hidden h-max min-h-full">
-                  {/* Decorative glow */}
-                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 blur-[80px] rounded-full pointer-events-none" />
-                  <ScriptSidebar 
-                    scripts={scripts}
-                    analyzingSlot={analyzingSlot}
-                    onGenerateScript={handleGenerateScript}
-                    onSelectScript={handleSelectScript}
-                    activeScriptId={activeScriptId}
-                    customScriptBlocks={customBlocks}
-                    onRefineScript={handleRefineScript}
-                    onGenerateCustomAI={handleGenerateCustomAI}
-                    refiningSlot={refiningSlot}
-                    onClearScripts={() => { setScripts(null); setActiveScriptId(null); setActiveScriptBlocks([]); setUserScript(''); }}
-                  />
-               </div>
-            </aside>
-            
-            {/* Mobile Script Sidebar (visible below video on small screens) */}
-            <div className="lg:hidden px-4 pb-8 md:px-8 bg-background flex-none max-w-full">
-               <div className="bg-surface-container-lowest p-6 rounded-[2rem] border border-outline-variant/10 shadow-[0_20px_40px_rgba(0,83,221,0.03)] flex flex-col gap-6 relative overflow-hidden max-w-full">
-                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 blur-[80px] rounded-full pointer-events-none" />
-                  <ScriptSidebar 
-                    scripts={scripts}
-                    analyzingSlot={analyzingSlot}
-                    onGenerateScript={handleGenerateScript}
-                    onSelectScript={handleSelectScript}
-                    activeScriptId={activeScriptId}
-                    customScriptBlocks={customBlocks}
-                    onRefineScript={handleRefineScript}
-                    onGenerateCustomAI={handleGenerateCustomAI}
-                    refiningSlot={refiningSlot}
-                    onClearScripts={() => { setScripts(null); setActiveScriptId(null); setActiveScriptBlocks([]); setUserScript(''); }}
-                  />
-               </div>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
+  let validation='';if(blocks.length)try{validateBlocks(blocks,duration);}catch(e){validation=(e as Error).message;}
+  const locked=busy||exporting;
+  return <div className="min-h-screen bg-background text-on-surface"><AppHeader/><main className="mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10">
+    <div className="mb-7"><p className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary">Your footage. Your story.</p><h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Make it work on mute.</h1><p className="mt-3 max-w-xl text-on-surface-variant">Turn your footage and message into a reel with readable, timed text. Keep your original video and sound.</p></div>
+    <div className="grid items-start gap-6 lg:grid-cols-[1fr_1fr]">
+    <section className="min-w-0 space-y-4" aria-label="Video preview">
+      <input ref={input} type="file" accept="video/mp4,video/quicktime,.mp4,.mov" className="sr-only" aria-label="Choose video" onChange={e=>{const selected=e.target.files?.[0];if(selected)select(selected);e.target.value='';}}/>
+      {!file?<button className="flex min-h-64 w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed border-primary/30 bg-surface-container-low p-8 text-center" onClick={()=>input.current?.click()}><span className="mb-4 text-4xl" aria-hidden>↥</span><span className="text-xl font-semibold">Choose your footage</span><span className="mt-2 text-sm text-on-surface-variant">MP4 or MOV · up to 60 seconds · 30 MB</span></button>:<>
+        <div className="mx-auto relative overflow-hidden rounded-2xl bg-black" style={{aspectRatio:`${size.width}/${size.height}`,maxWidth:size.height>size.width?`min(100%, 340px, ${65*size.width/size.height}vh)`:'100%'}}>
+          <video ref={video} src={url || undefined} playsInline controls preload="metadata" className="h-full w-full" onLoadedMetadata={e=>{const v=e.currentTarget;if(!Number.isFinite(v.duration)||v.duration<2||v.duration>MAX_VIDEO_SECONDS){setError('Choose a video between 2 and 60 seconds long.');setDuration(0);return;}setDuration(v.duration);setSize({width:v.videoWidth,height:v.videoHeight});}} onError={()=>setError('This video cannot play in your browser. Try an H.264 MP4.')} onTimeUpdate={e=>setTime(e.currentTarget.currentTime)} onSeeked={e=>setTime(e.currentTarget.currentTime)} />
+          <canvas ref={overlay} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full"/>
+        </div>
+        <div className="flex items-center justify-between gap-3"><p className="min-w-0 truncate text-sm text-on-surface-variant">{file.name}</p><button disabled={locked} className="min-h-11 shrink-0 rounded-xl border border-outline-variant/30 px-4 text-sm" onClick={()=>input.current?.click()}>Change video</button></div>
+      </>}
+      <p className="text-xs leading-relaxed text-on-surface-variant">Analysis uploads your clip privately to Supabase and Google Gemini. Temporary uploads are removed after the request. MP4 export happens on your device.</p>
+    </section>
+    <section className="min-w-0 rounded-3xl border border-outline-variant/20 bg-surface-container-lowest p-5 sm:p-6" aria-label="Story editor">
+      <label htmlFor="story" className="font-semibold">What do you want this video to say?</label>
+      <p className="mb-3 mt-1 text-sm text-on-surface-variant">Share the message and any true facts. For example: “I packed my first order today. Make it feel hopeful.”</p>
+      <textarea id="story" className={field+' min-h-28 resize-y'} maxLength={1500} value={message} onChange={e=>setMessage(e.target.value)} disabled={locked} placeholder="Describe your story…"/>
+      <div className="my-4 grid grid-cols-2 gap-3"><label className="text-sm">Language<select className={field+' mt-1'} value={language} onChange={e=>setLanguage(e.target.value)} disabled={locked}>{['English','Hindi','Hinglish'].map(x=><option key={x}>{x}</option>)}</select></label><label className="text-sm">Tone<select className={field+' mt-1'} value={tone} onChange={e=>setTone(e.target.value)} disabled={locked}>{['Warm','Playful','Informative'].map(x=><option key={x}>{x}</option>)}</select></label></div>
+      <button className={button+' w-full'} onClick={credits===0?upgradeToGoogle:generate} disabled={locked||isLoading||!user||!file||!duration||!message.trim()}>{busy?'Creating text…':credits===0?'Sign in to continue':blocks.length?'Generate another draft':'Create my story text'}</button>
+      <p className="mt-2 text-xs text-on-surface-variant">One analysis per draft. Editing and video export use no extra credits.</p>
+      {(error||authError)&&<p role="alert" className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm">{error||authError}</p>}
+      {status&&<p role="status" className="mt-4 text-sm text-on-surface-variant">{status}</p>}
+      {locked&&<button className="mt-2 min-h-11 text-sm underline" onClick={()=>abort.current?.abort()}>Cancel {exporting?'export':'analysis'}</button>}
+      {!!blocks.length&&<div className="mt-6 border-t border-outline-variant/20 pt-5"><h2 className="text-lg font-semibold">Make it yours</h2><p className="mt-1 text-sm text-on-surface-variant">Tap a time to preview. Keep cards short and give them room to breathe.</p>
+      <div className="my-4 grid grid-cols-2 gap-3"><label className="text-sm">Text style<select className={field+' mt-1'} value={style} disabled={locked} onChange={e=>{setStyle(e.target.value as TextStyle);setExported(null);}}><option value="clean">Clean</option><option value="bold">Bold</option><option value="label">Warm label</option></select></label><label className="text-sm">Placement<select className={field+' mt-1'} value={position} disabled={locked} onChange={e=>{setPosition(e.target.value as TextPosition);setExported(null);}}>{['top','middle','bottom'].map(x=><option key={x} value={x}>{x[0].toUpperCase()+x.slice(1)}</option>)}</select></label></div>
+      <ol className="space-y-4">{blocks.map((block,index)=><li key={index} className="rounded-xl bg-surface-container-low p-3"><div className="mb-2 flex items-center justify-between"><button className="min-h-11 text-sm font-semibold text-primary" onClick={()=>{if(video.current){video.current.currentTime=block.startTime;video.current.pause();setTime(block.startTime);}}}>Card {index+1} · Preview</button><button className="min-h-11 px-2 text-xs underline" disabled={locked} onClick={()=>{setBlocks(current=>current.filter((_,i)=>i!==index));setExported(null);}}>Remove</button></div><label className="sr-only" htmlFor={`card-${index}`}>Card {index+1} text</label><textarea id={`card-${index}`} className={field+' min-h-20'} value={block.text} maxLength={100} disabled={locked} onChange={e=>update(index,'text',e.target.value)}/><div className="mt-2 grid grid-cols-2 gap-3"><label className="text-xs">Start (seconds)<input type="number" min="0" max={duration} step="0.1" className={field+' mt-1'} value={block.startTime} disabled={locked} onChange={e=>update(index,'startTime',e.target.value)}/></label><label className="text-xs">End (seconds)<input type="number" min="0" max={duration} step="0.1" className={field+' mt-1'} value={block.endTime} disabled={locked} onChange={e=>update(index,'endTime',e.target.value)}/></label></div></li>)}</ol>
+      {validation&&<p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-300">{validation}</p>}
+      <button className={button+' mt-5 w-full'} disabled={locked||!!validation||!duration} onClick={exportVideo}>{exporting?'Exporting…':'Download MP4 with text'}</button><p className="mt-2 text-xs text-on-surface-variant">Up to 720 pixels on the longest side. Keep this page open while exporting; shorter clips work best on phones.</p>
+      {exported&&<button className="mt-3 min-h-11 w-full rounded-xl border border-primary/30 px-4 font-semibold" onClick={share}>Share or save reel</button>}
+      <button className="mt-3 min-h-11 w-full text-sm underline" onClick={()=>download(new Blob([JSON.stringify(blocks,null,2)],{type:'application/json'}),'viralscript-text.json')}>Save text and timings</button>
+      </div>}
+    </section></div>
+  </main></div>;
 }

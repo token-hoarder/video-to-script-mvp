@@ -12,8 +12,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ViralScript - Script your video with AI precision",
-  description: "Transform your raw ideas into viral-ready scripts. ViralScript uses advanced algorithmic sequencing to ensure your content hooks and holds every viewer.",
+  title: "ViralScript — Reels worth reading",
+  description: "Turn your footage and message into a reel with readable, timed on-screen text. Edit, style, and download your video.",
 };
 
 export default function RootLayout({

@@ -1,0 +1,5 @@
+.scratch
+e2e
+tests
+*.png
+supabase/.temp
